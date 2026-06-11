@@ -1,0 +1,18 @@
+{
+  "name": "arg",
+  "owner": {
+    "name": "Arg",
+    "email": "team@arg.ai"
+  },
+  "metadata": {
+    "description": "Arg is a collaborative, fast, cloud file system for humans and agents to work together.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "arg",
+      "source": "./plugins/arg",
+      "description": "Read and write files in Arg — images, video, audio, documents, spreadsheets, databases, designs, whiteboards, and kanban boards — over its cloud MCP server."
+    }
+  ]
+}

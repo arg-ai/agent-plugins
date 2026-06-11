@@ -1,0 +1,44 @@
+{
+  "name": "arg",
+  "version": "1.0.0",
+  "description": "A collaborative, cloud file system Codex can read and write to — images, video, audio, docs, spreadsheets, databases, designs, whiteboards, and kanban boards.",
+  "author": {
+    "name": "Arg",
+    "email": "team@arg.ai",
+    "url": "https://arg.ai"
+  },
+  "homepage": "https://arg.ai",
+  "repository": "https://github.com/arg-ai/agent-plugins.git",
+  "license": "MIT",
+  "keywords": [
+    "arg",
+    "files",
+    "filesystem",
+    "collaboration",
+    "cloud",
+    "design",
+    "whiteboard",
+    "kanban",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json",
+  "interface": {
+    "displayName": "Arg",
+    "shortDescription": "A collaborative, cloud file system Codex can read and write to.",
+    "longDescription": "Arg is a collaborative, fast, cloud file system for humans and agents to work together. With this plugin, Codex connects to your Arg workspace over MCP and can read and write files natively — images, video, audio, presentations, documents, spreadsheets, databases, designs, whiteboards, and kanban boards. Each supported file type ships a skill with format-specific guidance so edits stay high fidelity.",
+    "developerName": "Arg",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://arg.ai",
+    "privacyPolicyURL": "https://arg.ai/privacy",
+    "brandColor": "#0088FF",
+    "composerIcon": "./assets/logo.svg",
+    "logo": "./assets/logo.svg",
+    "defaultPrompt": [
+      "Create a kanban board in Arg to plan my launch and add the first tasks",
+      "Read my design file in Arg and implement it in my codebase",
+      "Turn the spreadsheet in my Arg workspace into a summary document"
+    ]
+  }
+}

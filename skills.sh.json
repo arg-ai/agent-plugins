@@ -1,0 +1,31 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Core",
+      "description": "Start here — Arg's CRUD model over MCP and the full map of every supported format, plus authoring reusable workspace skills and subagents.",
+      "skills": ["arg-core", "arg-skills-and-agents"]
+    },
+    {
+      "title": "Documents & web",
+      "description": "Author Markdown/MDX documents (with Arg's custom JSX components), HTML pages (file-backed apps via the window.arg FS SDK), dated journals, and URL-shortcut bookmarks.",
+      "skills": ["arg-file-document", "arg-file-html", "arg-file-diary", "arg-file-url"]
+    },
+    {
+      "title": "Design & boards",
+      "description": "Create and edit Arg's native canvases — vector designs, whiteboards, kanban boards, and automation workflows.",
+      "skills": ["arg-file-design", "arg-file-whiteboard", "arg-file-kanban", "arg-file-automation"]
+    },
+    {
+      "title": "Media",
+      "description": "Work with images, video, audio, and presentations, and build multi-track .video NLE timelines.",
+      "skills": ["arg-file-image", "arg-file-video", "arg-file-video-edit", "arg-file-audio", "arg-file-presentation"]
+    },
+    {
+      "title": "Data",
+      "description": "Build and query tabular data and SQLite databases in an Arg workspace.",
+      "skills": ["arg-file-spreadsheet", "arg-file-database"]
+    }
+  ]
+}

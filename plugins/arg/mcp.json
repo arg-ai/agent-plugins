@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "arg": {
+      "type": "http",
+      "url": "https://api.arg.ai/mcp"
+    }
+  }
+}
