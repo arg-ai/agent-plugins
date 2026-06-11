@@ -5,14 +5,14 @@ description: Create, read, update, and delete image files (png, jpg, exr, bmp) i
 
 # Image files (`.png`, `.jpg`, `.exr`, `.bmp`)
 
-Images are **binary** — they can't be created or edited with `write_file`. Arg's image editor supports pan/zoom, crop, draw, rotate/flip, resize, color filters, and undo/redo, and exports to png/jpg/webp. It opens png, jpg/jpeg, gif, webp, ico, bmp, and tiff/tif.
+Images are **binary** — they can't be written as text. Arg's image editor supports pan/zoom, crop, draw, rotate/flip, resize, color filters, and undo/redo, and exports to png/jpg/webp. It opens png, jpg/jpeg, gif, webp, ico, bmp, and tiff/tif.
 
 ## CRUD
 
-Binary format — see the `arg-core` skill for the shared binary workflow (`upload_file` base64 to create, `download_file` to read, `run_bash` to generate/transform, `rm`/`mv` to delete/move; `write_file` does not work). Image-specific:
+Binary format — see `arg-core` and your access-method skill (`arg-mcp` / `arg-cli` / `arg-fuse`) for reading/writing bytes (images can't be written as text). Image-specific:
 
-- Generate or transform in the sandbox with `run_bash` (Pillow, ImageMagick, `ffmpeg`); the new file opens in the editor.
-- `download_file` and inspect dimensions and color mode before editing.
+- Generate or transform with Pillow, ImageMagick, or `ffmpeg` — your access method says where it runs; the new file opens in the editor.
+- Read the bytes and inspect dimensions and color mode before editing.
 - Raster images aren't edited node-by-node — regenerate the bytes and overwrite.
 
 ## Guidance

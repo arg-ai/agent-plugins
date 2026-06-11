@@ -42,9 +42,15 @@ Custom Arg formats — `.design`, `.whiteboard`, `.kanban`, `.automation` — ar
 
 `.mdx` documents support Arg's custom JSX components (callouts, toggles, embeds, columns, tabs, math, mentions, and more); those are documented in full in the `arg-file-document` skill. `.html` pages can use the `window.arg` FS SDK ([arg.ai/docs/sdks/fs/llms.txt](https://arg.ai/docs/sdks/fs/llms.txt)) to read/write workspace files for file-backed apps; see the `arg-file-html` skill. Arg also opens many other formats (diagrams, 3D/CAD, notebooks, geo, media projects, code, and more) — the `arg-core` skill has the full list.
 
-## Connection
+## Access methods
 
-This plugin connects to Arg's cloud MCP server at `https://api.arg.ai/mcp` using OAuth. On first use you'll sign in and choose an organization or workspace. No local app is required.
+The skills are **transport-neutral** — the format knowledge is the same however you reach Arg. CRUD can run over any of three access methods, and `arg-core` routes to the right one:
+
+- **MCP** (`arg-mcp`) — this plugin's `mcp.json` connects to Arg's cloud MCP server at `https://api.arg.ai/mcp` over OAuth. On first use you'll sign in and choose an organization or workspace. No local app required.
+- **CLI** (`arg-cli`) — the `arg` command-line tool (`arg login`, `arg cat`/`ls`/`grep`/`upload`/`download`).
+- **FUSE** (`arg-fuse`) — mount the workspace as a local filesystem with `arg mount` and use your harness's native file tools, with two-way sync.
+
+When the environment doesn't specify, `arg-core` auto-detects in order: MCP → CLI → native filesystem.
 
 ## Examples
 

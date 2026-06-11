@@ -1,6 +1,6 @@
 ---
 name: arg-core
-description: Core overview of Arg, a collaborative cloud file system for humans and agents. Load this first whenever you create, read, update, or delete files in an Arg workspace over MCP — it lists every supported format, the shared CRUD tools and rules, and which arg-file-* skill to load before working on each format.
+description: Core overview of Arg, a collaborative cloud file system for humans and agents. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, routes you to the right access method (MCP / CLI / FUSE), states the shared rules, and points to the arg-file-* skill for each format.
 ---
 
 # Arg
@@ -8,54 +8,56 @@ description: Core overview of Arg, a collaborative cloud file system for humans 
 Arg is a collaborative, fast, cloud file system for humans and agents to collaborate and work together.
 
 - Website: https://arg.ai
-- Connection: remote MCP server at `https://api.arg.ai/mcp` (OAuth). See the `ensure-arg-connected` rule.
 
-> **Always load the matching `arg-file-*` skill before you create, read, update, or delete a file.** Load `arg-core` once for orientation, then the specific skill (e.g. `arg-file-kanban`, `arg-file-design`, `arg-file-document`, `arg-file-html`) for the file you're touching. Each `arg-file-*` skill covers only what's special about that format — the CRUD tooling and shared rules below apply to all of them.
+> **Two things to load for any file operation:** (1) the **access-method** skill for how this environment reaches Arg — `arg-mcp`, `arg-cli`, or `arg-fuse` (see "Accessing files" below); and (2) the **format** skill for the file you're touching — `arg-file-*`. Format skills are identical regardless of access method; they cover only what's special about the format.
 
-## CRUD over MCP
+## Accessing files (pick one)
 
-Arg exposes a workspace filesystem through MCP tools. The same set covers every file type:
+Arg supports three ways to do file CRUD. The **verbs differ; the formats don't.** Load the skill for the active method:
 
-| Operation | Tools | Notes |
+| Method | Use when | Skill |
 | --- | --- | --- |
-| **Create** | `write_file` · `upload_file` · `run_bash` | `write_file` for UTF‑8 text/JSON formats. `upload_file` (`encoding: "base64"`) for binary. `run_bash` to generate files in the workspace sandbox (e.g. `python-pptx`, `sqlite3`, `ffmpeg`). |
-| **Read** | `read_file` · `download_file` · `grep` | `read_file` for text (supports line `offset`/`limit`). `download_file` for binary (returns a base64 blob). `grep` to search across files. |
-| **Update** | `edit_file` · `multi_edit` · `write_file` | Prefer `edit_file`/`multi_edit` (targeted string replacements) for large files — change only what's needed. `write_file` overwrites the whole file. **Always `read_file` first.** |
-| **Delete / move** | `run_bash` | `rm` to delete, `mv` to move/rename, in the workspace sandbox. There is no dedicated delete/move MCP tool. |
+| **MCP** | Arg is connected as an MCP server (remote, OAuth — `https://api.arg.ai/mcp`) | `arg-mcp` |
+| **CLI** | the `arg` command-line tool is installed | `arg-cli` |
+| **Native filesystem** | the workspace is mounted as a local dir (FUSE, via `arg mount`) | `arg-fuse` |
 
-On the **organization** endpoint every tool also takes a `workspace_id`; call `list_workspaces` to discover ids. The **workspace** endpoint (`/mcp/{workspace_id}`) omits it.
+**Choosing one:** if the environment (system prompt / project config / `CLAUDE.md`) names a method, use it. Otherwise detect, in order:
 
-### Shared CRUD rules (apply to every format)
+1. **MCP** configured/connected → `arg-mcp`.
+2. else the **`arg` CLI** on `PATH` → `arg-cli`.
+3. else operate on the workspace as a **native mounted filesystem** → `arg-fuse`.
 
-These hold for all file types, so the `arg-file-*` skills don't repeat them — they only add format-specific notes:
+### Shared rules (every method, every format)
 
-- **Read before you edit.** `read_file` (or `download_file` for binary) the current contents first, then change only what was asked and preserve the rest of the structure.
-- **Edit surgically.** Prefer `edit_file` / `multi_edit` on large files; reserve `write_file` for new files or full rewrites.
-- **Text vs binary.** UTF‑8 text/JSON formats use `write_file`/`edit_file`. Binary formats can't — create them with `upload_file` (`encoding: "base64"`) or generate them in the sandbox with `run_bash`, and read them with `download_file`.
-- **JSON formats.** Write valid, pretty-printed (2-space) JSON, and give every node / object / column / card a unique `id`.
-- **Delete / move** with `run_bash` (`rm` / `mv`). To remove part of a structured file (a card, a node), edit the JSON rather than deleting the file.
+The `arg-file-*` skills assume these and only add format-specific notes:
+
+- **Read before you edit.** Fetch the current contents first, change only what was asked, and preserve the rest of the structure.
+- **Edit surgically** where the method supports targeted edits; otherwise rewrite the whole file.
+- **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, sqlite) can't be — create them by uploading bytes or by running a generator (`python-pptx`, `sqlite3`, `ffmpeg`, Pillow); your access-method skill says exactly how and where that runs.
+- **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card.
+- **Delete / move:** to remove part of a structured file (a card, a node), edit the JSON rather than deleting the file; your access-method skill covers deleting/moving whole files.
 
 ## Formats with a dedicated skill — load before CRUD-ing
 
 For these, **load the named skill first** for format-specific guidance:
 
-| Type | Extensions | Skill | Editable as text? |
+| Type | Extensions | Skill | Storage |
 | --- | --- | --- | --- |
-| Document / notes | md, mdx, txt, markdown | `arg-file-document` | Yes — `write_file` / `edit_file` (`.mdx` adds custom JSX components) |
-| HTML / web | html, htm | `arg-file-html` | Yes — incl. file-backed apps via the `window.arg` FS SDK |
-| Image | png, jpg, exr, bmp (+ gif, webp, ico, tif/tiff, hdr, psd) | `arg-file-image` | No — binary (`upload_file` / `run_bash`) |
-| Video | mp4, mov, webm (+ m4v, ogv, mkv, avi, 3gp, 3g2) | `arg-file-video` | No — binary |
-| Video editor (NLE) | video | `arg-file-video-edit` | Yes — JSON timeline |
-| Audio | wav, mp3 (+ ogg, flac, m4a, aac) | `arg-file-audio` | No — binary |
-| Presentation | pptx | `arg-file-presentation` | No — build via `run_bash` (`python-pptx`) |
-| Spreadsheet | csv, tsv, xlsx, xlsm | `arg-file-spreadsheet` | csv/tsv yes; xlsx binary |
-| Database | sqlite, sqlite3, db | `arg-file-database` | No — `run_bash` (`sqlite3`) |
-| Design | design, svg, fig | `arg-file-design` | `.design`/`.svg` yes (JSON/XML); `.fig` import-only |
-| Whiteboard | whiteboard | `arg-file-whiteboard` | Yes — JSON |
-| Task / project management | kanban | `arg-file-kanban` | Yes — JSON |
-| Automation / workflow | automation | `arg-file-automation` | Yes — JSON |
-| Diary / journal | diary | `arg-file-diary` | Yes — JSON (per-day rich text) |
-| URL shortcut / bookmark | url, webloc | `arg-file-url` | Yes — text |
+| Document / notes | md, mdx, txt, markdown | `arg-file-document` | Text (`.mdx` adds custom JSX components) |
+| HTML / web | html, htm | `arg-file-html` | Text (file-backed apps via the `window.arg` FS SDK) |
+| Image | png, jpg, exr, bmp (+ gif, webp, ico, tif/tiff, hdr, psd) | `arg-file-image` | Binary |
+| Video | mp4, mov, webm (+ m4v, ogv, mkv, avi, 3gp, 3g2) | `arg-file-video` | Binary |
+| Video editor (NLE) | video | `arg-file-video-edit` | Text (JSON timeline) |
+| Audio | wav, mp3 (+ ogg, flac, m4a, aac) | `arg-file-audio` | Binary |
+| Presentation | pptx | `arg-file-presentation` | Binary (generate with `python-pptx`) |
+| Spreadsheet | csv, tsv, xlsx, xlsm | `arg-file-spreadsheet` | csv/tsv text; xlsx binary |
+| Database | sqlite, sqlite3, db | `arg-file-database` | Binary (via `sqlite3`) |
+| Design | design, svg, fig | `arg-file-design` | Text (`.design`/`.svg`); `.fig` import-only |
+| Whiteboard | whiteboard | `arg-file-whiteboard` | Text (JSON) |
+| Task / project management | kanban | `arg-file-kanban` | Text (JSON) |
+| Automation / workflow | automation | `arg-file-automation` | Text (JSON) |
+| Diary / journal | diary | `arg-file-diary` | Text (JSON, per-day rich text) |
+| URL shortcut / bookmark | url, webloc | `arg-file-url` | Text |
 
 Plus a meta skill, **`arg-skills-and-agents`**, for authoring reusable workspace skills (`.skills/<name>/SKILL.md`) and subagents (`.agents/<name>.md`).
 
@@ -75,7 +77,7 @@ Two more custom surfaces:
 
 ## Other supported formats (no dedicated skill — handle directly)
 
-Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XML ones with `write_file`; build binary ones in the sandbox with `run_bash`; upload other binaries with `upload_file`.
+Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XML ones directly; build binary ones with a generator and write/upload the result (see your access-method skill).
 
 - **Diagrams & shaders** — `.mermaid`/`.mmd` (live SVG preview), `.shadertoy`/`.glsl`/`.frag` (WebGL render).
 - **Data & config** — `.json` (graph viewer), `.xml`, `.yaml`/`.yml`, `.toml`, `.ini`, `.env`, `.sql`.

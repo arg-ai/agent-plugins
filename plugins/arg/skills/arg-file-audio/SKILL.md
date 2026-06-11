@@ -5,14 +5,14 @@ description: Create, read, update, and delete audio files (wav, mp3) in Arg. Loa
 
 # Audio files (`.wav`, `.mp3`)
 
-Audio is **binary** — not created or edited with `write_file`. Arg plays back wav, mp3, ogg, flac, m4a, and aac. (In `.mdx` documents, embed an existing audio file with the `<Audio src="…" mime="…" />` component — see the `arg-file-document` skill.)
+Audio is **binary** — it can't be written as text. Arg plays back wav, mp3, ogg, flac, m4a, and aac. (In `.mdx` documents, embed an existing audio file with the `<Audio src="…" mime="…" />` component — see the `arg-file-document` skill.)
 
 ## CRUD
 
-Binary format — see the `arg-core` skill for the shared binary workflow (`upload_file` base64 to create, `download_file` to read, `run_bash` to generate/transform, `rm`/`mv` to delete/move; `write_file` does not work). Audio-specific:
+Binary format — see `arg-core` and your access-method skill (`arg-mcp` / `arg-cli` / `arg-fuse`) for reading/writing bytes (audio can't be written as text). Audio-specific:
 
-- Generate or transform in the sandbox with `run_bash` (`ffmpeg`).
-- `download_file` and inspect duration, sample rate, channels, and bitrate before editing.
+- Generate or transform with `ffmpeg` — your access method says where it runs and how the file lands in the workspace.
+- Read the bytes and inspect duration, sample rate, channels, and bitrate before editing.
 - Audio is an opaque asset — not edited sample-by-sample; regenerate and overwrite.
 
 ## Guidance

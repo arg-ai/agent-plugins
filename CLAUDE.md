@@ -42,10 +42,19 @@ When you write a skill, cite the file you verified against in your working notes
 
 ## Skill conventions
 
+### Two layers: format vs access method
+Keep **what a file is** separate from **how you reach it**:
+- **Format skills** (`arg-file-*`) describe the format — schema, components, fidelity rules — and are **transport-neutral**. They never name a specific tool.
+- **Access-method skills** (`arg-mcp`, `arg-cli`, `arg-fuse`) describe how to actually read/write/delete with that transport.
+- **`arg-core`** is the router: access methods, the detection order (MCP → CLI → FUSE), the shared rules, and the master format map.
+
+Adding a new transport = one new `arg-*` skill + a row in `arg-core`; the format skills don't change. Adding a new format = one `arg-file-*` skill; the access-method skills don't change.
+
 ### Naming
-- `arg-core` — the orientation skill. Loaded first; owns the shared CRUD model and the master format map.
+- `arg-core` — orientation + access-method router. Loaded first.
 - `arg-file-<type>` — one per file format (e.g. `arg-file-kanban`, `arg-file-video-edit`).
-- `arg-<topic>` — meta/authoring skills (e.g. `arg-skills-and-agents`).
+- `arg-mcp` / `arg-cli` / `arg-fuse` — the access-method (transport) skills.
+- `arg-<topic>` — other meta/authoring skills (e.g. `arg-skills-and-agents`).
 - Names are lowercase hyphen-case (`^[a-z0-9-]+$`), no leading/trailing/double hyphen, ≤ 64 chars.
 - **The directory name MUST equal the `name:` in frontmatter.**
 
@@ -60,7 +69,7 @@ description: One line — what it does, when to load it, the extensions/CRUD ver
 - Make the description specific: name the trigger and the file extensions so the right skill is matched.
 
 ### Body pattern
-- **Defer common CRUD to `arg-core`.** Do not repeat the generic MCP tool table. Start the CRUD section with "see the `arg-core` skill" and list only the **format-specific deltas** (binary vs text, `python-pptx`/`sqlite3`/`ffmpeg`, "moving a card = …", etc.).
+- **Keep CRUD transport-neutral.** Don't name MCP tools (`write_file`, `run_bash`, …), CLI commands, or FUSE paths in a format skill. Start the CRUD section with "use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`)" and list only the **format-specific deltas** (text vs binary, which generator — `python-pptx`/`sqlite3`/`ffmpeg` — "moving a card = …", etc.). The tool/command specifics live in the access-method skills.
 - For the four **public** custom formats, link the `llms.txt` and summarize the schema.
 - For formats with **no public doc**, inline the full schema (verified against source) so the skill is self-contained.
 - Cross-link related skills (e.g. `arg-file-video` ↔ `arg-file-video-edit`).
@@ -69,7 +78,7 @@ description: One line — what it does, when to load it, the extensions/CRUD ver
 
 1. **Verify the format** against `~/repos/arg-review` (see the table above). Don't guess.
 2. Create `plugins/arg/skills/<name>/SKILL.md` — frontmatter `name` == directory name, no angle brackets in `description`.
-3. Write the body: defer CRUD to `arg-core`, document only deltas + schema, cross-link siblings.
+3. Write the body: keep CRUD transport-neutral (defer the verbs to `arg-core` / the access-method skills), document only format deltas + schema, cross-link siblings.
 4. **Update `arg-core`** (`plugins/arg/skills/arg-core/SKILL.md`): add a row to the dedicated-skill table (and remove the format from the "Other supported formats" list if it was there).
 5. **Update `skills.sh.json`**: add the skill to a grouping. Every skill must be grouped — keep coverage at 100%.
 6. **Update `plugins/arg/README.md`**: add a row to the supported-types table.
@@ -92,11 +101,15 @@ Common failures:
 
 ## Don'ts
 - Don't invent schema fields/enums/tool names — verify against `~/repos/arg-review`.
-- Don't repeat the generic CRUD tool list in every skill — that lives in `arg-core`.
+- Don't hardcode access-method specifics (MCP tools, CLI commands, FUSE paths) in a format skill — keep `arg-file-*` transport-neutral; the verbs live in `arg-mcp`/`arg-cli`/`arg-fuse`.
 - Don't reference a public `llms.txt` that doesn't exist. Only `design`, `whiteboard`, `kanban`, and `automation` are published; everything else must be inlined in the skill.
 - Don't add a skill without also updating `arg-core`, `skills.sh.json`, and the README.
 - Don't commit or push unless asked.
 
 ## Quick facts
-- MCP: remote OAuth server `https://api.arg.ai/mcp` (org endpoint adds `workspace_id`; `/mcp/{workspace_id}` omits it). Tools: `read_file`, `write_file`, `edit_file`, `multi_edit`, `grep`, `run_bash`, `upload_file`/`download_file` (binary), `list_workspaces`, plus web/comment/server tools. No dedicated delete/move tool → use `run_bash` `rm`/`mv`.
+- **Access methods** (detail in `arg-mcp` / `arg-cli` / `arg-fuse`; routing in `arg-core`):
+  - **MCP** — remote OAuth server `https://api.arg.ai/mcp` (org endpoint adds `workspace_id`; `/mcp/{workspace_id}` omits it). Tools: `read_file`, `write_file`, `edit_file`, `multi_edit`, `grep`, `run_bash`, `upload_file`/`download_file` (binary), `list_workspaces`, plus web/comment/server tools. No delete/move tool → `run_bash` `rm`/`mv`.
+  - **CLI** (`arg`) — `cat`/`ls`/`grep` to read, `upload`/`download` to move whole files; **no in-place edit/rm/mv** (download→edit→upload, or mount).
+  - **FUSE** (`arg mount`) — workspace as a local dir with two-way sync; use native file tools; generators run locally.
+- Verified against `~/repos/arg-review`: CLI in `cli/` (Go), FUSE in `cli/internal/link/fuse.go` + `cli/internal/cli/mount.go`.
 - Repo: `github.com/arg-ai/agent-plugins`. Skills index/badge: `skills.sh/arg-ai/agent-plugins`.

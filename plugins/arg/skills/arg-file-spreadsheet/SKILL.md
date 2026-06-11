@@ -12,10 +12,10 @@ Two very different formats:
 
 ## CRUD
 
-See the `arg-core` skill for the shared tools and rules. The two formats differ:
+See `arg-core` and your access-method skill (`arg-mcp` / `arg-cli` / `arg-fuse`) for the verbs. The two formats differ:
 
-- **`.csv` / `.tsv`** (text) — `write_file` (whole file) or `edit_file` / `multi_edit` (targeted rows); `read_file` the header + a sample of rows first to learn the schema. Keep the header row and column order stable.
-- **`.xlsx`** (binary) — create/update with `run_bash` (`openpyxl` or `pandas`), preserving existing sheets, formulas, and named ranges; read with `download_file` or `run_bash` (`pandas`/`openpyxl`).
+- **`.csv` / `.tsv`** (text) — create and edit directly; read the header + a sample of rows first to learn the schema, and keep the header row and column order stable.
+- **`.xlsx`** (binary) — create/update with a generator (`openpyxl` or `pandas`), preserving existing sheets, formulas, and named ranges; read it back with `pandas`/`openpyxl`.
 
 ## Guidance
 

@@ -9,7 +9,7 @@ Arg has a live-preview editor for `.html`: it renders the page in a **sandboxed,
 
 ## CRUD
 
-`.html`/`.htm` are plain text — use the standard MCP tools and shared rules in the `arg-core` skill (`write_file` / `read_file` / `edit_file`). The rest of this skill covers the runtime `window.arg` FS SDK for file-backed pages.
+`.html`/`.htm` are plain text — use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`). The rest of this skill covers the runtime `window.arg` FS SDK for file-backed pages.
 
 ## File-backed apps with the `window.arg` FS SDK
 

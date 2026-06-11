@@ -11,7 +11,7 @@ This is the *edit project*, not a media file. Clips **reference** existing works
 
 ## CRUD
 
-`.video` is text (JSON) — use the standard MCP tools and shared rules in the `arg-core` skill (`write_file` / `read_file` / `edit_file` / `multi_edit`; `rm`/`mv` to delete/move). Video-edit-specific:
+`.video` is text (JSON) — use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core`. Video-edit-specific:
 
 - **Reference only media that already exists** in the workspace, by workspace-relative `src` (always starts with `/`). Never invent paths — a bad `src` renders nothing.
 - Give every track and clip a **unique `id`**, and write valid, pretty-printed (2-space) JSON.

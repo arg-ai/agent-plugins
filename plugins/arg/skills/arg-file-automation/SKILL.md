@@ -12,7 +12,7 @@ https://arg.ai/docs/files/automation/llms.txt
 
 ## CRUD
 
-Use the standard MCP tools and shared rules in the `arg-core` skill. Automation-specific: read the file first to map nodes and edges; to remove a node, edit the JSON and drop it plus its edges.
+Use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core`. Automation-specific: read the file first to map nodes and edges; to remove a node, edit the JSON and drop it plus its edges.
 
 ## Schema essentials
 

@@ -13,7 +13,7 @@ Arg's markdown editor is a rich block editor (slash commands, drag-and-drop, inl
 
 ## CRUD
 
-Use the standard MCP tools and shared rules in the `arg-core` skill (`write_file` / `read_file` / `edit_file` / `multi_edit`; `grep` to search across documents). Document-specific: edit surgically — keep the heading hierarchy, list style, and existing conventions intact. Standard Markdown (headings, paragraphs, lists, code fences, GFM tables, task lists, links, images, blockquotes) works both inside and outside JSX components.
+Use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core` (`grep` / `arg grep` / native search to find content across documents). Document-specific: edit surgically — keep the heading hierarchy, list style, and existing conventions intact. Standard Markdown (headings, paragraphs, lists, code fences, GFM tables, task lists, links, images, blockquotes) works both inside and outside JSX components.
 
 ## MDX custom components
 

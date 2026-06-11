@@ -12,7 +12,7 @@ https://arg.ai/docs/files/whiteboard/llms.txt
 
 ## CRUD
 
-Use the standard MCP tools and shared rules in the `arg-core` skill. Whiteboard-specific: read the board first to learn existing nodes and their coordinates; to remove a node, edit the JSON and drop it plus any edges that reference it.
+Use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core`. Whiteboard-specific: read the board first to learn existing nodes and their coordinates; to remove a node, edit the JSON and drop it plus any edges that reference it.
 
 ## Schema essentials
 

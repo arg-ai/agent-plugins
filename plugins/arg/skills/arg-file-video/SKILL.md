@@ -5,16 +5,16 @@ description: Create, read, update, and delete video files (mp4, mov, webm) in Ar
 
 # Video files (`.mp4`, `.mov`, `.webm`)
 
-Video is **binary** — not created or edited with `write_file`. Arg's video editor offers playback, trim markers, frame capture (saves the current frame as a sibling `.png`), and an AI Edit panel for video-to-video transformation. It opens mp4, webm, mov, m4v, ogv, mkv, avi, 3gp, and 3g2.
+Video is **binary** — it can't be written as text. Arg's video editor offers playback, trim markers, frame capture (saves the current frame as a sibling `.png`), and an AI Edit panel for video-to-video transformation. It opens mp4, webm, mov, m4v, ogv, mkv, avi, 3gp, and 3g2.
 
 > For a **multi-clip timeline edit** (tracks, titles, transitions, color grade, render to MP4/WebM), use the `arg-file-video-edit` skill — that's Arg's `.video` NLE project format, which references raw video files like these by path.
 
 ## CRUD
 
-Binary format — see the `arg-core` skill for the shared binary workflow (`upload_file` base64 to create, `download_file` to read, `run_bash` to generate/transform, `rm`/`mv` to delete/move; `write_file` does not work). Video-specific:
+Binary format — see `arg-core` and your access-method skill (`arg-mcp` / `arg-cli` / `arg-fuse`) for reading/writing bytes (video can't be written as text). Video-specific:
 
-- Produce or re-encode/trim in the sandbox with `run_bash` (`ffmpeg`); it opens in the editor.
-- `download_file` and inspect duration, resolution, frame rate, and codec before editing.
+- Produce or re-encode/trim with `ffmpeg` — your access method says where it runs; it opens in the editor.
+- Read the bytes and inspect duration, resolution, frame rate, and codec before editing.
 - Video is an opaque asset — not edited frame-by-frame; regenerate and overwrite.
 
 ## Guidance

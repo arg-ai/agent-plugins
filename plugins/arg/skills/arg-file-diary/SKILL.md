@@ -9,7 +9,7 @@ A `.diary` is a JSON journal: a map of **per-day entries**, each a rich-text doc
 
 ## CRUD
 
-`.diary` is text (JSON) — use the standard MCP tools and shared rules in the `arg-core` skill (`write_file` / `read_file` / `edit_file` / `multi_edit`; `rm`/`mv` to delete/move). Diary-specific:
+`.diary` is text (JSON) — use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core`. Diary-specific:
 
 - **Read the file first** and merge into the existing `entries` map — don't drop days you aren't editing.
 - Add or update a day by setting `entries["YYYY-MM-DD"]`; **delete a day** by removing its key from `entries`.

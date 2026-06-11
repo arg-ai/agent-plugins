@@ -5,14 +5,14 @@ description: Create, read, update, and delete presentation files (pptx) in Arg. 
 
 # Presentation files (`.pptx`)
 
-`.pptx` is a zipped Office Open XML format — **do not build it byte-by-byte with `write_file`**. Arg has a full WYSIWYG editor (slide thumbnails, text/shape editing, add/duplicate/delete/reorder slides) with round-trip save back to `.pptx`.
+`.pptx` is a zipped Office Open XML format — **don't build it byte-by-byte as text**. Arg has a full WYSIWYG editor (slide thumbnails, text/shape editing, add/duplicate/delete/reorder slides) with round-trip save back to `.pptx`.
 
 ## CRUD
 
-Binary format — see the `arg-core` skill for the shared rules (`rm`/`mv` to delete/move; `write_file` does not work). Presentation-specific:
+Binary format — see `arg-core` and your access-method skill (`arg-mcp` / `arg-cli` / `arg-fuse`) for reading/writing bytes (it can't be written as text). Presentation-specific:
 
-- **Create / Update** — `run_bash` with the `python-pptx` library; the saved `.pptx` opens directly in the editor. Read an existing deck first (via `python-pptx`) to preserve its theme, masters, and layouts — change only the requested slides.
-- **Read** — `download_file` for the bytes, or `run_bash` with `python-pptx` to extract slide order, per-slide text, and notes.
+- **Create / Update** — build it with the `python-pptx` library (your access method says where the script runs / how the file reaches the workspace); the saved `.pptx` opens directly in the editor. Read an existing deck first (via `python-pptx`) to preserve its theme, masters, and layouts — change only the requested slides.
+- **Read** — fetch the bytes, or run `python-pptx` to extract slide order, per-slide text, and notes.
 
 ## Authoring with python-pptx
 

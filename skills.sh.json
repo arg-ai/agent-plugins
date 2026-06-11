@@ -4,8 +4,13 @@
   "groupings": [
     {
       "title": "Core",
-      "description": "Start here — Arg's CRUD model over MCP and the full map of every supported format, plus authoring reusable workspace skills and subagents.",
+      "description": "Start here — Arg's access-method router, the full map of every supported format, the shared rules, and authoring reusable workspace skills and subagents.",
       "skills": ["arg-core", "arg-skills-and-agents"]
+    },
+    {
+      "title": "Access methods",
+      "description": "How to do Arg file CRUD over each transport — the MCP server, the arg CLI, or a FUSE mount (native filesystem). Pair with arg-core and the arg-file-* format skills.",
+      "skills": ["arg-mcp", "arg-cli", "arg-fuse"]
     },
     {
       "title": "Documents & web",

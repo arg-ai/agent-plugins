@@ -12,7 +12,7 @@ Clickable bookmarks that open a single URL in a new browser tab. Two interchange
 
 ## CRUD
 
-Both are plain text — use the standard MCP tools and shared rules in the `arg-core` skill (`write_file` to create, `read_file` to read, `edit_file`/`write_file` to update, `run_bash` `rm`/`mv` to delete/move).
+Both are plain text — use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core`.
 
 - **Filename:** use a hostname-based stem with the chosen extension — e.g. `github.com.url`, or strip the TLD (`medium.com` → `medium.url`).
 

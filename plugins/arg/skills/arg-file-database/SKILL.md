@@ -5,14 +5,14 @@ description: Create, read, update, and delete SQLite databases (sqlite, sqlite3,
 
 # Database files (`.sqlite`, `.sqlite3`, `.db`)
 
-SQLite databases are **binary** — not created or edited with `write_file`. Arg has a read-only viewer (table browser + a SQL query pane that runs against an in-browser copy). All writes go through the `sqlite3` CLI in the workspace sandbox.
+SQLite databases are **binary** — not written as text. Arg has a read-only viewer (table browser + a SQL query pane that runs against an in-browser copy). All writes go through the `sqlite3` CLI.
 
 ## CRUD
 
-Binary format — see the `arg-core` skill for the shared rules (`rm`/`mv` to delete/move; `write_file` does not work). Database-specific: all reads and writes go through the `sqlite3` CLI via `run_bash`.
+Binary format — see `arg-core` and your access-method skill (`arg-mcp` / `arg-cli` / `arg-fuse`). Database-specific: all reads and writes go through the `sqlite3` CLI (run it wherever your access method runs shell commands).
 
-- **Create / Update** — `run_bash` with `sqlite3`; the file opens automatically in the viewer afterward.
-- **Read** — `run_bash` `sqlite3 data.db ".schema"` / `"SELECT …"`, or `download_file` for the raw bytes. **Inspect the schema first** (`.schema`, list tables and indexes) before any write.
+- **Create / Update** — run `sqlite3` against the file; it opens automatically in the viewer afterward.
+- **Read** — `sqlite3 data.db ".schema"` / `"SELECT …"`, or fetch the raw bytes. **Inspect the schema first** (`.schema`, list tables and indexes) before any write.
 
 ## Working with sqlite3
 

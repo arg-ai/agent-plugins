@@ -12,7 +12,7 @@ https://arg.ai/docs/files/kanban/llms.txt
 
 ## CRUD
 
-Use the standard MCP tools and shared rules in the `arg-core` skill. Kanban-specific: read the board first to learn columns and card order; add/move/edit a card by editing the JSON rather than rewriting the board. **Moving** a card means removing it from one column's `cards` and inserting it into another.
+Use your active Arg access method (`arg-mcp` / `arg-cli` / `arg-fuse` — see `arg-core`) and the shared rules in `arg-core`. Kanban-specific: read the board first to learn columns and card order; add/move/edit a card by editing the JSON rather than rewriting the board. **Moving** a card means removing it from one column's `cards` and inserting it into another.
 
 ## Schema essentials
 
