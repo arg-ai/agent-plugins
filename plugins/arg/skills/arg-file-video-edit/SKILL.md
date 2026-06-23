@@ -63,7 +63,7 @@ Optional on any clip: `transform`, `opacity` (`0`–`1`), `blend`, `volume`/`fad
 - **`filters`** — array of `{ id, type, amount, enabled }`. `type` ∈ `blur`, `brightness`, `contrast`, `saturate`, `grayscale`, `sepia`, `hue-rotate`, `invert`, `vignette`, `sharpen`.
 - **`grade`** (`ColorGrade`) — `{ enabled, exposure, contrast, saturation, temperature, tint, hueShift, lift, gamma, gain }`. `lift`/`gamma`/`gain` are RGB wheels `{ r, g, b }` (defaults `lift 0,0,0` · `gamma 1,1,1` · `gain 1,1,1`); scalars default `exposure 0, contrast 1, saturation 1, temperature 0, tint 0, hueShift 0`.
 - **`textStyle`** — `{ fontFamily, fontSize, color, fontWeight, italic, align, verticalAlign, lineHeight, background, strokeColor, strokeWidth, shadow, letterSpacing }`. `fontSize` is a **fraction of frame height** (e.g. `0.12`); `align` is `left`/`center`/`right`; `verticalAlign` is `0`–`1`; `background`/`strokeColor` are a color or `null`.
-- **`transition`** — `{ type, duration }`. `type` ∈ `none`, `cross-dissolve`, `dip-to-black`, `dip-to-white`.
+- **`transition`** — `{ type, duration }`. `type` ∈ `none`, `cross-dissolve`, `dip-to-black`, `dip-to-white` **only** — `"fade"` / `"crossfade"` are **not** valid and are silently dropped (for a plain fade use the clip's numeric `fadeIn` / `fadeOut` instead). Prefer the per-clip fields **`transitionIn`** (played at the clip's start) and **`transitionOut`** (played at its end), each `{ type, duration }`; a bare `transition` is accepted as a legacy alias for `transitionOut`.
 - **`keyframes`** — array of `{ id, prop, time, value, ease }`. `prop` is a target path: a core prop (`opacity`, `scale`, `rotation`, `x`, `y`, `volume`), a grade scalar (`grade.exposure`, `grade.contrast`, `grade.saturation`, `grade.temperature`, `grade.tint`, `grade.hueShift`), a grade wheel channel (`grade.lift.r` … `grade.gain.b`), or a stacked-effect amount (`filter.<filterId>.amount`).
 
 ## Complete example
@@ -88,7 +88,7 @@ A 1080p edit: an intro clip with a fade-out cross-dissolve, b-roll, a title on a
       "clips": [
         { "id": "c1", "type": "video", "name": "Intro", "enabled": true, "src": "/clips/intro.mp4",
           "start": 0, "duration": 5, "sourceIn": 0, "sourceDuration": -1, "speed": 1,
-          "fadeOut": 0.5, "transition": { "type": "cross-dissolve", "duration": 1 } },
+          "fadeOut": 0.5, "transitionOut": { "type": "cross-dissolve", "duration": 1 } },
         { "id": "c2", "type": "video", "name": "B-roll", "enabled": true, "src": "/clips/broll.mp4",
           "start": 5, "duration": 4, "sourceIn": 2 }
       ]
@@ -116,8 +116,60 @@ A 1080p edit: an intro clip with a fade-out cross-dissolve, b-roll, a title on a
 }
 ```
 
+## Pitfalls (silent-failure traps)
+
+The parser **silently drops unknown keys and invalid enum values** and falls back to defaults — that is what makes an edit look broken (overlapping titles, missing transitions, no motion). Avoid these:
+
+- **Transitions:** the only valid `type`s are `cross-dissolve`, `dip-to-black`, `dip-to-white` (and `none`). `"fade"` / `"crossfade"` are dropped — for a plain fade use `fadeIn` / `fadeOut` (seconds) on the clip. Use `transitionIn` / `transitionOut` per clip.
+- **Crossfade between two clips:** overlap them by the dissolve length and give the **incoming** (later-in-array) clip a `cross-dissolve` `transitionIn` — the later clip composites on top and dissolves in over the previous one. This deliberate overlap is the one exception to "no overlap on a track".
+- **Images & video always _cover_ the frame** (fill + center-crop, aspect kept). There is **no `fit` field** — to reframe, zoom, or pan use `transform` (`scale`, `x`/`y`) and/or `keyframes`.
+- **Ken Burns** (slow zoom/pan on a still) = `keyframes`, **not** an `animation` object. Keyframe `scale` (and/or `x`/`y`): `[{ "id":"k1","prop":"scale","time":0,"value":1,"ease":"ease-in-out" }, { "id":"k2","prop":"scale","time":4,"value":1.1,"ease":"ease-in-out" }]`. `time` is clip-local seconds.
+- **Text:** the style object is `textStyle`, not `style`. `fontSize` is a **fraction of frame height** (≈`0.04`–`0.12`), **not pixels** — a pixel value like `48` clamps to `1.0` = full-frame-height text. Position with `align` (horizontal) + `verticalAlign` (`0` top … `1` bottom); text has no `x`/`y` percentage fields.
+- **Titles overlap by default:** every text clip is centered, so two text clips on screen at once stack on top of each other. Separate them — keep `verticalAlign: 0.5` and offset each with `transform` (`y` in pixels, negative = up), or give one a low and one a high `verticalAlign`.
+- **The `settings` wrapper is required:** `width`/`height`/`fps` live under `settings`; at the top level they're ignored and the project falls back to `1920×1080@30`. There is no top-level `duration` — length comes from the clips.
+- **`kind` is on the track, `type` is on the clip** — don't swap them. A mis-keyed track falls back to `video` and drops the clips that don't match it.
+- **Never invent:** `fit`/`objectFit`, `animation`/`kenBurns`, top-level `width`/`height`/`duration`, `style` on text, `x`/`y` percentages on text, `filters` as an object (it's an array). All are silently dropped.
+
+## Layering & positioning
+
+- **What draws on top:** video tracks composite **back-to-front in array order** — the first video track is the backdrop and each later one draws over it. Put base footage on the first video track and overlays (titles, logos, lower-thirds, picture-in-picture) on tracks **after** it. If two clips on the _same_ track overlap in time, the one later in that track's `clips` array wins. `hidden: true` removes a track; `solo: true` shows only soloed video tracks; audio level is `clip.volume` × `track.volume` × `masterVolume`.
+- **Placing a clip on the frame:** `transform.x`/`y` are **project pixels measured from the frame center** (`x > 0` right, `y > 0` down; negatives go left/up), so values run roughly ±width/2 by ±height/2. `scale` `1` fills the frame, `< 1` shrinks it (around `anchorX`/`anchorY`, default center `0.5`/`0.5`), `> 1` zooms in; `rotation` is degrees; `flipH`/`flipV` mirror.
+- **Picture-in-picture / corner logo / split panels:** put the overlay on its own video track _above_ the base, shrink with `scale`, and move with `x`/`y` — e.g. a webcam in the top-right of a 1920×1080 frame: `"transform": { "scale": 0.3, "x": 600, "y": -320 }`.
+
+## Photo-slideshow recipe
+
+The most common request — stills with Ken Burns, crossfades, captions, and music. Photos on one video track (overlap each pair by the dissolve length; the incoming clip gets a `cross-dissolve` `transitionIn`; every photo gets gentle `scale` keyframes); captions on a **second** video track above it, positioned out of each other's way; music on an audio track with `fadeIn` / `fadeOut`.
+
+```json
+"tracks": [
+  { "id": "v-photos", "kind": "video", "name": "Photos", "clips": [
+    { "id": "p1", "type": "image", "name": "Photo 1", "enabled": true, "src": "/photos/01.jpg",
+      "start": 0, "duration": 4, "fadeIn": 0.6,
+      "keyframes": [ { "id": "k1", "prop": "scale", "time": 0, "value": 1.0, "ease": "ease-in-out" },
+                     { "id": "k2", "prop": "scale", "time": 4, "value": 1.10, "ease": "ease-in-out" } ] },
+    { "id": "p2", "type": "image", "name": "Photo 2", "enabled": true, "src": "/photos/02.jpg",
+      "start": 3.4, "duration": 4, "fadeOut": 1.0,
+      "transitionIn": { "type": "cross-dissolve", "duration": 0.6 },
+      "keyframes": [ { "id": "k3", "prop": "scale", "time": 0, "value": 1.10, "ease": "ease-in-out" },
+                     { "id": "k4", "prop": "scale", "time": 4, "value": 1.0, "ease": "ease-in-out" } ] }
+  ] },
+  { "id": "v-titles", "kind": "video", "name": "Titles", "clips": [
+    { "id": "tt1", "type": "text", "name": "Title", "enabled": true, "text": "VAN GOGH",
+      "start": 0.3, "duration": 3.4, "fadeIn": 0.4, "fadeOut": 0.4, "transform": { "y": 300 },
+      "textStyle": { "fontSize": 0.06, "color": "#ffffff", "fontWeight": 700, "align": "left", "verticalAlign": 0.5, "shadow": true } },
+    { "id": "ts1", "type": "text", "name": "Caption", "enabled": true, "text": "Wheat Field with Cypresses, 1889",
+      "start": 0.5, "duration": 3.2, "fadeIn": 0.4, "fadeOut": 0.4, "transform": { "y": 378 },
+      "textStyle": { "fontSize": 0.028, "color": "#e8c87a", "fontWeight": 400, "align": "left", "verticalAlign": 0.5 } }
+  ] },
+  { "id": "a-music", "kind": "audio", "name": "Music", "clips": [
+    { "id": "m1", "type": "audio", "name": "Score", "enabled": true, "src": "/music/score.mp3",
+      "start": 0, "duration": 7.4, "volume": 0.6, "fadeIn": 1.0, "fadeOut": 2.0 }
+  ] }
+]
+```
+
 ## Tips
 
 - Default `settings` to `1920×1080 @ 30fps` (`1080×1920` for vertical). If no usable media exists yet, scaffold one video + one audio track plus any requested text titles, and leave media clips out.
-- Layer with tracks (later = on top); never overlap clips on a single track.
+- Layer with tracks (later = on top); clips on one track play in sequence — overlap two only to crossfade (see Layering & positioning).
 - Use an `adjustment` clip to grade/filter everything beneath it without touching each clip.
