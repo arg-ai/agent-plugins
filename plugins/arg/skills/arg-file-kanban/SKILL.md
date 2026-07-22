@@ -1,6 +1,6 @@
 ---
 name: arg-file-kanban
-version: "2.1.0"
+version: "2.2.0"
 description: Create, read, update, and delete Arg kanban boards (.kanban) for task and project management — columns of cards with labels, due dates, assignees, and nested sub-task boards. Load when building or editing task boards, project trackers, or status boards.
 ---
 
@@ -72,6 +72,8 @@ Files on disk stay v5 until someone opens or edits them in the editor, which upg
 ## Schema essentials
 
 Top-level: `version` (use `6` for new boards), `labels` (board-wide, referenced by cards), `rootColumnIds`, `columns`, `cards`, `settings` (`{ "expandLabels": false }` is a safe default — missing keys fall back).
+
+**Never write a `version` higher than `6`.** Editors and viewers refuse to open a board newer than they support and show an error instead — the file is intact, but nobody can read it until their client catches up. Older versions stay readable; only the forward direction is gated.
 
 **Settings** (every key optional, `expandLabels` included - each one you leave out falls back to its default) — `expandLabels` (label pills with text vs. compact bars), `theme` (palette key tinting the board), `gradient` (gradient key or `null`), `showConfetti` (confetti when a card lands in the complete column), `completeColumnId` (column treated as "done"; `null` = fuzzy title match), `autoMarkDone` (auto-toggle `done` on moves into/out of the complete column), `showCardDescription` (render the description snippet on the card face).
 
