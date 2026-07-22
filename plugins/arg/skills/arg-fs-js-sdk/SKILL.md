@@ -14,6 +14,10 @@ An optional **runtime** SDK that lets a single self-contained `.html` file read 
 
 When a `.html` file is previewed inside arg it renders in a **sandboxed, null-origin iframe** with no session cookie — by design, so a page can't silently touch your data. The side effect is the page can't reach the backend at all. The arg-fs SDK fixes that for opted-in pages: when the user turns on the **"Workspace access"** capability (plus **"Scripts"**) in the preview's permissions menu, the editor **injects `window.arg` inline** into the page. Each call is relayed over `postMessage` to the editor, which performs the backend operation with the signed-in user's session and posts the result back. The page never sees a token; the backend still enforces that user's own permissions on every call.
 
+## Runtime theme
+
+Every HTML document that receives `window.arg` also receives exactly one active Arg theme class on `<body>`: `light`, `dark`, or `focus`. Preserve these runtime classes in generated SDK-enabled pages and provide explicit styles for all three, treating `focus` as its own warm, low-distraction palette rather than a light alias. Read the body class instead of `prefers-color-scheme`, which may disagree with the user's selected Arg theme.
+
 ## The three rules (read these first)
 
 1. **There is NO import.** Do not add `<script src>`, npm, ESM, or a CDN tag. `window.arg` is injected automatically when the capability is on. Trying to import it does nothing.

@@ -14,6 +14,10 @@ Arg renders `.html` in a live-preview editor: a **sandboxed, null-origin iframe*
 
 `.html`/`.htm` are plain text — use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`). A static page needs nothing more. The rest of this skill covers the runtime `window.arg` FS SDK that turns a static page into an arg-app.
 
+## Runtime theme
+
+HTML that receives the `window.arg` SDK also receives the active Arg theme as exactly one runtime `<body>` class: `light`, `dark`, or `focus`. Theme generated SDK-enabled pages - including `/me` pages - with explicit styles for all three classes, treating `focus` as its own design rather than a light alias. Use these classes instead of `prefers-color-scheme`, which may disagree with the user's selected Arg theme.
+
 ## Building an arg-app with the `window.arg` FS SDK
 
 A `.html` page can read/write workspace files and read the signed-in user's identity at runtime, so a single self-contained page becomes its own backend — data persists as ordinary workspace files. Load `arg-fs-js-sdk` for the full SDK reference.
