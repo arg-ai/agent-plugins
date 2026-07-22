@@ -1,5 +1,6 @@
 ---
 name: arg-skills-and-agents
+version: "1.1.0"
 description: Create and edit Arg workspace skills (SKILL.md files under .skills) and subagents (markdown files under .agents). Load when asked to save a prompt, workflow, or set of instructions as a reusable skill, or to define a specialist subagent for a recurring task in an Arg workspace.
 ---
 
@@ -14,7 +15,7 @@ Both are just files in the workspace, so they're reviewed, versioned, and shared
 
 ## CRUD
 
-Both are plain Markdown-with-frontmatter text files — use the standard MCP tools and shared rules in the `arg-core` skill (`write_file` to create, `read_file`/`grep` to find, `edit_file` to update, `run_bash` `rm` to delete).
+Both are plain Markdown-with-frontmatter text files — use the standard MCP tools and shared rules in the `arg-files` skill (`write_file` to create, `read_file`/`grep` to find, `edit_file` to update, `run_bash` `rm` to delete).
 
 ## Skills — `.skills/<name>/SKILL.md`
 
@@ -22,9 +23,9 @@ A skill is a short, single-purpose playbook. It lives in a per-skill folder at t
 
 **Frontmatter**
 
-- `name` *(required)* — identifier, kebab-case recommended.
-- `description` *(required)* — one line that names the trigger ("when the user asks for X"). This is what the assistant matches on — make it specific.
-- `tools` *(optional)* — comma-separated allowlist (e.g. `read_file, write_file, run_bash`). Omit to allow all.
+- `name` _(required)_ — identifier, kebab-case recommended.
+- `description` _(required)_ — one line that names the trigger ("when the user asks for X"). This is what the assistant matches on — make it specific.
+- `tools` _(optional)_ — comma-separated allowlist (e.g. `read_file, write_file, run_bash`). Omit to allow all.
 
 ```markdown
 ---
@@ -53,10 +54,10 @@ It lives at `.agents/<name>.md` at the workspace root (e.g. `.agents/code-review
 
 **Frontmatter**
 
-- `name` *(required)* — what the main assistant calls the agent (used in `run_agent`).
-- `description` *(required)* — one line on when to hand off to this agent.
-- `tools` *(optional)* — comma-separated allowlist; restrict for read-only reviewers or no-shell summarizers. Omit to inherit the parent's tools.
-- `model` *(optional)* — `sonnet`, `opus`, `haiku`, `inherit`, or a full OpenRouter slug. Omit to inherit from the parent chat. Pick a smaller model for quick lookups, a stronger one for hard reasoning.
+- `name` _(required)_ — what the main assistant calls the agent (used in `run_agent`).
+- `description` _(required)_ — one line on when to hand off to this agent.
+- `tools` _(optional)_ — comma-separated allowlist; restrict for read-only reviewers or no-shell summarizers. Omit to inherit the parent's tools.
+- `model` _(optional)_ — `sonnet`, `opus`, `haiku`, `inherit`, or a full OpenRouter slug. Omit to inherit from the parent chat. Pick a smaller model for quick lookups, a stronger one for hard reasoning.
 
 ```markdown
 ---
@@ -76,6 +77,6 @@ You are a senior reviewer. For each change you look at:
 
 ## When to use which
 
-- Reach for a **skill** when you keep re-explaining the *same procedure*. Skills are lightweight nudges the assistant reads when relevant.
+- Reach for a **skill** when you keep re-explaining the _same procedure_. Skills are lightweight nudges the assistant reads when relevant.
 - Reach for a **subagent** when the work is a clearly separable subtask with its own personality or toolset (a reviewer, researcher, planner). Heavier, but keeps the main conversation clean.
 - They compose: a "release manager" agent can pick up a "release-notes" skill without repeating the instructions.

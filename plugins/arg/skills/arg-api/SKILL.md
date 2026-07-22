@@ -1,0 +1,120 @@
+---
+name: arg-api
+version: "1.2.1"
+description: Build against the Arg REST API (https://api.arg.ai) — API-key auth, workspace/file CRUD over HTTP, sandboxed bash + file tools, semantic search, actions, tunnels, share links, file invitations, notifications, service accounts. Load when writing code that calls Arg over HTTP — an integration, backend, script, CI job, or a custom agent harness that wires Arg tools into its own loop — or when the only available access is an API key and an HTTP client. For interactive file CRUD from an agent session prefer arg-mcp / arg-cli; this is the raw HTTP layer they wrap.
+---
+
+# Arg REST API
+
+Everything Arg's MCP server, CLI, and apps do rides one REST API at **`https://api.arg.ai`**. Use it to build your own thing on Arg: scripts, backends, CI jobs, integrations, or an agent harness that gives another model Arg's workspace tools.
+
+- Full reference + guides: https://developers.arg.ai
+- Machine-readable spec: https://api.arg.ai/openapi.json (OpenAPI 3) — the authoritative surface; fetch it when you need exact request/response schemas.
+
+> Doing file CRUD yourself inside an agent session? Load `arg-files` and use the MCP or CLI access method instead — this skill is for **writing code that calls the API**.
+
+## Auth
+
+Create an API key at https://arg.ai/platform/api-keys (shown once, `arg_live_…`) and send it on every request:
+
+```
+x-api-key: arg_live_…
+```
+
+- Keys are **org-scoped** and belong to a principal: a **user-owned** key inherits your current access in that org; a **service-account** key inherits its service account's role and grants. No separate scope system.
+- User sessions can also call the API with `Authorization: Bearer <access-token>`; long-lived automation should use an API key.
+- **Gotcha:** `POST /api/workspaces` requires a user principal — service-account keys get `403`. Unattended jobs create workspaces under an org instead: `POST /api/organizations/{orgId}/workspaces`.
+
+Errors are always `{ "detail": "…" }` with the matching HTTP status: `401` bad/missing key, `403` authenticated but not permitted, `404`, `422` validation, `429` rate limited.
+
+## Core model
+
+**Organizations → workspaces → files.** Discover ids with `GET /api/organizations` and `GET /api/workspaces`; file paths are workspace-rooted (`/reports/q3.md`).
+
+## Getting started — a workspace round-trip
+
+Create a workspace, put a file in, work on it, get the result out:
+
+```bash
+# 1. Workspace
+WS=$(curl -sS -X POST https://api.arg.ai/api/workspaces \
+  -H "x-api-key: $ARG_API_KEY" -H "Content-Type: application/json" \
+  -d '{"name":"quickstart"}' | jq -r .id)
+
+# 2. Upload input (multipart; ?path= sets the folder)
+curl -sS -X POST "https://api.arg.ai/api/workspaces/$WS/files/upload?path=/" \
+  -H "x-api-key: $ARG_API_KEY" -F "file=@data.csv"
+
+# 3. Work on it in the sandbox
+curl -sS -X POST "https://api.arg.ai/api/workspaces/$WS/tools/run-bash" \
+  -H "x-api-key: $ARG_API_KEY" -H "Content-Type: application/json" \
+  -d '{"command":"awk -F, \"NR>1 {sum+=\\$2} END {print sum}\" data.csv > total.txt"}'
+
+# 4. Collect the result
+curl -sS "https://api.arg.ai/api/workspaces/$WS/files/download?path=/total.txt" \
+  -H "x-api-key: $ARG_API_KEY" -o total.txt
+```
+
+## Files over HTTP
+
+All under `/api/workspaces/{workspaceId}/files…`; paths are query params or JSON bodies as shown.
+
+| Operation           | Endpoint                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List / full tree    | `GET /files?path=/` · `GET /files/tree`                                                                                                                                                                                                                                                                                                                                                |
+| Upload (any bytes)  | `POST /files/upload?path=/dir` (multipart `file=@…`); large files: `/upload/initiate` → `/part` → `/complete` (abort with `/abort`)                                                                                                                                                                                                                                                    |
+| Download            | `GET /files/download?path=…` · folder as zip: `GET /files/download-folder?path=…`                                                                                                                                                                                                                                                                                                      |
+| Signed asset URL    | `GET /files/asset-url?path=…` → `{ url, expiresAt }` — short-lived URL for streaming media / heavy binaries into `<video>`, players, or a plain fetch                                                                                                                                                                                                                                  |
+| Read text inline    | `GET /files/content?path=…` → `{ content, encoding, mime_type, … }` (binary comes back base64)                                                                                                                                                                                                                                                                                         |
+| Write text inline   | `PUT /files/content?path=…` body `{ "content": "…", "encoding": "utf-8" }`                                                                                                                                                                                                                                                                                                             |
+| Mkdir / move / copy | `POST /files/mkdir` · `POST /files/move` (`source_path`/`destination_path`) · `POST /files/copy`                                                                                                                                                                                                                                                                                       |
+| Delete              | `DELETE /files` body `{ "paths": ["/a.txt", "/old-dir"] }`                                                                                                                                                                                                                                                                                                                             |
+| Metadata / history  | `GET /files/info?path=…` · change history: `GET /files/history?path=…` · versions: `GET /files/versions`, restore `POST /files/versions/{id}/restore`                                                                                                                                                                                                                                  |
+| Comments            | `GET`/`POST /files/comments`, `PATCH`/`DELETE /files/comments/{id}`, `POST …/{id}/resolve`. Create takes `path` + `body`, plus `parent_id` (threaded reply), `anchor_text` (pin to a passage), `kind` (`"file"`/`"folder"`), `metadata` (editor anchor data)                                                                                                                           |
+| Public share link   | `POST /files/share` body `{ "path", "expires_hours"?, "password"?, "max_downloads"?, "allow_edit"?, "snapshot"? }` — omit `expires_hours` for 24 h, `snapshot: true` freezes today's bytes (default links stay live across renames/edits). Recipients hit `/api/share/{shareId}/…` unauthenticated. Manage with `GET /shares` (includes `access_count`) and `DELETE /shares/{shareId}` |
+| Invite by email     | `POST /invitations` body `{ "path", "kind": "file"\|"folder", "email", "level": "read"\|"write"\|"manage" }` (user principals only; inviter needs `manage` on the path) · `GET /invitations?path=…` · revoke `DELETE /invitations/{invId}`                                                                                                                                             |
+
+Writes are versioned and attributed to the key's principal, and show up in the workspace activity feed (`GET /api/workspaces/{workspaceId}/activity`) like any other edit.
+
+## Sandbox tools — the agent's tools, callable directly
+
+`POST /api/workspaces/{workspaceId}/tools/{tool}` executes in the workspace sandbox; file paths are workspace paths. These are exactly the tools the Arg agent uses, so they're the right primitives to expose to your **own** model in a custom agent loop (define them as tool schemas, proxy calls to these endpoints — worked Anthropic/OpenAI examples at https://developers.arg.ai/guides/anthropic-sdk and /guides/openai-sdk).
+
+| Tool         | Body                                                                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `run-bash`   | `{ "command": "…", "sandbox_id"?: "…" }` — shell in the sandbox, workspace mounted; file changes are tracked + audited |
+| `read-file`  | `{ "path": "…", "offset"?: 0, "limit"?: 100 }` (line-based)                                                            |
+| `write-file` | `{ "path": "…", "content": "…" }` — create or overwrite                                                                |
+| `edit-file`  | `{ "path", "old_string", "new_string", "replace_all"?: false }`                                                        |
+| `multi-edit` | `{ "path", "edits": [{ "old_string", "new_string" }, …] }`                                                             |
+| `grep`       | `{ "pattern", "path"?: ".", "include"?: "*.ts" }`                                                                      |
+
+`run-bash` (and any write tool) needs workspace **write** access on the key's principal. It returns `{ status: "completed"|"failed", stdout, stderr, duration_ms }`; pass a `sandbox_id` to run in a named, isolated container scoped to the workspace (parallel runs don't collide; omit it for the shared sandbox).
+
+## The rest of the surface
+
+- **Search** — `POST /api/workspaces/{id}/search` body `{ "query", "limit"?, "pathPrefix"? }` → `{ indexState, results }` (paths, scores, snippets; `limit` defaults 8, caps at 30). Semantic + keyword, permission-aware. Fan out across every workspace the caller can see with `POST /api/organizations/{orgId}/search` (narrow with `"workspaceIds": […]`; results add `workspaceName`). An unindexed workspace returns `indexState: "unindexed"` — the index is managed explicitly via `GET`/`PUT /api/workspaces/{id}/search/settings` and `POST …/search/reindex`, never built by searching.
+- **Actions** (media generation, transcription, scraping, html→pdf, …) — `GET /api/actions` to list, `GET /api/actions/{actionId}/schema` for inputs, `POST /api/workspaces/{id}/actions/{actionId}/run`, poll `GET /api/workspaces/{id}/actions/runs/{runId}`. Same catalog as the `arg-actions` skill.
+- **Tunnels** — expose a service running in the sandbox at a public HTTPS URL: `POST /api/tunnels` body `{ "workspace_id", "command", "port", "name"?, "timeout"? }` → `{ url, tunnel_id, … }`. Max 3 active per workspace; timeout defaults 5 min, caps at 30. `GET /api/tunnels?workspace_id=…`, `DELETE /api/tunnels/{id}`.
+- **Notifications** — reach a human when a job finishes, fails, or needs a decision: `POST /api/notifications` body `{ "title", "body"?, "type"?, "users"?: [ids or emails in the org], "metadata"?: { "filePath", "workspaceId", … } }` → `202` (omit `users` to notify yourself; service-account keys must name recipients). Delivery fans out to email, mobile, desktop, and the in-app inbox per each recipient's preferences. Read the inbox with `GET /api/notifications` (`unread_count` included), mark read via `PATCH /api/notifications/{id}/read` / `POST /api/notifications/read-all`, or listen live on the WebSocket `wss://api.arg.ai/api/notifications/stream`.
+- **Service accounts & keys** — `POST /api/service-accounts` (`organization_id`, `name`), then `POST /api/keys` (`organization_id`, `name`, `service_account_id?`). Omit `service_account_id` from a user session to mint a user-owned key. Revoke with `POST /api/keys/{keyId}/revoke?organization_id=…`.
+- **MCP over the same host** — headless MCP clients connect to `https://api.arg.ai/mcp/{workspaceId}` with the same `x-api-key` header (see `arg-mcp`).
+
+## TypeScript SDK
+
+Skip the raw HTTP: [`@arg-ai/sdk`](https://www.npmjs.com/package/@arg-ai/sdk) (zero-dependency ESM; Node 18+, browser, Workers) wraps auth, retries, typed errors, and resilient multipart uploads:
+
+```ts
+import { ArgAI } from "@arg-ai/sdk";
+const client = new ArgAI(); // reads ARG_API_KEY
+const ws = await client.workspaces.create({ name: "quickstart" });
+const scoped = client.withWorkspace(ws.id);
+await scoped.files.upload({ data: "region,revenue\nAPAC,120\n", name: "data.csv" });
+console.log(await scoped.files.tree());
+```
+
+## Tips
+
+- **Fetch the OpenAPI spec instead of guessing** an endpoint's exact fields — https://api.arg.ai/openapi.json is generated from the live routes.
+- **Use `/files/content` for text, `/files/upload`/`download` for bytes** — inline content is JSON-friendly; uploads/downloads stream real bytes.
+- **One key per integration**, service-account keys for anything unattended — access follows the principal, so rotating or revoking is one call.
