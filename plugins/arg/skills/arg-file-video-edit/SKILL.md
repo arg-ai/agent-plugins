@@ -226,12 +226,20 @@ The parser **silently drops unknown keys and invalid enum values** and falls bac
 
 ## Rendering a timeline to a video file
 
-Two routes, and picking the wrong one wastes a long run:
+Two routes:
 
-- **`render_video` action (cloud)** — renders to **WebM** with no local setup. It runs inside a memory-bounded headless browser that must hand the whole encoded file back in one piece, so it is capped at **timelines up to 2 minutes that encode to under ~25 MB** — roughly **1 minute at 1080p, 2 minutes at 720p**. Over that it fails fast with an explicit error rather than burning a render. Lowering `settings.width`/`height` (or cropping) raises the length that fits.
-- **`arg video render <path.video>` (CLI)** — the escape hatch for anything longer, and the only route to **mp4/mov/gif/mkv**. It provisions a local browser + ffmpeg and streams the encode to disk, so it has no length or size cap. Run `arg video render install` once first.
+- **`render_video` action (cloud)** — no local setup, no length cap. It shards the timeline across GPU containers and stitches the segments, writing the finished file straight into the workspace, so nothing is streamed back through the response. Outputs **mp4** (default), **mov**, **mkv** or **webm**. A 26-minute 1080p60 timeline renders in a few minutes; the run reports progress while it works.
+- **`arg video render <path.video>` (CLI)** — the offline route. Provisions a local browser + ffmpeg and streams the encode to disk. Use it when you want the file on the local machine rather than in the workspace, or when working without network access. Run `arg video render install` once first.
 
-Both drive the **same** web exporter, so the picture is identical either way — only the host, the container, and the ceiling differ. For a long timeline, don't attempt `render_video` "to see if it fits": check the duration against the cap and go straight to the CLI.
+Both drive the **same** web exporter, so the picture is identical either way — only the host differs.
+
+Optional `render_video` inputs, for when the finished file matters more than the render being untouched:
+
+- `max_height` — downscale (aspect preserved, never upscales), e.g. `720`.
+- `fps` — output frame rate, e.g. `30`.
+- `quality` — `original` (default), `high`, `medium`, `low`.
+
+`original` with no `max_height`/`fps` copies the rendered stream, which is the fastest path and loses nothing. Any other setting re-encodes the whole timeline: slower, but a much smaller file (a 26-minute render is ~486 MB untouched, ~68 MB at 720p30 `medium`).
 
 ## Layering & positioning
 
