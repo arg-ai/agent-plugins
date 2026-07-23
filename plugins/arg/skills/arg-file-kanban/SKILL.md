@@ -1,6 +1,6 @@
 ---
 name: arg-file-kanban
-version: "2.2.0"
+version: "2.2.1"
 description: Create, read, update, and delete Arg kanban boards (.kanban) for task and project management — columns of cards with labels, due dates, assignees, and nested sub-task boards. Load when building or editing task boards, project trackers, or status boards.
 ---
 
@@ -81,7 +81,7 @@ Top-level: `version` (use `6` for new boards), `labels` (board-wide, referenced 
 
 **Column** — `{ id, title, cardIds: [...] }`, plus optional `icon` (icon key), `color` (palette key or hex tint), `collapsed` (render as a narrow strip).
 
-**Card** — `id`, `title`, `description`, `labelIds` (array of label ids), `dueDate` (ISO date string like `"2026-06-01"` or `null`), `createdByUserId`, `createdAt`, `assignedToUserIds`. Optional: `location` (`{ lat, lng, label? }` — pins the card on the board's Map view), `attachments` (array of `{ id, path, name, kind: "file"|"folder" }` workspace files, `path` workspace-relative with a leading slash), and `heroAttachmentId` (which attachment renders as the card's cover preview).
+**Card** — `id`, `title`, `description`, `labelIds` (array of label ids), `dueDate` (ISO date string like `"2026-06-01"` or `null`), `createdByUserId`, `createdAt`, `assignedToUserIds`. Optional: `location` (`{ lat, lng, label? }` — pins the card on the board's Map view), `attachments` (array of `{ id, path, name, kind: "file"|"folder", fileId? }` workspace files, `path` workspace-relative with a leading slash), and `heroAttachmentId` (which attachment renders as the card's cover preview). `fileId` is a UI-managed durable id for file attachments only: author attachments by path, preserve a valid existing id, and never invent one. Folder attachments stay path-only.
 
 - **People fields:** when you author a board, leave `createdByUserId` and `createdAt` as `null` and `assignedToUserIds` as `[]` — the UI stamps these when a person creates or assigns a card.
 

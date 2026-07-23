@@ -1,6 +1,6 @@
 ---
 name: arg-file-daw
-version: "1.0.2"
+version: "1.0.3"
 description: Create, read, and update Arg's .daw multi-track audio sessions — a JSON DAW project with a transport, instrument/audio/MIDI tracks, MIDI clips (inline notes), instruments (multi-engine synth, 808/909/707 drum machines, and a sampler that pitches a workspace audio file), MIDI + audio effect chains, a mixer with sends/returns, a master bus, and VST3/AU plugin slots. Plays and bounces to WAV/MP3 in the browser; also renderable offline via `arg daw render` (wav/mp3/flac/aac/ogg/opus). Load when building or editing a .daw song, beat, MIDI part, podcast mix, film cue, or when mixing/mastering a multi-track session. For raw audio files (wav/mp3), see arg-files.
 ---
 
@@ -16,6 +16,7 @@ This is the _session/arrangement_, not an audio file. Audio clips **reference** 
 - **All timing is in beats** (floats), never seconds. The engine converts beats→seconds with `transport.bpm`. One bar in 4/4 = 4 beats.
 - **Every node needs a unique `id`** — tracks, clips, notes, effect slots, MIDI devices. Reused ids cause selection/automation bugs.
 - **Reference only workspace media that exists** for audio clips, by workspace-relative `src` (always starts with `/`). A bad `src` plays nothing. MIDI clips have `src: null`.
+- Author workspace media by path only. The editor manages optional durable ids (`srcFileId` for an audio clip, `sampleFileId` for a sampler's `parameters.src`) so links survive renames and moves. Preserve a valid existing id when editing, but never invent one.
 
 ## Schema
 
@@ -45,7 +46,7 @@ This is the _session/arrangement_, not an audio file. Audio clips **reference** 
 
 ### Clip — `DawClip`
 
-`{ id, type, trackId, name, start, duration, offset, gain, fadeIn, fadeOut, stretch, warpMode, color, src, notes, automation }`
+`{ id, type, trackId, name, start, duration, offset, gain, fadeIn, fadeOut, stretch, warpMode, color, src, srcFileId?, notes, automation }`
 
 - `type`: `"midi"` | `"audio"` | `"automation"`.
 - `start`, `duration`: in **beats**. `start` is the clip's position on the arrangement.
@@ -64,7 +65,7 @@ This is the _session/arrangement_, not an audio file. Audio clips **reference** 
 
 ### Instrument — `DawInstrument`
 
-`{ type, name, preset, plugin, parameters }`
+`{ type, name, preset, plugin, parameters, sampleFileId? }`
 
 - `type`: `"synth"` | `"drum-rack"` | `"sampler"` | `"external-midi"` | `"plugin"`.
 - **synth** — multi-engine synth. `parameters.engine` ∈ `"analog"` | `"fm"` | `"wavetable"` | `"supersaw"` | `"pluck"` picks the oscillator section. Shared by every engine: amp `attack, decay, sustain, release` (s / 0–1); filter `cutoff` (Hz), `resonance` (0–1), `filterType` (`"lowpass"|"highpass"|"bandpass"`), `filterPoles` (12 or 24 dB/oct — 24 = Moog ladder), `drive` (0–1 saturation), `keytrack` (0–1 cutoff-follows-pitch), `filterEnv` (0–1); `gain` (0–1.5); `noise` (0–1 white-noise layer); `vibratoRate` (Hz) + `vibratoDepth` (cents pitch LFO); and on analog/wavetable/pluck `unison` (1–7 detuned copies), `unisonDetune` (cents), `unisonSpread` (0–1 stereo). The waveform `"pulse"` (on `oscillator`/`osc2`) uses `pulseWidth` (0.05–0.95) for PWM. Engine-specific: **analog** `oscillator`+`osc2` (`"sawtooth"|"square"|"triangle"|"sine"|"pulse"`), `oscMix` (0–1), `detune` (cents), `osc2Octave` (-2..2), `sub` (0–1 sub-osc); **fm** `oscillator` (carrier wave), `fmRatio`, `fmAmount` (0–1); **supersaw** `voices` (1–9), `detune` (cents), `unisonSpread`; **wavetable** `wavetable` (`"harmonic"|"organ"|"vocal"|"bright"|"hollow"`); **pluck** `oscillator` + a high `filterEnv`. The editor ships ~30 factory presets recreating classic synths (Moog, Juno, Massive, Sylenth1, DX7, TB-303, …); `preset` is just a display name, so recreate a sound by setting the params above directly. E.g. a Moog bass: `{ engine:"analog", oscillator:"sawtooth", sub:0.5, filterPoles:24, drive:0.4, cutoff:480, resonance:0.32, filterEnv:0.5, keytrack:0.3, attack:0.005, decay:0.18, sustain:0.5, release:0.16 }`.

@@ -1,6 +1,6 @@
 ---
 name: arg-file-video-edit
-version: "1.3.0"
+version: "1.3.1"
 description: Create, read, and update Arg's .video non-linear editor (NLE) timeline projects — multi-track video/audio/GIF/text/effects edits that composite a live preview and render to MP4/WebM. Load when building or editing a .video timeline (montages, animated GIFs, titles, transitions, color grades). For raw video files (mp4/mov/webm), see arg-files.
 ---
 
@@ -15,6 +15,7 @@ This is the _edit project_, not a media file. Clips **reference** existing works
 `.video` is text (JSON) — use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Video-edit-specific:
 
 - **Reference only media that already exists** in the workspace, by workspace-relative `src` (always starts with `/`). Never invent paths — a bad `src` renders nothing.
+- Author linked files by `src` only. The editor manages the optional durable `srcFileId` (and `cursorTelemetryFileId` for `cursorTelemetrySrc`) so links survive workspace renames and moves. Preserve a valid existing id when editing, but never invent one.
 - Give every track and clip a **unique `id`**, and write valid, pretty-printed (2-space) JSON.
 - **All timing is in seconds** (floats). Parsing deep-clones defaults and clamps/drops invalid values, so hand-authored files round-trip safely.
 
@@ -49,6 +50,8 @@ This is the _edit project_, not a media file. Clips **reference** existing works
 ### Clip — `VideoClip`
 
 Base: `{ id, type, name, enabled, start, duration }`.
+
+Workspace-backed `src` clips may also contain the UI-managed `srcFileId` (`argfile_<uuid>`). A clip with cursor telemetry may pair `cursorTelemetrySrc` with `cursorTelemetryFileId`. These ids are optional and additive; the path remains the readable fallback.
 
 - `type` — `video` / `audio` / `image` / `gif` / `cast` / `text` / `solid` / `adjustment` / `stock` / `weather` / `shape` / `embed` / `object3d` / `shader` / `zoom`.
 - `start` = position on the timeline (s); `duration` = length on the timeline (s). **Clips on one track must not overlap** — a track is a sequence; put overlapping content (titles over footage, picture-in-picture) on separate tracks.
