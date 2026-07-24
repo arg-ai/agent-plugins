@@ -1,6 +1,6 @@
 ---
 name: arg-file-automation
-version: "1.7.1"
+version: "1.8.0"
 description: Create, read, update, delete, and deploy Arg automation files (.automation) and YAML workflows (.arg/workflows/*.yml) for scheduled jobs, webhooks, file-change reactions, and multi-step pipelines. Load when building, editing, or deploying workflow automations.
 ---
 
@@ -93,8 +93,8 @@ Writing the file only saves it. `manual` workflows run on demand, but persistent
 
 Deploy it yourself; don't ask the user to open the editor and click **Deploy**:
 
-- `deploy_automation({ file_path })` — registers the persistent triggers. Call it after writing or editing the file; calling it again ships an edit.
-- `list_automation_deployments()` — what's live: registered triggers, which are enabled, the service account, and whether the deployment is active, paused, or stopped.
+- `deploy_automation({ file_path })` — registers the persistent triggers. Call it after writing or editing the file; calling it again ships an edit. **Editing a deployed automation without redeploying changes nothing at runtime**: dispatch executes the deployment snapshot, so the old graph — old trigger patterns included — keeps running (or keeps not firing) until you deploy again.
+- `list_automation_deployments()` — what's live: registered triggers **with their configs** (`registered_triggers` — the file-change pattern / cron dispatch actually consults), which are enabled, the service account, whether the deployment is active, paused, or stopped, and `file_changed_since_deploy`. When that flag is true the saved file has drifted from the running snapshot — say so and redeploy. When a deployed automation never fires, compare `registered_triggers` against the file's trigger nodes first: a pattern edited (or a watched file moved) after the last deploy is the classic silent killer.
 - `list_automation_history({ file_path?, limit? })` — finished runs, newest first, and how each ended. A successful deploy only means the triggers are registered, so check the runs before telling the user an automation works or is fixed. Two limits: a run that finished before your latest edit says nothing about that edit (check its age), and a `completed` run only means every node reported success — it does not prove the notification, board update, or calendar event actually landed, so confirm the affected file or resource. No runs returned does not mean it never ran; the reply lists the causes it cannot distinguish.
 - `manage_automation_deployment({ file_path, action })` — `pause` (triggers stay registered but stop firing), `resume`, `stop` (unregister the runtime, keep the snapshot), or `delete` (remove the deployment; the file stays).
 
