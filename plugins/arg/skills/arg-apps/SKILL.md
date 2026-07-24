@@ -1,14 +1,45 @@
 ---
 name: arg-apps
-version: "2.0.1"
-description: Build arg-apps — self-contained internal apps and tools your team runs inside Arg, made from a single .html file plus the window.arg filesystem SDK for persistent state and identity. Also covers plain HTML/web file (html, htm) CRUD. Load when building a web page, dashboard, CRM, admin panel, tracker, blog, note app, or any .html that reads or writes workspace files at runtime.
+version: "2.1.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, and versioned npm imports, plus self-contained .html apps using the window.arg filesystem SDK for persistent state and identity.
 ---
 
-# arg-apps (`.html`, `.htm`)
+# React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
+
+Use `.tsx` or `.jsx` for a React component, UI prototype, or small app that benefits from modules and npm packages. The editor compiles the unsaved source and runs the result only on the file's isolated `sitearg.com` preview origin.
+
+Every React preview must export one component as its default export:
+
+```tsx
+import { useState } from "react";
+import { Button, Card, Heading, Stack, Text } from "@arg/ui";
+
+export default function Welcome() {
+  const [welcomed, setWelcomed] = useState(false);
+
+  return (
+    <Card>
+      <Stack>
+        <Heading>Welcome</Heading>
+        <Text>{welcomed ? "Hello!" : "This component renders live in Arg."}</Text>
+        <Button onClick={() => setWelcomed(true)}>Say hello</Button>
+      </Stack>
+    </Card>
+  );
+}
+```
+
+React previews support:
+
+- Relative imports from workspace `.tsx`, `.ts`, `.jsx`, `.js`, `.json`, and `.css` files. Resolution is relative to the importing file and supports extension and `index.*` fallback.
+- `@arg/ui`, a portable preview component library. It is intentionally separate from Arg's application-internal React components so previews do not inherit private contexts or app CSS.
+- Bare npm imports when the package has an exact version in the nearest workspace `package.json`. React and React DOM are pinned by the editor. A versioned `https://esm.sh/package@version` import is also accepted.
+
+Do not expect `window.arg` in a React preview. Use a self-contained `.html` arg-app when the page needs the opt-in filesystem SDK and persistent workspace-backed state.
 
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
-Arg renders `.html` in a live-preview editor: a **sandboxed, null-origin iframe** (scripts off by default). Plain HTML files are created with `write_file` using standard markup; the SDK only activates when the user turns it on.
+Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup; the SDK only activates when the user turns it on.
 
 ## CRUD
 
