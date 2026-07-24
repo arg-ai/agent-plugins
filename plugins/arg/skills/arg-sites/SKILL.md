@@ -1,7 +1,7 @@
 ---
 name: arg-sites
-version: "1.0.0"
-description: Publish an Arg workspace folder as a hosted website on its own subdomain - static sites, framework builds, and server-side apps. Load this whenever you are asked to deploy, publish, host, or update a website, dashboard, or internal tool from workspace files, or to roll one back, share it, or take it offline.
+version: "1.1.0"
+description: Publish an Arg workspace folder as a hosted website on its own subdomain - static sites, framework builds, and server-side apps - via the workspace agent's site tools or the arg CLI (arg sites deploy). Load this whenever you are asked to deploy, publish, host, or update a website, dashboard, or internal tool from workspace files, or to roll one back, share it, or take it offline.
 ---
 
 # Arg Sites
@@ -60,6 +60,10 @@ Static files in the same output dir are served first; every request that doesn't
 - `env.ASSETS` exists **only** when the build also produced static files; a pure-SSR bundle has no assets binding
 
 If `deploy_site` returns a `degraded` note, the build produced no `_worker.js` and the site went live as plain static files. Tell the user that - do not claim the server-side routes work.
+
+## From the arg CLI (local folder → live site)
+
+When you are on a machine with the `arg` CLI instead of the workspace tools, `arg sites deploy [dir]` is the whole flow in one command: it uploads the LOCAL folder into the workspace (honoring `.gitignore` plus standard ignores; `.env`/`.env.*` never leave the machine), creates or reuses the site by slug, builds with promote-on-success, and prints the openable URL. `arg sites list` and `arg sites status <slug>` cover listing and version history. Flags mirror the tool params: `--slug`, `--framework`, `--public`, `--name`, `--source-path`. Works headlessly with `ARG_API_KEY`. Full detail lives in `arg-cli`; the tool-based flow below is unchanged and remains the right path from inside a workspace chat.
 
 ## Manage
 

@@ -1,7 +1,7 @@
 ---
 name: arg-cli
-version: "1.5.1"
-description: Access method for Arg file operations via the `arg` command-line tool — direct commands (cat, ls, grep, upload, download, mv, rm), sandbox `exec`, a local `mcp` stdio server, `arg mount` (two-way workspace sync), and opt-in native renderers for .video/.design/.daw/.psd files (`arg {type} render`). Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
+version: "1.8.0"
+description: Access method for Arg file operations via the `arg` command-line tool — direct commands (cat, ls, grep, upload, download, mv, rm), sandbox `exec`, a local `mcp` stdio server, `arg mount` (two-way workspace sync), local coding-agent import (`arg onboard`), one-command site hosting (`arg sites deploy`), and opt-in native renderers for .video/.design/.daw/.psd files (`arg {type} render`). Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 ---
 
 # Arg access: `arg` CLI
@@ -12,9 +12,31 @@ The `arg` CLI wraps Arg's REST API and is the single binary behind **two ways to
 
 **Headless / CI / agents:** skip the browser login. Create an API key at `arg.ai/platform/api-keys` and set `ARG_API_KEY` (or pass `--api-key`) — it authenticates **every** command and needs no OS keychain. With a key, set `ARG_ACTIVE_ORG=<org-id>` (and `ARG_WORKSPACE=<id>` or `--workspace`) for context, since `whoami`/`orgs` are user-session-only.
 
-Beyond file CRUD: `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk — see **Native renderers** below), `arg action` (list/run built-in actions — see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), and `arg init` / `arg skills` (install the Arg skill bundle into the current project for your coding harness).
+Beyond file CRUD: `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk — see **Native renderers** below), `arg action` (list/run built-in actions — see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), `arg onboard` (import a local coding-agent setup — Claude Code, Cursor, Copilot, Gemini — into a workspace, see below), `arg sites deploy` (deploy a local folder as a hosted site, see below), and `arg init` / `arg skills` (install the Arg skill bundle into the current project for your coding harness; add `--scope user` to install into `~/.claude/skills/` so every project on the machine sees them).
 
 **Discovering Arg's skills without the CLI:** the same bundle is published at two well-known endpoints, so any agent that speaks either convention can find and install it. `https://arg.ai/.well-known/skills/index.json` is the `vercel-labs/skills-handler` format (what `hermes skills install --source well-known` reads; `SKILL.md` is served with frontmatter intact at `/.well-known/skills/<name>/SKILL.md`). `https://arg.ai/.well-known/agent-skills/index.json` is Cloudflare's Agent Skills Discovery v0.2.0 format, which adds a sha256 digest per skill.
+
+## Import a local coding-agent setup (`arg onboard`)
+
+`arg onboard` scans this machine for coding-agent state and plans (or applies) its transfer into the active workspace. It is safe to run unattended: the default is a **read-only dry-run report** and `--json` emits the same plan as machine output. It reads `~/.claude/CLAUDE.md`; project context files `./CLAUDE.md`, `./AGENTS.md`, `./GEMINI.md`, `./.github/copilot-instructions.md`, `./.cursorrules`, `./.cursor/rules/*.mdc`, and nested `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` in monorepo subdirectories; skill bundles under `./.claude/skills/` and `~/.claude/skills/` (the whole bundle, including `scripts/` and `references/`); subagents under `./.claude/agents/` and `~/.claude/agents/`; slash commands under `./.claude/commands/` and `~/.claude/commands/`; and MCP servers in `./.mcp.json` / `~/.claude.json` (including the local-scope per-project entries).
+
+- `arg onboard` — dry-run report grouped as **Transfers / Transfers with changes / Skipped / Needs manual**.
+- `arg onboard --apply` — writes the plan: context files → workspace-root `AGENTS.md` (multiple sources merged with provenance headers; `CLAUDE.local.md` never transfers and is reported as skipped); portable skills → `.skills/<name>/` with their full bundle; subagents → `.agents/<name>.md`; slash commands → converted into skills at `.skills/<name>/SKILL.md`. A destination that already exists in the workspace is never silently overwritten: identical content is reported as already present, different content moves to **Needs manual** - pass `--force` to overwrite explicitly.
+- `arg onboard --apply --install-skills` — additionally installs the four core arg skills (arg-cli, arg-files, arg-overview, arg-sites) into the project's own skills dir (offline), so the machine's coding agents know the arg CLI from then on. Opt-in; install failures are warnings, never a failed exit. Add the rest any time with `arg init` (full bundle; `--minimal` for just the core) or `arg skills install <name>`.
+- Flags: `--workspace <id|name>` (or `ARG_WORKSPACE`), `--project <dir>` (default: cwd), `--apply`, `--force`, `--install-skills`, plus the global `--json`.
+- The report also flags a **deploy candidate** when the project has a root `index.html` or a `package.json` build script (`deploy_candidate` in JSON) — follow it with `arg sites deploy <dir>` to finish onboarding with a live site.
+
+**Security:** secrets are never transferred. MCP servers are only ever listed as connector candidates you add by hand — env values, secret-looking args, and URL tokens are redacted from the output. A skill, agent, or command that references local-machine paths (`~/…`, `/Users/…`, `/opt/homebrew/…`) is left under **Needs manual** rather than transferred.
+
+## Deploy a local project as a hosted site (`arg sites`)
+
+`arg sites deploy [dir]` is one command from a local folder to a live URL (default dir: `.`):
+
+1. Detects the framework from `package.json` (`static`, `vite`, `astro`, `next`, `worker` — same precedence as the workspace agent's `deploy_site` tool) and derives the site slug from the folder name. Override with `--framework`, `--slug`, `--name`; `--public` requests a public site (requires the org opt-in, otherwise 403).
+2. Uploads the project into the workspace folder `/sites/<slug>/`, honouring the project's root `.gitignore` plus standard ignores (`node_modules`, VCS dirs); `.env`/`.env.*` files never leave the machine. Re-deploys replace that folder's contents.
+3. Builds with the durable promote-on-success flag, polls up to `--timeout` (default 5m), and prints the openable URL on stdout — the tokenized capability link for private (workspace-access) sites, the bare URL for public ones. A build still running at the timeout is not a failure: it finishes and goes live on its own; check `arg sites status <slug>`.
+
+`arg sites list` shows the workspace's sites; `arg sites status <slug>` shows version states and the openable URL. All work headlessly with `ARG_API_KEY`.
 
 ## Native renderers (`arg <type> render`)
 
