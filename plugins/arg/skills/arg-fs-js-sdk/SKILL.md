@@ -8,7 +8,7 @@ description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .
 
 An optional **runtime** SDK that lets a single self-contained `.html` file read and write real workspace files and read the signed-in user's identity — so one page can act as its own backend (blogs, CRMs, dashboards, note apps), with data persisted as ordinary workspace files.
 
-> **Runtime global:** `window.arg` · **Availability:** previewed `.html` (web + desktop) · **Import:** none (injected)
+> **Runtime global:** `window.arg` · **Availability:** previewed `.html` (web, desktop, iOS, and Android) · **Import:** none (injected)
 
 ## What it is, in one paragraph
 
@@ -21,7 +21,7 @@ Every HTML document that receives `window.arg` also receives exactly one active 
 ## The three rules (read these first)
 
 1. **There is NO import.** Do not add `<script src>`, npm, ESM, or a CDN tag. `window.arg` is injected automatically when the capability is on. Trying to import it does nothing.
-2. **Always feature-detect with `if (window.arg)` and degrade gracefully.** The SDK is absent when the page is opened outside arg, or in the iOS app (which renders `.html` natively in a `WKWebView` with no bridge). A page that assumes `window.arg` exists will throw there.
+2. **Always feature-detect with `if (window.arg)` and degrade gracefully.** The SDK is absent when the page is opened outside Arg or Workspace access is unavailable. A page that assumes `window.arg` exists will throw there.
 3. **Build a single-document app.** Never `<a href="page.html">` to another HTML file — that reloads the sandboxed preview and **drops `window.arg`**, losing the SDK session. Change views with in-page state (buttons / click handlers / `location.hash` + a `hashchange` listener) and read data from `arg.fs`. Treat workspace files as your data store, not as pages.
 
 ## Boilerplate
@@ -31,7 +31,7 @@ A classic `<script>` has no top-level `await`, so wrap calls in an async IIFE an
 ```html
 <script>
   (async () => {
-    if (!window.arg) return; // opened outside arg, or iOS — degrade gracefully
+    if (!window.arg) return; // opened outside Arg - degrade gracefully
     await arg.ready; // resolves once the editor handshake completes
     const posts = (await arg.fs.exists("posts.json")) ? await arg.fs.readJSON("posts.json") : [];
     posts.push({ author: arg.me.name, at: Date.now() });
@@ -150,6 +150,38 @@ document.body.append(img);
 
 **Glob semantics:** `*` matches within a path segment, `**` spans separators, `?` matches a single non-`/` character. A leading `/` in the pattern is workspace-root-relative; otherwise it resolves against `cwd` (default: the scope root).
 
+## Relative `fetch()`
+
+String GET and HEAD requests without a URL scheme read workspace files through the same authenticated bridge as `arg.fs.readFile()`:
+
+```js
+const res = await fetch("magic-numbers.csv", { cache: "no-store" });
+if (!res.ok) throw new Error(`Could not load CSV (${res.status})`);
+const csv = await res.text();
+```
+
+- Relative paths resolve against `arg.dir`; a leading `/` is workspace-root-relative.
+- Query strings and fragments are ignored for the workspace file lookup.
+- The result is a normal `Response`, including binary-safe bodies, `Content-Type`, and `Content-Length`.
+- `cache: "no-store"`, `"reload"`, or `"no-cache"` forces a fresh file read through the existing cache policy.
+- `not_found` becomes 404; permission, scope, and disabled-access failures become 403; bad paths become 400; over-cap files become 413.
+- `AbortSignal` cancels the caller-facing fetch promise, and GET/HEAD requests with bodies reject like native fetch.
+- Absolute and protocol-relative URLs, `Request` objects, non-GET/HEAD methods, and calls made while Workspace access is disabled use native browser fetch.
+- Relative fetch decodes files up to 16 MB inline to limit preview memory use. Use `arg.fs.assetUrl()` for larger images, video, audio, PDFs, and other streaming media.
+
+## Relative scripts and stylesheets
+
+With Scripts and Workspace access enabled, static classic scripts and stylesheets can be split into sibling workspace files:
+
+```html
+<link rel="stylesheet" href="styles/app.css" />
+<script src="scripts/app.js" defer></script>
+```
+
+The preview resolves each scheme-less `src`/`href` beside the HTML file, or from the workspace root for a leading `/`, and replaces it with an exact signed asset URL before browser parsing. The selected folder/workspace scope and the signed-in user's read permission are enforced for every file. Query strings and fragments are ignored for lookup but retained on the loaded URL. Browser-native classic script ordering, `async`, `defer`, and element attributes are preserved. Absolute and protocol-relative URLs are unchanged.
+
+This bounded support does not rewrite `type="module"` scripts, dynamically inserted tags, preload/modulepreload links, CSS `@import`, or relative `url()` dependencies inside a stylesheet. Keep those inline, use absolute URLs, or load their bytes explicitly through `arg.fs`.
+
 ## SQLite — `arg.db.*`
 
 Query and mutate a SQLite database file (`.sqlite` / `.db`) directly, without parsing the bytes yourself. The first argument is always the **path** to the database file (same path rules and scope as `arg.fs`); `params` bind to `?` placeholders in the SQL.
@@ -179,7 +211,7 @@ const cols = await arg.db.schema("/data/app.db", "users");
 
 - Works on `.sqlite` / `.db` files. Reads and writes go through the same authenticated file routes as `arg.fs`, so the backend still enforces the signed-in user's own FGA permissions on every call — `exec` requires write access to the file.
 - Errors reject with the same `.code` values as the Files API (e.g. `not_found`, `access_denied`); SQL errors surface as `request_failed`.
-- **Availability:** `arg.db` executes in the **web editor** only. It is **not yet available in the native iOS HTML viewer** (which, like the rest of the SDK, has no bridge — see **Portability**). Feature-detect and degrade gracefully.
+- **Availability:** `arg.db` executes in the **web editor** only. The native iOS and Android file bridges reject database operations. Feature-detect and degrade gracefully.
 
 ## Identity — `arg.me` and `arg.team`
 
@@ -271,7 +303,8 @@ Wrap calls in `try/catch` and show a friendly message; treat `not_found` / a `nu
 ## Portability
 
 - **Web + desktop**: supported. The SDK is injected inline, so it works on the desktop app's null `file://` origin where an absolute `<script src>` wouldn't resolve.
-- **iOS**: **not supported.** iOS renders `.html` in a native `WKWebView`, so `window.arg` is absent. Pages must feature-detect and degrade gracefully.
+- **iOS + Android**: supported through native WebView bridges with the same file, identity, relative-fetch, and bounded static script/stylesheet behavior. `arg.db` remains web-only.
+- **Outside Arg**: unsupported. Pages must feature-detect `window.arg` and degrade gracefully.
 
 ## Complete pattern — a single-document, file-backed page
 
@@ -324,6 +357,6 @@ Wrap calls in `try/catch` and show a friendly message; treat `not_found` / a `nu
 
 ## Tips
 
-- Feature-detect with `if (window.arg)` and provide a sensible read-only / "open in arg" fallback — the same `.html` may be viewed outside arg or on iOS.
+- Feature-detect with `if (window.arg)` and provide a sensible read-only / "open in Arg" fallback - the same `.html` may be viewed outside Arg.
 - Store data in plain `.json` files so it stays inspectable and editable in arg, and treat workspace files as the data store, not as pages.
 - Keep everything in one document: drive navigation from in-page state (`location.hash` + `hashchange`), never `<a href="page.html">`.

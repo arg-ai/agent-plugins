@@ -56,7 +56,7 @@ A `.html` page can read/write workspace files and read the signed-in user's iden
 ### The three rules (follow these)
 
 1. **There is NO import.** Never add `<script src>`, npm, ESM, or a CDN tag for it. The editor injects `window.arg` inline when the user turns on **"Scripts" + "Workspace access"** in the preview's permissions menu.
-2. **Feature-detect with `if (window.arg)` and degrade gracefully.** It's absent when the page is opened outside Arg or in the iOS app. The user — not you — enables the capability, so the page must still work (read-only or with a hint) when it's off. After `arg.ready`, check `arg.readOnly` before showing mutation controls; reads remain available, while `write`, `remove`, `mkdir`, `move`, `copy`, and `db.exec` reject with `read_only` in a read-only host.
+2. **Feature-detect with `if (window.arg)` and degrade gracefully.** It's absent when the page is opened outside Arg or Workspace access is unavailable. The user — not you — enables the capability, so the page must still work (read-only or with a hint) when it's off. After `arg.ready`, check `arg.readOnly` before showing mutation controls; reads remain available, while `write`, `remove`, `mkdir`, `move`, `copy`, and `db.exec` reject with `read_only` in a read-only host.
 3. **Build a single-document app.** Never `<a href="page.html">` to another HTML file — that reloads the sandboxed preview and **drops `window.arg`**. Change views with in-page state (buttons / click handlers / `location.hash` + a `hashchange` listener) and render from `arg.fs` reads. Treat workspace files as the data store, not as pages.
 
 ### Boilerplate
@@ -66,7 +66,7 @@ A classic `<script>` has no top-level `await` — wrap calls in an async IIFE an
 ```html
 <script>
   (async () => {
-    if (!window.arg) return; // opened outside arg, or iOS — degrade gracefully
+    if (!window.arg) return; // opened outside Arg - degrade gracefully
     try {
       await arg.ready;
     } catch {
@@ -153,6 +153,25 @@ const asset = await arg.fs.assetUrl("hero.png");
 img.src = asset.url;
 ```
 
+Relative string GET and HEAD `fetch()` calls use the same file bridge and permissions:
+
+```js
+const res = await fetch("magic-numbers.csv", { cache: "no-store" });
+if (!res.ok) throw new Error(`Could not load CSV (${res.status})`);
+const csv = await res.text();
+```
+
+Relative paths resolve beside the HTML file, a leading `/` starts at the workspace root, and query/hash suffixes are ignored for file lookup. The result is a normal binary-safe `Response`; `AbortSignal` cancels the caller-facing promise, and over-cap files return 413. Absolute URLs, `Request` objects, non-GET/HEAD methods, and disabled Workspace access keep native browser behavior. Relative fetch decodes up to 16 MB inline to limit preview memory use, so large media should use `arg.fs.assetUrl()`.
+
+Static classic scripts and stylesheets can also live beside the HTML:
+
+```html
+<link rel="stylesheet" href="styles/app.css" />
+<script src="scripts/app.js" defer></script>
+```
+
+With Scripts and Workspace access enabled, the preview resolves those scheme-less references through the same folder/workspace scope and per-file read permissions before browser parsing. Classic script order, `async`, `defer`, and other attributes stay native. Module scripts, dynamically inserted tags, preload links, CSS `@import`, and relative `url()` dependencies are not rewritten.
+
 Actor metadata intentionally omits member emails. Use `arg.me.email` only for the current signed-in user.
 
 ### Rendering MDX `FileEmbed` images
@@ -200,7 +219,7 @@ Use `dataUrlById(id)` only for small inline images. Id helpers resolve id-to-pat
 ## Guidance
 
 - **Prefer storing data in plain `.json` files** so it stays inspectable and editable inside Arg.
-- Supported on web + desktop; **not** on iOS (no bridge) — always feature-detect.
+- Supported on web, desktop, iOS, and Android - always feature-detect for pages opened outside Arg.
 - Need a real server/process (a framework, a backend, a port) instead of a file-backed arg-app? Use a **`.server`** file instead - a JSON config (`command`, `port`, optional `exec`/`timeout`) that launches a process in a sandboxed container and exposes it as a public URL. Over MCP you can also host a workspace command with `deploy_server`.
 - A `.server` that calls a third-party API declares portable provider aliases, for example `"integrations": { "github": { "provider": "github" } }`. Never write OAuth tokens, PATs, refresh tokens, connection ids, or an upstream base URL into the file or generated source. Arg asks the user to bind each alias to one of their real connections when they explicitly launch the server; an integration-enabled file does not auto-launch. The connection keeps its existing owner: user-owned connections run only as that user, and service-account-owned connections run only as that service account. Runtime ownership checks support service accounts, but the current connection creation flow provisions user-owned connections only.
 - Server code calls the integration broker at `${ARG_INTEGRATIONS_URL}/${alias}/${relativePath}` with `Authorization: Bearer ${ARG_INTEGRATIONS_TOKEN}`. The broker URL already includes `/api/server-integrations/v1`; append only the alias and provider-relative path, never an absolute provider URL. The broker attaches the real provider credential without exposing it to the sandbox. Treat the broker token as sensitive, never print or persist it, and never return it to a tunnel client. Tunnels are public and run from the live workspace mount: public requests and collaborators who change server code can exercise the bound provider authority until the tunnel is stopped or relaunched. Use the narrowest provider scopes available for unattended servers.
