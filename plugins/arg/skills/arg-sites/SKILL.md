@@ -63,7 +63,7 @@ If `deploy_site` returns a `degraded` note, the build produced no `_worker.js` a
 
 ## From the arg CLI (local folder → live site)
 
-When you are on a machine with the `arg` CLI instead of the workspace tools, `arg sites deploy [dir]` is the whole flow in one command: it uploads the LOCAL folder into the workspace (honoring `.gitignore` plus standard ignores; `.env`/`.env.*` never leave the machine), creates or reuses the site by slug, builds with promote-on-success, and prints the openable URL. `arg sites list` and `arg sites status <slug>` cover listing and version history. Flags mirror the tool params: `--slug`, `--framework`, `--public`, `--name`, `--source-path`. Works headlessly with `ARG_API_KEY`. Full detail lives in `arg-cli`; the tool-based flow below is unchanged and remains the right path from inside a workspace chat.
+When you are on a machine with the `arg` CLI instead of the workspace tools, `arg sites deploy [dir]` is the whole flow in one command: it uploads the LOCAL folder into the workspace (honoring `.gitignore` plus standard ignores; `.env`/`.env.*` never leave the machine), creates or reuses the site by slug, builds with promote-on-success, and prints the openable URL. `arg sites list` and `arg sites status <slug>` cover listing and version history. `arg sites delete <slug>` takes a site offline and frees its subdomain (preview first with `--dry-run` - not reversible). Flags mirror the tool params: `--slug`, `--framework`, `--public`, `--name`, `--source-path`. Works headlessly with `ARG_API_KEY`. Full detail lives in `arg-cli`; the tool-based flow below is unchanged and remains the right path from inside a workspace chat.
 
 ## Manage
 

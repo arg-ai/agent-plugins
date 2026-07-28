@@ -1,7 +1,7 @@
 ---
 name: arg-cli
-version: "1.8.0"
-description: Access method for Arg file operations via the `arg` command-line tool — direct commands (cat, ls, grep, upload, download, mv, rm), sandbox `exec`, a local `mcp` stdio server, `arg mount` (two-way workspace sync), local coding-agent import (`arg onboard`), one-command site hosting (`arg sites deploy`), and opt-in native renderers for .video/.design/.daw/.psd files (`arg {type} render`). Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
+version: "1.9.0"
+description: Access method for Arg file operations via the `arg` command-line tool — direct commands (cat, ls, grep, upload, download, mv, rm), sandbox `exec`, a local `mcp` stdio server, `arg mount` (two-way workspace sync), local coding-agent import (`arg onboard`), one-command site hosting (`arg sites deploy` / `arg sites delete`), and opt-in native renderers for .video/.design/.daw/.psd files (`arg {type} render`). Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 ---
 
 # Arg access: `arg` CLI
@@ -33,10 +33,10 @@ Beyond file CRUD: `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` f
 `arg sites deploy [dir]` is one command from a local folder to a live URL (default dir: `.`):
 
 1. Detects the framework from `package.json` (`static`, `vite`, `astro`, `next`, `worker` — same precedence as the workspace agent's `deploy_site` tool) and derives the site slug from the folder name. Override with `--framework`, `--slug`, `--name`; `--public` requests a public site (requires the org opt-in, otherwise 403).
-2. Uploads the project into the workspace folder `/sites/<slug>/`, honouring the project's root `.gitignore` plus standard ignores (`node_modules`, VCS dirs); `.env`/`.env.*` files never leave the machine. Re-deploys replace that folder's contents.
+2. Uploads the project into the workspace folder `/sites/<slug>/`, honouring the project's root `.gitignore` plus standard ignores (`node_modules`, `__pycache__`). **Every dot-prefixed file and folder stays on the machine** - so `.env`, `.mcp.json`, `.npmrc`, `.netrc`, `.git`, `.claude` and anything else beginning with a dot never upload; a root `.well-known/` is the single exception, since the web serves it. A `.gitignore` cannot re-admit a dotfile. Re-deploys replace that folder's contents.
 3. Builds with the durable promote-on-success flag, polls up to `--timeout` (default 5m), and prints the openable URL on stdout — the tokenized capability link for private (workspace-access) sites, the bare URL for public ones. A build still running at the timeout is not a failure: it finishes and goes live on its own; check `arg sites status <slug>`.
 
-`arg sites list` shows the workspace's sites; `arg sites status <slug>` shows version states and the openable URL. All work headlessly with `ARG_API_KEY`.
+`arg sites list` shows the workspace's sites; `arg sites status <slug>` shows version states and the openable URL; `arg sites delete <slug>` takes a site offline and removes its versions (preview with `--dry-run`, not reversible). Deleting the uploaded sources with `arg rm` does **not** unpublish a built version - use `arg sites delete` for that. All work headlessly with `ARG_API_KEY`.
 
 ## Native renderers (`arg <type> render`)
 
