@@ -6,7 +6,7 @@ description: The map of the Arg (arg.ai) product — what Arg is, every offering
 
 # Arg overview
 
-**Arg (arg.ai) is one shared workspace where teams and AI agents plan, create, and ship work together.** It pairs a Google-Drive-style file manager with an AI chat agent that has full context of the files: you upload or create files, the agent reads and edits them inline, and everything it produces — docs, decks, spreadsheets, designs, videos, live sites — lands as real, versioned files that humans and agents keep editing together. Tagline: "One workspace, everyone in sync."
+**Arg (arg.ai) is one shared workspace where teams and AI agents plan, create, and ship work together.** It pairs a Google-Drive-style file manager with an AI chat agent that has full context of the files: you upload or create files, the agent reads and edits them inline, and everything it produces — docs, decks, spreadsheets, designs, videos, live sites — lands as real, versioned files that humans and agents keep editing together. Tagline: "One workspace, everyone in the loop."
 
 - Website: https://arg.ai · AI-readable site index: https://arg.ai/llms.txt
 - Developer docs: https://developers.arg.ai
@@ -15,7 +15,7 @@ Three framings of the same platform:
 
 1. **Arg Workspace** (for teams) — files, editors, chat, real-time collaboration.
 2. **Arg Filesystem API** (for agents) — the same versioned, attributed filesystem over REST, MCP, and CLI, plus sandboxes, search, artifacts, comments, and notifications.
-3. **Arg Automation** (for scale) — workflows that run the workspace on triggers and schedules.
+3. **Arg Loops** (for scale) — work that runs itself: automation workflows fire the workspace on triggers and schedules, and each run builds on the last.
 
 ## Core model
 
@@ -34,7 +34,7 @@ Three framings of the same platform:
 | **The agent**                  | Every workspace ships with an AI agent: chats over your files with cited sources, edits inline in every editor, runs Python/Bash in an isolated sandbox, generates media, works long tasks in the background, runs on your choice of frontier model    | `arg-ui`                                     |
 | **Skills & subagents**         | Teach the agent your team's playbooks as plain markdown in `.skills/`; define specialist subagents in `.agents/`. One `.skills/` folder is read by Arg's agent, Claude Code, Cursor, and automations                                                   | `arg-skills-and-agents`                      |
 | **Actions**                    | Built-in operations the agent runs and saves as files: image/video/3D/audio/music generation and editing, transcription, web screenshot and scraping, html→pdf, stock data, connected-service calls                                                    | `arg-actions`                                |
-| **Automations**                | Workflows as files — visual `.automation` canvas or GitHub-Actions-style `.arg/workflows/*.yml` — triggered by schedule, file change, webhook, or manually; every run on the record                                                                    | `arg-file-automation`                        |
+| **Automations (Arg Loops)**    | Workflows as files — visual `.automation` canvas or GitHub-Actions-style `.arg/workflows/*.yml` — triggered by schedule, file change, webhook, or manually; every run on the record                                                                    | `arg-file-automation`                        |
 | **Arg Apps**                   | A single `.html` file becomes an internal app (dashboard, CRM, tracker) via the `window.arg` FS SDK — workspace files are its backend. `.server` runs a process in a sandboxed container on a public URL                                               | `arg-apps`                                   |
 | **Forms**                      | Shareable `.form` surveys written in MDX; submissions collect as rows the agent can read and summarize                                                                                                                                                 | `arg-file-document`                          |
 | **Recordings & meeting notes** | Record mic/screen (desktop detects meetings), transcribe, and summarize into structured notes with decisions and action items                                                                                                                          | `arg-ui`                                     |
