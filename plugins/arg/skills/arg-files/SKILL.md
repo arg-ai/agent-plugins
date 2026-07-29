@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.3.1"
+version: "2.3.2"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -53,7 +53,7 @@ For a product feature map of the Arg **web** and **desktop** apps — what each 
 Arg defines native, agent-friendly formats. Load the dedicated format skill before authoring one:
 
 - `.design` — vector canvas — see the `arg-file-design` skill.
-- `.whiteboard` — infinite canvas — see the `arg-file-whiteboard` skill.
+- `.whiteboard` — infinite canvas with font-selectable standalone text objects — see the `arg-file-whiteboard` skill.
 - `.kanban` — task board — see the `arg-file-kanban` skill.
 - `.automation` — visual workflow — see the `arg-file-automation` skill.
 - `.arg/workflows/*.yml` — YAML workflow that compiles to the automation engine — see the `arg-file-automation` skill.
