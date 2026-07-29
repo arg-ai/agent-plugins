@@ -55,11 +55,36 @@ Static files in the same output dir are served first; every request that doesn't
 
 **What a worker site does not have:**
 
-- no database, no file storage, no environment variables or secrets - keep state in the page, or call an external API
+- no database and no file storage - keep state in the page, or call an external API
 - no WebSocket support
 - `env.ASSETS` exists **only** when the build also produced static files; a pure-SSR bundle has no assets binding
 
 If `deploy_site` returns a `degraded` note, the build produced no `_worker.js` and the site went live as plain static files. Tell the user that - do not claim the server-side routes work.
+
+## Environment variables and secrets
+
+Not a worker-only feature. Every site that gets built can carry configuration, and each variable has a **scope** that decides where it is delivered:
+
+| scope     | delivered as                      | works on                                    |
+| --------- | --------------------------------- | ------------------------------------------- |
+| `build`   | exported into the build shell     | `vite`, `astro`, `next`, `worker`           |
+| `runtime` | `env.NAME` in the request handler | `worker` only - a static site has no server |
+| `both`    | each of the above                 | the default                                 |
+
+`build` scope is how a `VITE_`/`NEXT_PUBLIC_`/`PUBLIC_` value reaches a bundler, so it is the scope most sites actually need. Both scopes apply at **build** time, so changing a variable requires a redeploy.
+
+**The user sets these, not you.** Values are write-only everywhere - no tool, command, page or API returns one. `list_site_env` shows the names, kinds and scopes on a site so you can see what is missing; the user sets a value in the site's panel or with `arg sites env set <slug> <NAME>`.
+
+A `VITE_`/`NEXT_PUBLIC_`/`PUBLIC_` name cannot be marked secret, because the bundler inlines its value into the JavaScript every visitor downloads.
+
+**How to use it when building a site:**
+
+1. Code that needs a value reads it - `import.meta.env.VITE_API_URL`, or `env.API_KEY` in worker code. Never hardcode a value and never invent one.
+2. Deploy.
+3. Tell the user the exact names to set and the exact command.
+4. Redeploy once they have.
+
+Never write a secret the user pastes into chat into a file or a tool argument - anything written down persists in the chat history. Never create a `.env` file inside a site's source folder either: a `static` site ships that folder as-is, hidden files included, so the file would be published and served to anyone holding the link.
 
 ## From the arg CLI (local folder → live site)
 
@@ -68,6 +93,7 @@ When you are on a machine with the `arg` CLI instead of the workspace tools, `ar
 ## Manage
 
 - `list_sites` - the workspace's sites and their live URLs.
+- `list_site_env` - the names, kinds and scopes of a site's environment variables. Never a value; there is no tool that sets one.
 - `promote_site_version` - repoint the live URL at a specific build. Promoting an older version **is** the rollback. Very old versions have their artifacts reclaimed and can no longer be promoted; rebuild instead.
 - `set_site_access` - toggle `workspace` (private) and `public`. Public requires the organization to have enabled public sites.
 - `get_site_share_link` - mint a fresh private link when an earlier one expires.
