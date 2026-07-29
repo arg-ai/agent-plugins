@@ -19,10 +19,10 @@ Prefer an action over doing it by hand whenever one fits — generating or editi
 | ----------------- | --------------------------------------------------------------------------------------------- |
 | `search_actions`  | Find actions by keyword or category. **Start here.**                                          |
 | `describe_action` | Look at ONE action's inputs, and list the choices for any field you must pick (like `model`). |
-| `run_action`      | Run one by id with its `input`. Returns the result, or a `run_id` to poll for long jobs.      |
-| `list_runs`       | Check past/in-flight runs — status, progress, output file. Poll long jobs here.               |
+| `run_action`      | Run one by id with its `input`. Waits for long jobs and reports progress in the tool UI.      |
+| `list_runs`       | Check past or in-flight runs - status, progress, output file.                                 |
 
-**Flow:** `search_actions` → `describe_action` (when you need a field's choices or the exact inputs) → `run_action` → `list_runs` (for long jobs).
+**Flow:** `search_actions` → `describe_action` (when you need a field's choices or the exact inputs) → `run_action`. Use `list_runs` to inspect history or recover an interrupted run.
 
 ### 1. Find it — `search_actions`
 
@@ -58,18 +58,19 @@ run_action({
 ```
 
 - `input` matches what `describe_action` showed. File actions usually take a `source_path` (input file) and/or `output_path` (often defaults next to the source if omitted).
-- You may get back `{ status: "succeeded", output }` immediately — `output.output_path` is the saved file. Open it like any workspace file.
-- **Long/provider-backed jobs** (e.g. `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `video_generate`, `three_d_generate`) return `{ run_id, status: "queued" }` instead — poll it with `list_runs`.
+- Successful runs return `{ status: "succeeded", output }` - `output.output_path` is the saved file. Open it like any workspace file.
+- **Long/provider-backed jobs** (e.g. `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `video_generate`, `three_d_generate`) stay in the `run_action` tool call and report progress until they finish.
+- If the wait limit returns a queued/running `run_id`, check that run with `list_runs`. After an interrupted call with no result, list running runs to recover the in-flight work. Do not start it again, especially for paid provider work.
 - **Write actions need workspace write access** — a read-only session can't run them.
 
-### 4. Poll long jobs — `list_runs`
+### 4. Inspect or recover runs - `list_runs`
 
 ```
-list_runs({ run_id: "<id from run_action>" })   // one run: status + progress + output
+list_runs({ run_id: "<id returned at the wait limit>" })   // one run: status + progress + output
 list_runs({ status: "running" })                // everything in flight
 ```
 
-Poll the `run_id` until `status` is `succeeded` (the file is at `output.output_path`) or `failed` (read `error`). Runs also report live `progress`.
+Use the returned status and progress to recover work after an interrupted tool call. A succeeded run's file is at `output.output_path`; a failed run includes `error`.
 
 ## What you can run (search_actions is authoritative)
 
@@ -113,7 +114,7 @@ the action's (`output.output_path`, `output.asset_url`).
 ## Tips
 
 - **Search before you run.** Pick model ids from `describe_action`; guessing fails.
-- **A queued/running job isn't a failure** — poll `list_runs`, don't re-run it.
+- **A queued/running job isn't a failure** - inspect it with `list_runs`; don't re-run it.
 - **After success, the file is at `output.output_path`** — that's what to open, embed, or edit next.
 - **One file in, one file out** per action.
 - **Don't hand-roll what an action does** — for media, transcription, screenshots, or conversions, an action is more reliable than writing bytes yourself.
