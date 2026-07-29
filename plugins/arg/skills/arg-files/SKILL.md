@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.3.2"
+version: "2.4.2"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -83,7 +83,7 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 - **Animation & docs** — `.lottie` (Bodymovin), `.pdf`, `.epub`, `.ipynb` (read-only Jupyter).
 - **Bookmarks / shortcuts** — `.url` (Windows INI: `[InternetShortcut]` with a `URL=` line), `.webloc` (macOS XML plist with a `URL` key). Clickable files that open a single URL in a new tab; name them after the host (e.g. `github.com.url`).
 - **3D / CAD / splats** — `.glb`, `.gltf`, `.obj`, `.stl`, `.fbx`, `.usd*`, `.ply`, `.dae`, `.3ds`, `.3mf`, `.vox`, `.vrml`/`.wrl`, `.amf`; CAD `.step`/`.stp`, `.iges`/`.igs`, `.brep`, `.ifc`, `.3dm`, `.dxf`, `.dwg`; PCB layouts `.kicad_pcb` (KiCad — upload/view only); splats `.splat`, `.ksplat`, `.spz`.
-- **React preview** - `.tsx`/`.jsx` files export a default component and render live on a per-file `sitearg.com` origin. They can import relative workspace modules, portable components from `@arg/ui`, and exactly versioned npm dependencies through the nearest `package.json`.
+- **React preview** - `.tsx`/`.jsx` files export a default component and render live on a per-file `sitearg.com` origin. They can import relative workspace modules, the exact shared Arg components from `@arg/ui`, and exactly versioned npm dependencies through the nearest `package.json`.
 - **Code** - `.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.c`/`.cpp`/`.h`, `.rb`, `.php`, `.swift`, `.kt`, `.css`/`.scss`, `.vue`, `.svelte`, `.astro`, `.sh`, and more.
 - **Games & misc** — `.pgn` (chess), `.solitaire` (playable Klondike solitaire, JSON).
 - **Archives** — `.zip`, `.tar`, `.gz`/`.tgz`, `.rar`, `.7z`, `.jar`, `.war`, `.apk` (upload/view only — no blank-file creation).

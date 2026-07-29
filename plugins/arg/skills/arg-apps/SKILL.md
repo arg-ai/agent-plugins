@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.2.1"
+version: "2.4.2"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, and versioned npm imports, plus self-contained .html apps using the window.arg filesystem SDK for persistent state and identity, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -12,18 +12,16 @@ Every React preview must export one component as its default export:
 
 ```tsx
 import { useState } from "react";
-import { Button, Card, Heading, Stack, Text } from "@arg/ui";
+import { Button, Card } from "@arg/ui";
 
 export default function Welcome() {
   const [welcomed, setWelcomed] = useState(false);
 
   return (
     <Card>
-      <Stack>
-        <Heading>Welcome</Heading>
-        <Text>{welcomed ? "Hello!" : "This component renders live in Arg."}</Text>
-        <Button onClick={() => setWelcomed(true)}>Say hello</Button>
-      </Stack>
+      <h1>Welcome</h1>
+      <p>{welcomed ? "Hello!" : "This component renders live in Arg."}</p>
+      <Button onClick={() => setWelcomed(true)}>Say hello</Button>
     </Card>
   );
 }
@@ -32,8 +30,87 @@ export default function Welcome() {
 React previews support:
 
 - Relative imports from workspace `.tsx`, `.ts`, `.jsx`, `.js`, `.json`, and `.css` files. Resolution is relative to the importing file and supports extension and `index.*` fallback.
-- `@arg/ui`, a portable preview component library. It is intentionally separate from Arg's application-internal React components so previews do not inherit private contexts or app CSS.
+- `@arg/ui`, the same component package Arg uses internally, bundled with standalone theme styles for the isolated preview.
 - Bare npm imports when the package has an exact version in the nearest workspace `package.json`. React and React DOM are pinned by the editor. A versioned `https://esm.sh/package@version` import is also accepted.
+
+### Arg UI components
+
+`@arg/ui` exports Arg's exact shared `Button`, `IconButton`, `Card`, `FormInput` (`Input` is an alias), `FormTextarea` (`Textarea` is an alias), `KeyboardShortcut`, `Dropdown`, and `ContextMenu` primitives. The preview supplies the active Arg theme as `light`, `focus`, or `dark`; `focus` is the fallback when no explicit theme is present.
+
+Existing previews may also import the legacy `Badge`, `Heading`, `Text`, `Stack`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, and `CardFooter` layout helpers. They remain available for compatibility, but new previews should prefer semantic HTML composed with the exact shared primitives above.
+
+Use `Dropdown` for a controlled select. Its API matches Arg's picker: `options` contain `value`, `label`, and optional `description` or `icon`; `triggerVariant` accepts `"default"`, `"field"`, or `"ghost"`; and `searchable` adds a filter input.
+
+```tsx
+import { useState } from "react";
+import { Dropdown } from "@arg/ui";
+
+const options = [
+  { value: "comfortable", label: "Comfortable" },
+  { value: "compact", label: "Compact", description: "Fit more rows on screen" },
+];
+
+export default function DensityPicker() {
+  const [density, setDensity] = useState("comfortable");
+  return (
+    <Dropdown
+      options={options}
+      value={density}
+      onChange={setDensity}
+      triggerVariant="field"
+      searchable
+    />
+  );
+}
+```
+
+`ContextMenu` is rendered only while a right-click anchor exists. Pass viewport coordinates in `position`, clear the anchor in `onClose`, and build `items` from `item`, `separator`, `header`, `checkbox`, `submenu`, or `stepper` entries.
+
+```tsx
+import { useState } from "react";
+import { ContextMenu } from "@arg/ui";
+
+export default function ContextMenuExample() {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [pinned, setPinned] = useState(false);
+
+  return (
+    <div
+      onContextMenu={(event) => {
+        event.preventDefault();
+        setMenu({ x: event.clientX, y: event.clientY });
+      }}
+    >
+      Right-click here
+      {menu ? (
+        <ContextMenu
+          position={menu}
+          ariaLabel="Item actions"
+          onClose={() => setMenu(null)}
+          items={[
+            { kind: "item", id: "open", label: "Open", onClick: () => {} },
+            {
+              kind: "checkbox",
+              id: "pin",
+              label: "Pin",
+              checked: pinned,
+              onClick: () => setPinned((value) => !value),
+            },
+            { kind: "separator", id: "divider" },
+            {
+              kind: "item",
+              id: "delete",
+              label: "Delete",
+              danger: true,
+              onClick: () => {},
+            },
+          ]}
+        />
+      ) : null}
+    </div>
+  );
+}
+```
 
 Do not expect `window.arg` in a React preview. Use a self-contained `.html` arg-app when the page needs the opt-in filesystem SDK and persistent workspace-backed state.
 
