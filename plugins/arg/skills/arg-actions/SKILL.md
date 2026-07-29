@@ -29,6 +29,7 @@ Prefer an action over doing it by hand whenever one fits — generating or editi
 ```
 search_actions({ query: "generate image" })
 search_actions({ category: "video" })   // image | video | audio | 3d | document | web | data | integration | file
+search_actions({ provider: "slack" })   // every action for one connected service, with schemas
 ```
 
 Action ids read **`category_verb`** — `image_generate`, `video_generate`, `transcribe_audio`, `html_to_pdf`, `screenshot_webpage` (a guess like `generate_image` is wrong, though a bad id suggests the right one). **Search rather than relying on memory** for ids or which models exist.
@@ -78,6 +79,16 @@ A sampling — there are more:
 - **video / 3d / audio** — `video_generate` (text/image/video→video; also drives audio-driven avatar / lip-sync models like Kling AI Avatar - pass the portrait as `source_path` and the voice track as `audio_path`), `three_d_generate`, `video_to_audio`, `music_generate`, `tts_generate` (text→speech), `transcribe_audio`.
 - **web / data / document** — `screenshot_webpage`, `web_to_markdown` (one-shot page → Markdown), `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`), `extract_webpage_data`, `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …), `get_stock_data`, `html_to_pdf`.
 - **integration** — calls to connected services where a connector is set up: Airtable, Confluence, GitHub, Google (Gmail/Calendar/Drive), HubSpot, Jira, Linear, Microsoft, Monday.com, Notion, Salesforce, Slack. Each takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available.
+
+### Acting on a connected service
+
+Integrations are not automation-only: whatever the user has connected, you can run here.
+
+1. `search_actions({ provider: "slack" })` for that service's actions and their input schemas.
+2. Pass the `connection` id. Your system prompt names the connected services and their connection ids; otherwise `describe_action(action_id, "connection")` lists them. **Never invent one.**
+3. `run_action({ action_id: "slack_send_message", input: { connection: "<id>", channel: "C01ABC123", text: "..." } })`.
+
+A `not_configured` failure means the account is disconnected or the grant is missing a scope - tell the user to reconnect that service rather than retrying or trying a different account.
 
 ## Running an action from an automation
 
