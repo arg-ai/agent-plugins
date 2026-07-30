@@ -1,6 +1,6 @@
 ---
 name: arg-overview
-version: "1.2.1"
+version: "1.2.2"
 description: The map of the Arg (arg.ai) product — what Arg is, every offering (workspace, agent, editors, skills, automations, actions, apps, developer/agent APIs, platform surfaces, plans), who it's for, and which skill or URL to go deeper with. Load this to answer any question about Arg itself ("what is Arg", "can Arg do X", "what does it cost"), to build a get-started or onboarding guide for someone who just signed up, or to orient another agent before it loads a specialist arg-* skill.
 ---
 
@@ -35,7 +35,7 @@ Three framings of the same platform:
 | **Skills & subagents**         | Teach the agent your team's playbooks as plain markdown in `.skills/`; define specialist subagents in `.agents/`. One `.skills/` folder is read by Arg's agent, Claude Code, Cursor, and automations                                                   | `arg-skills-and-agents`                      |
 | **Actions**                    | Built-in operations the agent runs and saves as files: image/video/3D/audio/music generation and editing, transcription, web screenshot and scraping, html→pdf, stock data, connected-service calls                                                    | `arg-actions`                                |
 | **Automations (Arg Loops)**    | Workflows as files — visual `.automation` canvas or GitHub-Actions-style `.arg/workflows/*.yml` — triggered by schedule, file change, webhook, or manually; every run on the record                                                                    | `arg-file-automation`                        |
-| **Arg Apps**                   | A single `.html` file becomes an internal app (dashboard, CRM, tracker) via the `window.arg` FS SDK — workspace files are its backend. `.server` runs a process in a sandboxed container on a public URL                                               | `arg-apps`                                   |
+| **Arg Apps**                   | A single `.html` file becomes an internal app (dashboard, CRM, tracker) via the `window.arg` FS SDK - workspace files are its backend. `.server` runs a sandboxed process with Personal, Workspace, or Public access                                   | `arg-apps`                                   |
 | **Forms**                      | Shareable `.form` surveys written in MDX; submissions collect as rows the agent can read and summarize                                                                                                                                                 | `arg-file-document`                          |
 | **Recordings & meeting notes** | Record mic/screen (desktop detects meetings), transcribe, and summarize into structured notes with decisions and action items                                                                                                                          | `arg-ui`                                     |
 | **Enterprise search**          | Ask the workspace anything in plain language — semantic + keyword search across docs, decks, PDFs, images, audio, and video, with cited sources; also an API                                                                                           | `arg-mcp` (semantic_search), /product/search |

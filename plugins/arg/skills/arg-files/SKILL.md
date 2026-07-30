@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.4.2"
+version: "2.4.3"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -61,7 +61,7 @@ Arg defines native, agent-friendly formats. Load the dedicated format skill befo
 Two more custom surfaces:
 
 - **`.mdx` documents** carry Arg's custom JSX components (callouts, toggles, embeds, columns, tabs, math, mentions, recordings, and more) — documented in full in the `arg-file-document` skill.
-- **`.server`** is a JSON config that launches a process in a sandboxed container and exposes a port as a public URL — see the `arg-apps` skill.
+- **`.server`** is a JSON config that launches a process in a sandboxed container and exposes a port with Personal, Workspace, or Public access - see the `arg-apps` skill.
 - **`.form`** is an MDX document with form field components; shared externally, it collects responses as rows — see the `arg-file-document` skill.
 
 ## Other supported formats (no dedicated skill — handle directly)

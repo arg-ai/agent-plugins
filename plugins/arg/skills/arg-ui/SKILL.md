@@ -1,6 +1,6 @@
 ---
 name: arg-ui
-version: "1.0.2"
+version: "1.0.3"
 description: Feature overview of the Arg web app and desktop (macOS/Windows/Linux) app — what a user or agent can do in each surface, and what the desktop app adds on top of the web app. Load this to explain Arg's product functionality, decide which surface a capability lives on, or point a user at the right feature. For file CRUD, load arg-files plus the access-method and arg-file-* skills instead.
 ---
 
@@ -39,7 +39,7 @@ Arg opens and edits many formats directly in the browser, including Arg's own ag
 - **Canvas & design** — `.design` (vector canvas), `.svg`, `.whiteboard` (infinite canvas), `.mermaid` diagrams, `.shadertoy`/GLSL shaders.
 - **Productivity** — `.kanban` boards, `.form` surveys, spreadsheets (`.csv`, `.xlsx`), `.pptx` decks, calendars, maps (`.kml`).
 - **Media** — image, audio, and video viewers plus a multi-track `.video` NLE timeline; 3D models and Gaussian splats.
-- **Code** — syntax-aware viewing/editing for most languages, with sandboxed run for Python/Bash, and `.server` apps that expose a running process on a public URL.
+- **Code** - syntax-aware viewing/editing for most languages, with sandboxed run for Python/Bash, and `.server` apps that expose a running process with Personal, Workspace, or Public access.
 
 See `arg-files` for the full format list and which formats have a dedicated skill.
 
