@@ -1,13 +1,13 @@
 ---
 name: arg-actions
 version: "1.0.0"
-description: Run Arg's built-in actions - operations that generate or transform workspace files and data (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping, Markdown/HTML conversion, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand - e.g. "generate an image", "make a video", "transcribe this audio", "convert markdown to html", "convert html to pdf". Driven by four tools: search_actions, describe_action, run_action, list_runs.
+description: Run Arg's built-in actions — operations that generate or transform workspace files (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping — Instagram/LinkedIn/X/YouTube/reviews via web_scrape, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand — e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools: search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
 
 # Arg actions
 
-An **action** is an operation Arg runs for you and returns as a typed result: media generation and editing (image, video, 3D, audio, music, speech), image crop/resize/recolor, transcription, web screenshot, web/social scraping (`web_scrape` wraps curated scrapers for Instagram, LinkedIn - no cookies, X/Twitter, YouTube, Trustpilot/G2/Glassdoor reviews, Similarweb, and general site crawling; the Instagram reel scraper can return native reel transcripts), Markdown/HTML conversion, `html`→`pdf`/`image`, stock data, and calls to connected services (GitHub, Jira, ...). File-producing actions save a normal workspace file you can read, open, embed, or edit; data-producing actions return inline fields for the next action or automation node.
+An **action** is an operation Arg runs for you and saves straight into the workspace: media generation and editing (image, video, 3D, audio, music, speech), image crop/resize/recolor, transcription, web screenshot, web/social scraping (`web_scrape` wraps curated scrapers for Instagram, LinkedIn — no cookies, X/Twitter, YouTube, Trustpilot/G2/Glassdoor reviews, Similarweb, and general site crawling; the Instagram reel scraper can return native reel transcripts), `html`→`pdf`/`image`, stock data, and calls to connected services (GitHub, Jira, …). You don't build actions — you find the right one and run it. The result is a normal workspace file you can read, open, embed, or edit.
 
 Prefer an action over doing it by hand whenever one fits — generating or editing media, transcribing audio/video, screenshotting or scraping a page, converting a document. Arg does the work and writes the result for you.
 
@@ -15,12 +15,12 @@ Prefer an action over doing it by hand whenever one fits — generating or editi
 
 ## The four tools (use in this order)
 
-| Tool              | What it does                                                                                              |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| `search_actions`  | Find actions by keyword or category. **Start here.**                                                      |
-| `describe_action` | Look at ONE action's inputs and outputs, and list the choices for any field you must pick (like `model`). |
-| `run_action`      | Run one by id with its `input`. Waits for long jobs and reports progress in the tool UI.                  |
-| `list_runs`       | Check past or in-flight runs - status, progress, output file.                                             |
+| Tool              | What it does                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| `search_actions`  | Find actions by keyword or category. **Start here.**                                          |
+| `describe_action` | Look at ONE action's inputs, and list the choices for any field you must pick (like `model`). |
+| `run_action`      | Run one by id with its `input`. Waits for long jobs and reports progress in the tool UI.      |
+| `list_runs`       | Check past or in-flight runs - status, progress, output file.                                 |
 
 **Flow:** `search_actions` → `describe_action` (when you need a field's choices or the exact inputs) → `run_action`. Use `list_runs` to inspect history or recover an interrupted run.
 
@@ -34,10 +34,10 @@ search_actions({ provider: "slack" })   // every action for one connected servic
 
 Action ids read **`category_verb`** — `image_generate`, `video_generate`, `transcribe_audio`, `html_to_pdf`, `screenshot_webpage` (a guess like `generate_image` is wrong, though a bad id suggests the right one). **Search rather than relying on memory** for ids or which models exist.
 
-### 2. Check inputs and outputs - `describe_action`
+### 2. Check inputs — `describe_action`
 
 ```
-describe_action({ action_id: "image_generate" })                      // its input and output fields
+describe_action({ action_id: "image_generate" })                      // the inputs it takes
 describe_action({ action_id: "image_generate", field: "model" })      // the model choices
 describe_action({ action_id: "image_generate", field: "model", value: "<id from the list>" })  // that model's extra settings
 ```
@@ -78,7 +78,7 @@ A sampling — there are more:
 
 - **image** — `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `html_to_image` (render HTML → png/jpeg/webp), plus `image_crop` / `image_resize` / `image_recolor` / `image_metadata` / `image_blank`.
 - **video / 3d / audio** — `video_generate` (text/image/video→video; also drives audio-driven avatar / lip-sync models like Kling AI Avatar - pass the portrait as `source_path` and the voice track as `audio_path`), `three_d_generate`, `video_to_audio`, `music_generate`, `tts_generate` (text→speech), `transcribe_audio`.
-- **web / data / document** - `screenshot_webpage`, `web_to_markdown` (one-shot page → Markdown), `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`), `extract_webpage_data`, `web_scrape` (curated Apify scrapers - Instagram, LinkedIn, X, YouTube, G2, Trustpilot, ...), `get_stock_data`, `markdown_to_html` (inline Markdown → `output.html`), `html_to_markdown` (inline HTML → `output.markdown`), `html_to_pdf`.
+- **web / data / document** — `screenshot_webpage`, `web_to_markdown` (one-shot page → Markdown), `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`), `extract_webpage_data`, `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …), `get_stock_data`, `html_to_pdf`.
 - **integration** — calls to connected services where a connector is set up: Airtable, Confluence, GitHub, Google (Gmail/Calendar/Drive), HubSpot, Jira, Linear, Microsoft, Monday.com, Notion, Salesforce, Slack. Each takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available.
 
 ### Acting on a connected service
@@ -111,37 +111,10 @@ they all show up in run history too. Keep using those kinds; they just have a fr
 shape, and they keep their own output key names (`output.path`, `output.image_url`) alongside
 the action's (`output.output_path`, `output.asset_url`).
 
-Text-conversion actions return their converted text inline rather than creating a file:
-
-- `markdown_to_html` returns `output.html`.
-- `html_to_markdown` returns `output.markdown`.
-
-That makes them composable without a temporary file. For example, a Markdown-producing node can
-feed `markdown_to_html`, whose HTML can feed `html_to_pdf`:
-
-```yaml
-- id: render_html
-  uses: action/markdown_to_html
-  with:
-    markdown: "{{ draft.output.markdown }}"
-- id: render_pdf
-  uses: action/html_to_pdf
-  with:
-    html: "{{ render_html.output.html }}"
-    output_path: reports/final.pdf
-```
-
-The visual automation editor uses the same fields: connect or insert the Markdown node's output
-into **Markdown to HTML**, then use its **HTML** output as the inline **HTML** input on **HTML to
-PDF**. Use `html_to_markdown` in the opposite direction when a node returns HTML but the next node
-needs Markdown. The HTML/Markdown conversion itself is inline; add `write-file` only when you also
-want to persist the converted text as a workspace file.
-
 ## Tips
 
 - **Search before you run.** Pick model ids from `describe_action`; guessing fails.
 - **A queued/running job isn't a failure** - inspect it with `list_runs`; don't re-run it.
-- **After a file-producing action succeeds, the file is at `output.output_path`** - that's what to open, embed, or edit next.
-- **Read the declared output fields.** Data-producing actions can return inline text or structured data without an `output_path`; pass those fields directly to the next action.
-- **File-producing actions use one source file and one output file.** Data-producing actions need not create a file.
-- **Don't hand-roll what an action does** - for media, transcription, screenshots, or conversions, an action is more reliable than writing bytes yourself.
+- **After success, the file is at `output.output_path`** — that's what to open, embed, or edit next.
+- **One file in, one file out** per action.
+- **Don't hand-roll what an action does** — for media, transcription, screenshots, or conversions, an action is more reliable than writing bytes yourself.
