@@ -47,8 +47,8 @@ Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) an
   - `font` — `sans` (default) / `serif` / `mono`.
   - `align` — `left` (default) / `center` / `right`.
   - `markers` — `bullets` (default) / `none`.
-- **`<PromptTemplate>…</PromptTemplate>`** — block. No props. Body supports `{{variable}}` placeholders.
-- **`<EmailTemplate>…</EmailTemplate>`** — block. All props optional strings: `to`, `cc`, `bcc`, `subject`.
+- **`<PromptTemplate>…</PromptTemplate>`** — block. No props. Body supports `{{variable}}` placeholders and full markdown blocks (lists, headings, tables, quotes, code).
+- **`<EmailTemplate>…</EmailTemplate>`** — block. All props optional strings: `to`, `cc`, `bcc`, `subject`. Body supports full markdown blocks (lists, headings, tables, quotes, code).
 - **`<FileEmbed />`** — void. Embeds another workspace file inline.
   - `path` — **required**. Write the workspace path (e.g. `clips/intro.mp4`). On load the editor records the file's stable id (`argfile_<uuid>`) alongside it, round-tripping as `path="clips/intro.mp4" id="argfile_…"` — the path stays readable and the id makes the embed survive renames/moves. (A legacy `id="<path or argfile_…>"` is still accepted, but prefer `path`.)
   - `height` — number, px.
