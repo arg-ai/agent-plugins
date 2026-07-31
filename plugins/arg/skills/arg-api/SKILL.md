@@ -23,6 +23,7 @@ x-api-key: arg_live_…
 
 - Keys are **org-scoped** and belong to a principal: a **user-owned** key inherits your current access in that org; a **service-account** key inherits its service account's role and grants. No separate scope system.
 - User sessions can also call the API with `Authorization: Bearer <access-token>`; long-lived automation should use an API key.
+- `GET /api/auth/principal` tells you which identity a credential resolves to (`kind`, `id`, `email`, `name`, `api_key_id`, `service_account_id`, bound `organization`) — use it to confirm a key works, and which org it reaches. `GET /api/auth/me` is the richer profile route but is user-session-only and `401`s under a key.
 - **Gotcha:** `POST /api/workspaces` requires a user principal — service-account keys get `403`. Unattended jobs create workspaces under an org instead: `POST /api/organizations/{orgId}/workspaces`.
 
 Errors are always `{ "detail": "…" }` with the matching HTTP status: `401` bad/missing key, `403` authenticated but not permitted, `404`, `422` validation, `429` rate limited.
