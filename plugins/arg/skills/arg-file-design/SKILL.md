@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.1.4"
+version: "1.1.5"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides.
 ---
 
@@ -11,8 +11,6 @@ description: Create, read, update, and delete design files in Arg — the native
 ## CRUD
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Design-specific: `.design`/`.svg` are text — edit the JSON / SVG markup directly, and reuse the design's existing colors, type, and spacing. **`.fig` is binary and import-only** — read it for structure/tokens, but edits don't write back; to create a Figma-like file from scratch, produce a `.design` or `.svg` instead.
-
-When the Arg agent exposes `preview_file`, use it after creating or changing a `.design` file. It renders the design through the same headless renderer as `render_design` and returns a JPEG for visual inspection without creating an export file in the workspace.
 
 ## Schema essentials
 

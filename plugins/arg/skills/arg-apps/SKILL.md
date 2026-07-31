@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.5.0"
+version: "2.5.1"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, and versioned npm imports, plus self-contained .html apps using the window.arg filesystem SDK for persistent state and identity, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -114,13 +114,9 @@ export default function ContextMenuExample() {
 
 Do not expect `window.arg` in a React preview. Use a self-contained `.html` arg-app when the page needs the opt-in filesystem SDK and persistent workspace-backed state.
 
-When the Arg agent exposes `preview_file`, use it after creating or changing a `.tsx`/`.jsx` preview. It compiles the workspace modules and renders the component through the isolated site preview, returning a JPEG the model can inspect. Every executable preview run pauses for fresh explicit user approval because read-only workspace data could still be disclosed by authored network code.
-
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
 Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup; the SDK only activates when the user turns it on.
-
-Use `preview_file` to inspect the rendered page when the Arg agent exposes it. After the user approves the executable preview, it runs with bounded read-only workspace access, so runtime reads can populate the page but previewing cannot mutate workspace files.
 
 ## CRUD
 
