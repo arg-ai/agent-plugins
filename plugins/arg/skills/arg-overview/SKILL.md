@@ -1,6 +1,6 @@
 ---
 name: arg-overview
-version: "1.2.2"
+version: "1.3.0"
 description: The map of the Arg (arg.ai) product — what Arg is, every offering (workspace, agent, editors, skills, automations, actions, apps, developer/agent APIs, platform surfaces, plans), who it's for, and which skill or URL to go deeper with. Load this to answer any question about Arg itself ("what is Arg", "can Arg do X", "what does it cost"), to build a get-started or onboarding guide for someone who just signed up, or to orient another agent before it loads a specialist arg-* skill.
 ---
 
@@ -58,14 +58,14 @@ Three framings of the same platform:
 | **Desktop** (macOS/Windows/Linux)         | Local-folder workspaces, folder sync, offline access, drag to/from Finder/Explorer, native notifications, meeting detection, local Claude Code/Codex agents, a local MCP server exposing shared folders to external agents | `arg-ui`   |
 | **Mobile** (iOS/Android)                  | Chat with file context on the go, snap photos into a workspace, voice prompts, push notifications                                                                                                                          | /mobile    |
 | **Browser extension** (Chrome/Edge/Brave) | Workspace side panel on any tab — ask about the page, clip text/screenshots/links into a workspace                                                                                                                         | /extension |
-| **CLI** (`arg`)                           | Terminal file CRUD, uploads/downloads, skill install (`arg init`), `arg mount` for a local FUSE mount                                                                                                                      | `arg-cli`  |
+| **CLI** (`arg`)                           | Workspace-aware terminal agent (`arg agent`), file CRUD, uploads/downloads, skill install (`arg init`), and `arg mount` for local workspace sync                                                                           | `arg-cli`  |
 | **MCP server**                            | `https://api.arg.ai/mcp` — connect Claude, Codex, Cursor, or any MCP client to a workspace; the desktop app can also host a local loopback MCP server over shared folders (Settings → Agent Access)                        | `arg-mcp`  |
 | **REST API**                              | `https://api.arg.ai` — files, search, sandbox, comments, notifications, agents; OpenAPI spec                                                                                                                               | `arg-api`  |
 
 ## For developers & external agents
 
 - **Connect over MCP (fastest):** `claude mcp add -t http arg https://api.arg.ai/mcp` — OAuth sign-in, pick a workspace. For headless/CI, create an API key at https://arg.ai/platform/api-keys and use `https://api.arg.ai/mcp/<workspace-id>` with an `x-api-key` header.
-- **CLI:** `curl -fsSL https://arg.ai/cli | sh`, then `arg login` → `arg workspace switch` → `ls`/`cat`/`grep`/`upload`/`download`/`mount`.
+- **CLI:** `curl -fsSL https://arg.ai/cli | sh`, then `arg login` → `arg workspace switch` → `arg agent` for terminal chat, or `ls`/`cat`/`grep`/`upload`/`download`/`mount` for direct workflows.
 - **Agent-facing APIs:** storage (walk the tree, land outputs as files), search (semantic/keyword, permission-aware, cited), sandbox (isolated Python/Bash with the workspace mounted, streamed output), artifacts (upload + share with expiring/gated links), comments, and notifications. Index: https://arg.ai/llms.txt. Building code against the REST API → `arg-api`.
 - **API keys** belong to a user or a service account and inherit that principal's access — no separate scope system to reason about.
 - **The `window.arg` FS SDK** turns a previewed `.html` file into a file-backed app — see `arg-apps`.

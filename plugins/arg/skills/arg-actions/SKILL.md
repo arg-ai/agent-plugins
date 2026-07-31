@@ -1,7 +1,7 @@
 ---
 name: arg-actions
-version: "1.0.0"
-description: Run Arg's built-in actions — operations that generate or transform workspace files (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping — Instagram/LinkedIn/X/YouTube/reviews via web_scrape, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand — e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools: search_actions, describe_action, run_action, list_runs.
+version: "1.0.1"
+description: Run Arg's built-in actions — operations that generate or transform workspace files (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping — Instagram/LinkedIn/X/YouTube/reviews via web_scrape, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand — e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
 
