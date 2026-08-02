@@ -1,6 +1,6 @@
 ---
 name: arg-fs-js-sdk
-version: "1.0.0"
+version: "1.0.1"
 description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html files. Load when building or modifying a single-file HTML app that reads or writes workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
 ---
 
@@ -150,37 +150,54 @@ document.body.append(img);
 
 **Glob semantics:** `*` matches within a path segment, `**` spans separators, `?` matches a single non-`/` character. A leading `/` in the pattern is workspace-root-relative; otherwise it resolves against `cwd` (default: the scope root).
 
-## Relative `fetch()`
+## Workspace file `fetch()`
 
-String GET and HEAD requests without a URL scheme read workspace files through the same authenticated bridge as `arg.fs.readFile()`:
+Requests for relative paths, canonical Arg file URLs, and `arg://` workspace URIs use the same authenticated bridge as `arg.fs`:
 
 ```js
 const res = await fetch("magic-numbers.csv", { cache: "no-store" });
 if (!res.ok) throw new Error(`Could not load CSV (${res.status})`);
 const csv = await res.text();
+
+const save = await fetch("magic-numbers.csv", {
+  method: "PATCH",
+  body: new TextEncoder().encode("4,5,6\n"),
+});
+if (!save.ok) throw new Error(`Could not save CSV (${save.status})`);
+
+await fetch("obsolete.csv", { method: "DELETE" });
 ```
 
+- `GET` and `HEAD` read through `arg.fs.readFile()`.
+- `POST`, `PUT`, and `PATCH` replace the entire file with the exact request-body bytes through the existing scoped `write` operation. They are equivalent whole-file upserts - `PATCH` is not JSON Patch or a partial merge.
+- `DELETE` removes the file through `arg.fs.remove()`.
+- `OPTIONS` returns the supported method list without touching the file.
 - Relative paths resolve against `arg.dir`; a leading `/` is workspace-root-relative.
+- Canonical `https://arg.ai/.../files/workspace/<id>/file/...` links, Arg-owned `*.arg.ai` preview links, and `arg://<org>/w/<workspace>/...` URIs bridge only when their workspace id exactly matches `arg.workspaceId`. A different workspace returns 403 without a network request.
+- String, `URL`, and `Request` inputs are supported.
 - Query strings and fragments are ignored for the workspace file lookup.
 - The result is a normal `Response`, including binary-safe bodies, `Content-Type`, and `Content-Length`.
+- Successful writes and deletes return status 200 with the bridge result as JSON.
 - `cache: "no-store"`, `"reload"`, or `"no-cache"` forces a fresh file read through the existing cache policy.
-- `not_found` becomes 404; permission, scope, and disabled-access failures become 403; bad paths become 400; over-cap files become 413.
-- `AbortSignal` cancels the caller-facing fetch promise, and GET/HEAD requests with bodies reject like native fetch.
-- Absolute and protocol-relative URLs, `Request` objects, non-GET/HEAD methods, and calls made while Workspace access is disabled use native browser fetch.
-- Relative fetch decodes files up to 16 MB inline to limit preview memory use. Use `arg.fs.assetUrl()` for larger images, video, audio, PDFs, and other streaming media.
+- `not_found` becomes 404; permission, scope, read-only, and disabled-access failures become 403; bad paths become 400; over-cap bodies become 413.
+- `AbortSignal` prevents a mutation before it is dispatched. Once a write/delete reaches the bridge, fetch resolves its real result rather than claiming a committed mutation was cancelled.
+- Other absolute and protocol-relative URLs and unsupported methods keep native browser fetch behavior. Recognized mutations fail closed when Workspace access is disabled.
+- Bridged reads and write bodies are limited to 16 MB inline. Use `arg.fs.assetUrl()` for larger images, video, audio, PDFs, and other streaming reads.
+- Request headers do not set workspace file metadata and conditional-write headers are not supported.
 
-## Relative scripts and stylesheets
+## Workspace scripts, stylesheets, and media
 
-With Scripts and Workspace access enabled, static classic scripts and stylesheets can be split into sibling workspace files:
+With Scripts and Workspace access enabled, static classic scripts, stylesheets, and media can reference workspace files:
 
 ```html
 <link rel="stylesheet" href="styles/app.css" />
 <script src="scripts/app.js" defer></script>
+<img src="arg://acme/w/workspace-id/media/hero.png" />
 ```
 
-The preview resolves each scheme-less `src`/`href` beside the HTML file, or from the workspace root for a leading `/`, and replaces it with an exact signed asset URL before browser parsing. The selected folder/workspace scope and the signed-in user's read permission are enforced for every file. Query strings and fragments are ignored for lookup but retained on the loaded URL. Browser-native classic script ordering, `async`, `defer`, and element attributes are preserved. Absolute and protocol-relative URLs are unchanged.
+The preview resolves relative paths beside the HTML file, or from the workspace root for a leading `/`. Matching-workspace canonical Arg URLs and `arg://` workspace URIs resolve to the path they carry. Static `img`, `video`, `audio`, `source`, and `track` sources plus video posters are replaced with an exact signed asset URL before browser parsing. Runtime media setters are intercepted before native loading, including on detached React-created elements, and resolved through the same `assetUrl()` bridge; a resolved child `<source>` restarts parent media selection. Cross-workspace references and failed URL mints remain inert instead of loading the authored Arg URL directly. The selected folder/workspace scope and the signed-in user's read permission are enforced for every file. Query strings and fragments are ignored for lookup but retained on the loaded URL. Browser-native classic script ordering, `async`, `defer`, and element attributes are preserved. Non-Arg absolute and protocol-relative URLs are unchanged.
 
-This bounded support does not rewrite `type="module"` scripts, dynamically inserted tags, preload/modulepreload links, CSS `@import`, or relative `url()` dependencies inside a stylesheet. Keep those inline, use absolute URLs, or load their bytes explicitly through `arg.fs`.
+This bounded support does not rewrite `type="module"` scripts, preload/modulepreload links, `srcset`, CSS `@import`, or relative `url()` dependencies inside a stylesheet. Keep those inline, use absolute URLs, or load their bytes explicitly through `arg.fs`.
 
 ## SQLite — `arg.db.*`
 

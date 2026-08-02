@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.5.1"
+version: "2.5.2"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, and versioned npm imports, plus self-contained .html apps using the window.arg filesystem SDK for persistent state and identity, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -112,7 +112,7 @@ export default function ContextMenuExample() {
 }
 ```
 
-Do not expect `window.arg` in a React preview. Use a self-contained `.html` arg-app when the page needs the opt-in filesystem SDK and persistent workspace-backed state.
+React previews can also receive `window.arg` after the user explicitly enables Workspace access in the preview permissions menu. Keep capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
 
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
@@ -230,24 +230,31 @@ const asset = await arg.fs.assetUrl("hero.png");
 img.src = asset.url;
 ```
 
-Relative string GET and HEAD `fetch()` calls use the same file bridge and permissions:
+Relative paths plus canonical Arg file URLs and `arg://` workspace URIs in `fetch()` calls use the same file bridge and permissions:
 
 ```js
 const res = await fetch("magic-numbers.csv", { cache: "no-store" });
 if (!res.ok) throw new Error(`Could not load CSV (${res.status})`);
 const csv = await res.text();
+
+await fetch("magic-numbers.csv", {
+  method: "PUT",
+  body: "4,5,6\n",
+});
 ```
 
-Relative paths resolve beside the HTML file, a leading `/` starts at the workspace root, and query/hash suffixes are ignored for file lookup. The result is a normal binary-safe `Response`; `AbortSignal` cancels the caller-facing promise, and over-cap files return 413. Absolute URLs, `Request` objects, non-GET/HEAD methods, and disabled Workspace access keep native browser behavior. Relative fetch decodes up to 16 MB inline to limit preview memory use, so large media should use `arg.fs.assetUrl()`.
+`GET`/`HEAD` read files, `POST`/`PUT`/`PATCH` replace the entire file with the exact request-body bytes, `DELETE` removes it, and `OPTIONS` reports the supported methods. The three write methods are whole-file upsert aliases - `PATCH` is not a partial merge. Successful mutations return status 200 with the bridge result as JSON. Relative paths resolve beside the preview file and a leading `/` starts at the workspace root. Canonical `https://arg.ai/.../files/workspace/<id>/file/...` links, Arg-owned `*.arg.ai` preview links, and `arg://<org>/w/<workspace>/...` URIs resolve only when their workspace id exactly matches `arg.workspaceId`; a different workspace returns 403 without reaching the network. String, `URL`, and `Request` inputs are supported. Query/hash suffixes are ignored for file lookup. Reads and write bodies are binary-safe and capped at 16 MB. Abort prevents a mutation before bridge dispatch; after dispatch, fetch reports the real mutation result. Other absolute URLs, protocol-relative URLs, and unsupported methods keep native browser behavior, while recognized mutations fail closed when Workspace access is disabled. Request headers do not set file metadata or conditional-write behavior. Large streaming reads should use `arg.fs.assetUrl()`.
 
-Static classic scripts and stylesheets can also live beside the HTML:
+Static classic scripts, stylesheets, and media can also live beside the HTML:
 
 ```html
 <link rel="stylesheet" href="styles/app.css" />
 <script src="scripts/app.js" defer></script>
+<img src="arg://acme/w/workspace-id/media/hero.png" />
+<video src="https://arg.ai/o/acme/files/workspace/workspace-id/file/media/demo.mp4"></video>
 ```
 
-With Scripts and Workspace access enabled, the preview resolves those scheme-less references through the same folder/workspace scope and per-file read permissions before browser parsing. Classic script order, `async`, `defer`, and other attributes stay native. Module scripts, dynamically inserted tags, preload links, CSS `@import`, and relative `url()` dependencies are not rewritten.
+With Scripts and Workspace access enabled, static `img`, `video`, `audio`, `source`, and `track` sources plus video posters resolve before browser parsing through short-lived `assetUrl()` capabilities. Runtime media setters use the same resolver before native loading, including on detached elements created by React, and a resolved child `<source>` restarts its parent media element. Cross-workspace references and failed URL mints remain inert instead of loading the authored Arg URL directly. Relative paths and matching-workspace canonical Arg/`arg://` references all retain the selected folder/workspace scope and per-file read permissions. Classic script order, `async`, `defer`, and other attributes stay native. Module scripts, preload links, `srcset`, CSS `@import`, and relative `url()` dependencies are not rewritten.
 
 Actor metadata intentionally omits member emails. Use `arg.me.email` only for the current signed-in user.
 
