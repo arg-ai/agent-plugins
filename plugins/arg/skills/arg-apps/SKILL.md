@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.5.2"
+version: "2.6.1"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, and versioned npm imports, plus self-contained .html apps using the window.arg filesystem SDK for persistent state and identity, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -117,6 +117,31 @@ React previews can also receive `window.arg` after the user explicitly enables W
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
 Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup; the SDK only activates when the user turns it on.
+
+## Full-view apps
+
+Add `<meta name="arg-full-view" />` to authored source when the file should open as a preview-first app inside the WorkspaceBrowser. It hides the source pane and collapses the per-file toolbar to navigable breadcrumbs while leaving the surrounding WorkspaceBrowser navigation and tabs available:
+
+```html
+<head>
+  <meta name="arg-full-view" />
+</head>
+```
+
+For web `.tsx` and `.jsx` previews, put the same static lowercase element in the returned component tree:
+
+```tsx
+export default function App() {
+  return (
+    <>
+      <meta name="arg-full-view" />
+      <main>Your app</main>
+    </>
+  );
+}
+```
+
+The exact native `<meta>` element must be present in JSX; a `<Meta>` component, comment, or string does not activate full view. Desktop supports full view for HTML, but deliberately ignores it for TSX/JSX because executable React previews require the isolated web render origin and are unavailable from Electron's `file://` parent. The marker takes effect after local saving and collaboration sync settle, and full view intentionally shows no floating source/app toggle.
 
 ## CRUD
 

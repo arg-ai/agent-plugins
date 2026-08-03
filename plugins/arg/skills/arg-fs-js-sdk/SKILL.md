@@ -1,6 +1,6 @@
 ---
 name: arg-fs-js-sdk
-version: "1.0.1"
+version: "1.2.1"
 description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html files. Load when building or modifying a single-file HTML app that reads or writes workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
 ---
 
@@ -17,6 +17,10 @@ When a `.html` file is previewed inside arg it renders in a **sandboxed, null-or
 ## Runtime theme
 
 Every HTML document that receives `window.arg` also receives exactly one active Arg theme class on `<body>`: `light`, `dark`, or `focus`. Preserve these runtime classes in generated SDK-enabled pages and provide explicit styles for all three, treating `focus` as its own warm, low-distraction palette rather than a light alias. Read the body class instead of `prefers-color-scheme`, which may disagree with the user's selected Arg theme.
+
+## Full-view app chrome
+
+An authored HTML file can include `<meta name="arg-full-view" />` in its `<head>` to open preview-first inside the WorkspaceBrowser after local saving and collaboration sync settle. The marker hides the source pane and collapses the per-file toolbar to navigable breadcrumbs, without changing the surrounding WorkspaceBrowser navigation or tabs. Full view intentionally shows no floating source/app toggle.
 
 ## The three rules (read these first)
 
