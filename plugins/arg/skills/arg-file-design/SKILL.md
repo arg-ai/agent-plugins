@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.1.5"
+version: "1.1.6"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides.
 ---
 
@@ -11,6 +11,28 @@ description: Create, read, update, and delete design files in Arg — the native
 ## CRUD
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Design-specific: `.design`/`.svg` are text — edit the JSON / SVG markup directly, and reuse the design's existing colors, type, and spacing. **`.fig` is binary and import-only** — read it for structure/tokens, but edits don't write back; to create a Figma-like file from scratch, produce a `.design` or `.svg` instead.
+
+## Editing library
+
+For `.design` JSON, prefer the bundled dependency-free module at `scripts/document-edit/design.mjs`. It is generated from `@arg-ai/sdk` and preserves unknown fields while cloning every edit. Resolve that path from the installed skill directory. When the workspace is mounted locally, a complete edit looks like:
+
+```js
+import { readFile, writeFile } from "node:fs/promises";
+import {
+  parseDesign,
+  patchDesignObject,
+  stringifyDesign,
+} from "/path/to/arg-file-design/scripts/document-edit/design.mjs";
+
+const path = process.argv[2];
+const document = parseDesign(await readFile(path, "utf8"));
+const updated = patchDesignObject(document, "title", { text: "Updated title" });
+await writeFile(path, stringifyDesign(updated));
+```
+
+Use the artboard, object, and shader helpers for relationship-aware edits; `collectDesignFileReferences` and `replaceDesignFillSource` handle linked fills. Use `editDesign` with JSON `set`, `merge`, `delete`, `insert`, or `move` operations for uncommon leaf fields. Every structural helper validates before returning. With MCP or direct CLI access, read and write through that access method instead of `node:fs`; the library itself performs no network or authentication work.
+
+Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDesignObject(doc, id, { parentId?, index? })`, and `patchDesignObject(doc, id, patch)`. Raw paths are arrays, for example `editDesign(doc, [{ op: "set", path: ["objects", "title", "name"], value: "New name" }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
 
 ## Schema essentials
 

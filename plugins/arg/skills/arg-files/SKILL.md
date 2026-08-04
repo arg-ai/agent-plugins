@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.4.4"
+version: "2.4.5"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -20,6 +20,7 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 - **Edit surgically** where the method supports targeted edits; otherwise rewrite the whole file.
 - **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, sqlite) can't be — create them by uploading bytes or by running a generator (`python-pptx`, `sqlite3`, `ffmpeg`, Pillow); your access-method skill says exactly how and where that runs.
 - **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card.
+- **Structured edit libraries:** the Design, Video, and Kanban skills bundle small dependency-free modules under `scripts/document-edit/`. Prefer their relationship-aware helpers over hand-editing linked ids and arrays; use their raw JSON edit operation for fields without a dedicated helper.
 - **Linked workspace files:** author the documented readable path field only. Editors such as `.video`, `.design`, `.kanban`, `.daw`, and `.dj` add or refresh their optional durable `argfile_...` fields when the file opens. Never invent a file id or replace a path with one.
 - **Delete / move:** to remove part of a structured file (a card, a node), edit the JSON rather than deleting the file; your access-method skill covers deleting/moving whole files.
 - **Respect locked files.** A file can be locked ("editing locked"): writing to or editing it is refused with an error. Don't fight the lock or route around it - surface it to the user, who can unlock the file if they want the change. A lock freezes content only, so moving/renaming/copying/deleting a locked file still works - but confirm with the user first, since the lock says they care about that file.

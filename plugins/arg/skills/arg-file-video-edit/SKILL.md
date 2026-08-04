@@ -1,6 +1,6 @@
 ---
 name: arg-file-video-edit
-version: "1.3.1"
+version: "1.3.2"
 description: Create, read, and update Arg's .video non-linear editor (NLE) timeline projects — multi-track video/audio/GIF/text/effects edits that composite a live preview and render to MP4/WebM. Load when building or editing a .video timeline (montages, animated GIFs, titles, transitions, color grades). For raw video files (mp4/mov/webm), see arg-files.
 ---
 
@@ -17,7 +17,29 @@ This is the _edit project_, not a media file. Clips **reference** existing works
 - **Reference only media that already exists** in the workspace, by workspace-relative `src` (always starts with `/`). Never invent paths — a bad `src` renders nothing.
 - Author linked files by `src` only. The editor manages the optional durable `srcFileId` (and `cursorTelemetryFileId` for `cursorTelemetrySrc`) so links survive workspace renames and moves. Preserve a valid existing id when editing, but never invent one.
 - Give every track and clip a **unique `id`**, and write valid, pretty-printed (2-space) JSON.
-- **All timing is in seconds** (floats). Parsing deep-clones defaults and clamps/drops invalid values, so hand-authored files round-trip safely.
+- **All timing is in seconds** (floats). The Arg editor normalizes invalid fields when it opens a project. The bundled editing library instead preserves unknown fields and rejects invalid timing or relationships, so validate helper output before writing.
+
+## Editing library
+
+For `.video` JSON, prefer the bundled dependency-free module at `scripts/document-edit/video.mjs`. It is generated from `@arg-ai/sdk` and preserves unknown fields while cloning every edit. Resolve that path from the installed skill directory. When the workspace is mounted locally, a complete edit looks like:
+
+```js
+import { readFile, writeFile } from "node:fs/promises";
+import {
+  parseVideo,
+  patchVideoClip,
+  stringifyVideo,
+} from "/path/to/arg-file-video-edit/scripts/document-edit/video.mjs";
+
+const path = process.argv[2];
+const project = parseVideo(await readFile(path, "utf8"));
+const updated = patchVideoClip(project, "title", { start: 1.5, duration: 4 });
+await writeFile(path, stringifyVideo(updated));
+```
+
+Use the track and clip helpers for placement, compatibility, overlap, move, and split safety. Marker, keyframe, transcript, and file-reference helpers cover the other linked structures. Use `editVideo` with JSON `set`, `merge`, `delete`, `insert`, or `move` operations for uncommon leaf fields. Every structural helper validates before returning. With MCP or direct CLI access, read and write through that access method instead of `node:fs`; the library itself performs no network or authentication work.
+
+Key call shapes: `addVideoClip(project, trackId, clip, { placement?: "reject" | "next-free" })`, `moveVideoClip(project, clipId, targetTrackId, start, options?)`, and `splitVideoClip(project, clipId, time, rightId?)`. Raw paths are arrays, for example `editVideo(project, [{ op: "set", path: ["settings", "fps"], value: 60 }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
 
 ## Schema
 
@@ -54,7 +76,7 @@ Base: `{ id, type, name, enabled, start, duration }`.
 Workspace-backed `src` clips may also contain the UI-managed `srcFileId` (`argfile_<uuid>`). A clip with cursor telemetry may pair `cursorTelemetrySrc` with `cursorTelemetryFileId`. These ids are optional and additive; the path remains the readable fallback.
 
 - `type` — `video` / `audio` / `image` / `gif` / `cast` / `text` / `solid` / `adjustment` / `stock` / `weather` / `shape` / `embed` / `object3d` / `shader` / `zoom`.
-- `start` = position on the timeline (s); `duration` = length on the timeline (s). **Clips on one track must not overlap** — a track is a sequence; put overlapping content (titles over footage, picture-in-picture) on separate tracks.
+- `start` = position on the timeline (s); `duration` = length on the timeline (s). Clips on one track must not overlap except when an incoming clip uses a `cross-dissolve` `transitionIn`; put other overlapping content (titles over footage, picture-in-picture) on separate tracks.
 
 Type-specific:
 
@@ -216,7 +238,7 @@ A 1080p edit: an intro clip with a fade-out cross-dissolve, b-roll, a title on a
 
 ## Pitfalls (silent-failure traps)
 
-The parser **silently drops unknown keys and invalid enum values** and falls back to defaults — that is what makes an edit look broken (overlapping titles, missing transitions, no motion). Avoid these:
+The Arg editor parser **silently drops unsupported keys and invalid enum values** and falls back to defaults - that is what makes an edit look broken (overlapping titles, missing transitions, no motion). Avoid these:
 
 - **Transitions:** valid `type`s are `none`, `cross-dissolve`, `dip-to-black`, `dip-to-white`, `wipe`, `slide`, `push`, `zoom`, `spin`, `iris`, `blur-dissolve`, `glitch` (add `direction` for `wipe`/`slide`/`push`, `softness` for `wipe`/`iris`). `"fade"` / `"crossfade"` are **not** valid and are dropped — for a plain fade use `fadeIn` / `fadeOut` (seconds) on the clip. Use `transitionIn` / `transitionOut` per clip.
 - **Crossfade between two clips:** overlap them by the dissolve length and give the **incoming** (later-in-array) clip a `cross-dissolve` `transitionIn` — the later clip composites on top and dissolves in over the previous one. This deliberate overlap is the one exception to "no overlap on a track".

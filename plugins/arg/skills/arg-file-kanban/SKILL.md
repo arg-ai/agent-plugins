@@ -1,6 +1,6 @@
 ---
 name: arg-file-kanban
-version: "2.2.1"
+version: "2.2.2"
 description: Create, read, update, and delete Arg kanban boards (.kanban) for task and project management — columns of cards with labels, due dates, assignees, and nested sub-task boards. Load when building or editing task boards, project trackers, or status boards.
 ---
 
@@ -55,6 +55,28 @@ Generate **unique ids** for every label, column, and card — ids must be unique
 ## CRUD
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Kanban-specific: **read the board first** to learn its version, columns, and card order; then edit the JSON surgically rather than rewriting the whole board.
+
+## Editing library
+
+Prefer the bundled dependency-free module at `scripts/document-edit/kanban.mjs`. It is generated from `@arg-ai/sdk`, migrates complete v5 boards to v6, refuses newer unsupported versions, and preserves unknown fields while cloning every edit. Resolve that path from the installed skill directory. When the workspace is mounted locally, a complete edit looks like:
+
+```js
+import { readFile, writeFile } from "node:fs/promises";
+import {
+  moveKanbanCard,
+  parseKanban,
+  stringifyKanban,
+} from "/path/to/arg-file-kanban/scripts/document-edit/kanban.mjs";
+
+const path = process.argv[2];
+const board = parseKanban(await readFile(path, "utf8"));
+const updated = moveKanbanCard(board, "card-1", "done", 0);
+await writeFile(path, stringifyKanban(updated));
+```
+
+Use the label, column, card, settings, and attachment helpers for graph-safe edits, including recursive deletion and ownership updates. Use `editKanban` with JSON `set`, `merge`, `delete`, `insert`, or `move` operations for uncommon leaf fields. Every structural helper validates before returning. With MCP or direct CLI access, read and write through that access method instead of `node:fs`; the library itself performs no network or authentication work.
+
+Key call shapes: `addKanbanCard(board, card, columnId, index?)`, `moveKanbanCard(board, cardId, columnId, index?)`, and `addKanbanColumn(board, column, { ownerCardId?, index? })`. Raw paths are arrays, for example `editKanban(board, [{ op: "merge", path: ["settings"], value: { showConfetti: false } }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
 
 ## Older files: the nested shape (v5)
 
