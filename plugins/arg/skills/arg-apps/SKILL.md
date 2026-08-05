@@ -1,7 +1,7 @@
 ---
 name: arg-apps
-version: "2.6.1"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, and versioned npm imports, plus self-contained .html apps using the window.arg filesystem SDK for persistent state and identity, and .server files that call third-party APIs through the integration broker.
+version: "2.7.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -31,7 +31,32 @@ React previews support:
 
 - Relative imports from workspace `.tsx`, `.ts`, `.jsx`, `.js`, `.json`, and `.css` files. Resolution is relative to the importing file and supports extension and `index.*` fallback.
 - `@arg/ui`, the same component package Arg uses internally, bundled with standalone theme styles for the isolated preview.
+- `@arg/actions`, the typed facade for Action discovery, schema reflection, execution, and run history.
 - Bare npm imports when the package has an exact version in the nearest workspace `package.json`. React and React DOM are pinned by the editor. A versioned `https://esm.sh/package@version` import is also accepted.
+
+React previews use the typed `@arg/actions` module for Action discovery, schema reflection, execution, and run history. It delegates to the same isolated `window.arg.actions` bridge used by HTML; it does not fetch directly or expose a token. The viewer must explicitly click **Allow Actions** for the current file session before a call succeeds. The grant is separate from filesystem access because Actions are workspace-wide and may spend credits or use the viewer's connected services.
+
+```tsx
+import { actions } from "@arg/actions";
+
+export default function GenerateButton() {
+  async function generate() {
+    await actions.ready;
+    const schema = await actions.schema("image_generate");
+    console.log(schema.inputSchema);
+    const run = await actions.run("image_generate", {
+      prompt: "A red bicycle on a beach at sunset",
+      output_path: "/images/bicycle.png",
+    });
+    if (run.status === "queued" || run.status === "running") {
+      console.log(await actions.getRun(run.runId));
+    }
+  }
+  return <button onClick={generate}>Generate</button>;
+}
+```
+
+The TSX/JSX editor supplies autocomplete and diagnostics for the package and browser contract. Action ids and per-action inputs remain registry-driven: use `list()`, `schema()`, and `describe()` rather than guessing, and expect the backend to validate the input against the current Action schema.
 
 ### Arg UI components
 
@@ -112,11 +137,13 @@ export default function ContextMenuExample() {
 }
 ```
 
-React previews can also receive `window.arg` after the user explicitly enables Workspace access in the preview permissions menu. Keep capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
+React previews expose Actions through `@arg/actions` (backed by `window.arg.actions`) and scoped persistent workspace files through `window.arg.fs`, with independent grants. Enabling one never enables the other.
+
+React previews receive `window.arg` only after the user explicitly enables Workspace access in the preview permissions menu. Keep filesystem capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
 
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
-Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup; the SDK only activates when the user turns it on.
+Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup. Filesystem access activates when the user turns it on; Actions use a separate session-only **Actions access** grant on the isolated web preview.
 
 ## Full-view apps
 
@@ -160,6 +187,25 @@ A `.html` page can read/write workspace files and read the signed-in user's iden
 1. **There is NO import.** Never add `<script src>`, npm, ESM, or a CDN tag for it. The editor injects `window.arg` inline when the user turns on **"Scripts" + "Workspace access"** in the preview's permissions menu.
 2. **Feature-detect with `if (window.arg)` and degrade gracefully.** It's absent when the page is opened outside Arg or Workspace access is unavailable. The user — not you — enables the capability, so the page must still work (read-only or with a hint) when it's off. After `arg.ready`, check `arg.readOnly` before showing mutation controls; reads remain available, while `write`, `remove`, `mkdir`, `move`, `copy`, and `db.exec` reject with `read_only` in a read-only host.
 3. **Build a single-document app.** Never `<a href="page.html">` to another HTML file — that reloads the sandboxed preview and **drops `window.arg`**. Change views with in-page state (buttons / click handlers / `location.hash` + a `hashchange` listener) and render from `arg.fs` reads. Treat workspace files as the data store, not as pages.
+
+## Calling the Action registry from HTML
+
+On an in-app cloud HTML preview, the separate `window.arg.actions` namespace exposes:
+
+| Method                                                              | Result                                             |
+| ------------------------------------------------------------------- | -------------------------------------------------- |
+| `list({ query?, category?, runtime?, backend?, includeSchema? })`   | Matching Action catalog entries                    |
+| `schema(actionId)`                                                  | `{ id, inputSchema }`                              |
+| `describe(actionId, { field?, value?, query?, category?, limit? })` | Base or dynamic-field schema/options               |
+| `run(actionId, input, { idempotencyKey? })`                         | `{ runId, status, output?, error? }`               |
+| `getRun(runId)`                                                     | One durable run record with status/progress/output |
+| `listRuns({ actionId?, status?, limit? })`                          | Recent run records                                 |
+
+There is no import and no token in authored code. The isolated iframe sends an origin-pinned `postMessage` to the Arg editor; the parent fixes the current workspace and audit surface, calls the normal authenticated Action API as the signed-in viewer, and the backend rechecks workspace permissions plus the Action's current Zod schema. Call `await window.arg.actions.ready`, then check `window.arg.actions.enabled`.
+
+This is a broad whole-workspace authority, not an extension of the filesystem folder scope. The viewer must explicitly grant it for that file session. Degrade gracefully when it is disabled, and never auto-retry an expensive Action without a stable `idempotencyKey`.
+
+This API exists only in framed `r-*.sitearg.com` previews inside Arg. A deployed top-level `<slug>.sitearg.com` Site has no authenticated Arg parent and cannot run as its current viewer through `postMessage`; use a reviewed `.server`/worker backend or an explicit external sign-in/API design for deployed sites.
 
 ### Boilerplate
 
@@ -330,6 +376,7 @@ Use `dataUrlById(id)` only for small inline images. Id helpers resolve id-to-pat
 - **Prefer storing data in plain `.json` files** so it stays inspectable and editable inside Arg.
 - Supported on web, desktop, iOS, and Android - always feature-detect for pages opened outside Arg.
 - Need a real server/process (a framework, a backend, a port) instead of a file-backed arg-app? Use a **`.server`** file instead - a JSON config (`command`, `port`, optional `exec`/`timeout`, and optional `access`) that launches a process in a sandboxed container. `access` can be `"public"`, `"personal"`, or `"workspace"` and defaults to `"public"` for compatibility. Personal servers require a human launcher and only that launcher can open them; workspace servers require workspace-wide read access. Over MCP you can also host a workspace command with `deploy_server`.
+- A `.server` that needs built-in workspace Actions declares the smallest explicit allowlist, for example `"actions": ["file_read", "text_generate"]`. Only declared Actions whose backend is not `integration` are visible or runnable. The file will not auto-launch; the user must review and launch it. Server code can use the preinstalled `arg-action` helper through injected `ARG_API_URL`, `ARG_WORKSPACE_ID`, and `ARG_ACTION_TOKEN`. Treat the token as sensitive: never print, persist, return, or copy it into source. It is revoked with the tunnel or when the launching principal loses authority. Servers run from the live workspace mount, so requests from the approved audience and collaborators who change live server code can exercise the declared Actions until the server stops.
 - A `.server` that calls a third-party API declares portable provider aliases, for example `"integrations": { "github": { "provider": "github" } }`. Never write OAuth tokens, PATs, refresh tokens, connection ids, or an upstream base URL into the file or generated source. Arg asks the user to bind each alias to one of their real connections when they explicitly launch the server; an integration-enabled file does not auto-launch. The connection keeps its existing owner: user-owned connections run only as that user, and service-account-owned connections run only as that service account. Runtime ownership checks support service accounts, but the current connection creation flow provisions user-owned connections only.
 - Server code calls the integration broker at `${ARG_INTEGRATIONS_URL}/${alias}/${relativePath}` with `Authorization: Bearer ${ARG_INTEGRATIONS_TOKEN}`. The broker URL already includes `/api/server-integrations/v1`; append only the alias and provider-relative path, never an absolute provider URL. The broker attaches the real provider credential without exposing it to the sandbox. Treat the broker token as sensitive, never print or persist it, and never return it to a tunnel client. Servers run from the live workspace mount: collaborators who change server code can change what the approved audience executes until the tunnel is stopped or relaunched. Use the narrowest provider scopes available for unattended servers.
 - **Publish a folder as a durable hosted website (Sites).** When the goal is a real, versioned website on its own subdomain — not an app that only runs inside Arg's preview — deploy a workspace folder as a **Site** on `<slug>.sitearg.com`. Sites build and serve static folders and framework apps (`static`, `vite`, `astro`, `next` — auto-detected from `package.json`), keep a version history you can promote/roll back, and can be `workspace`-only (default) or `public`. Deploy from the **Deployments** hub in the app, or over MCP with `deploy_site` (pass `source_path`; optionally `slug`, `framework`, `access`, `display_name`) — it returns the live `url`. Sister tools: `list_sites`, `get_site_deploy` (poll a framework build until live), `promote_site_version` (rollback), `set_site_access`, `get_site_share_link`, `delete_site`. Choose Sites over an arg-app when you want a shareable, deployed site with clean URLs and versioning; choose an arg-app when the page must read/write live workspace files at runtime via `window.arg`; choose a `.server` when you need a long-running server process.

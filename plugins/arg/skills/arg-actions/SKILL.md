@@ -1,7 +1,7 @@
 ---
 name: arg-actions
-version: "1.0.1"
-description: Run Arg's built-in actions — operations that generate or transform workspace files (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping — Instagram/LinkedIn/X/YouTube/reviews via web_scrape, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand — e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
+version: "1.2.1"
+description: Run Arg's built-in actions - operations that generate or transform workspace files and data (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand - e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
 
@@ -71,6 +71,59 @@ list_runs({ status: "running" })                // everything in flight
 ```
 
 Use the returned status and progress to recover work after an interrupted tool call. A succeeded run's file is at `output.output_path`; a failed run includes `error`.
+
+## From sandbox or `.server` code - `arg-action`
+
+The same actions are callable from inside `run_bash` when you'd rather script them than use the tools - e.g. running an action in a loop over many files. A preinstalled helper reads the workspace + token the environment injects:
+
+```
+arg-action catalog "generate image"        # find actions (with input schemas)
+arg-action schema image_generate           # one action's input and output schemas
+arg-action run image_generate '{"prompt":"a red bike","output_path":"/images/bike.png"}'
+arg-action get <run_id>                     # inspect one queued/running run
+arg-action wait <run_id>                    # wait up to 75s for terminal output
+```
+
+`run` prints the JSON result (`output.output_path` is the saved file; long jobs return `{ "runId", "status": "queued" }`). Pass that `runId` to `wait` rather than starting the paid action again; `wait` prints the durable run record with progress/output, exits non-zero for failed or canceled runs, and accepts an optional timeout in seconds. Use `get` for one non-blocking status read. Both commands are owner- and workspace-scoped. The helper runs against the current workspace at the session's permission - a read-only session can't run write actions. For interactive one-offs, the four tools above are simpler; reach for `arg-action` when you're already in a script.
+
+A `.server` backend must opt in with an explicit top-level allowlist, for example `"actions": ["file_read", "text_generate"]`. Only those registered Actions whose backend is not `integration` are visible or runnable. Action-enabled files do not auto-launch: the user must launch them after reviewing the declared authority. The long-running process receives `ARG_API_URL`, `ARG_WORKSPACE_ID`, and `ARG_ACTION_TOKEN`, so it can use `arg-action` directly or call `/api/actions-exec/*` with the token. Never print, persist, return, or copy the token into source. The token stops working when the tunnel stops, the launching principal is deactivated, or that principal loses workspace-wide write access. Because tunnel URLs are public and collaborators can change live workspace code, declare the smallest Action set the backend needs.
+
+Hosted-site server code can call the same endpoint directly using its incoming `X-Arg-Api-Url` and `X-Arg-Action-Token` headers.
+
+## From an in-app TSX or JSX preview - `@arg/actions`
+
+Cloud `.tsx` and `.jsx` previews can discover and run Actions through the typed package facade:
+
+```ts
+import { actions } from "@arg/actions";
+
+await actions.ready;
+const catalog = await actions.list({ query: "generate image" });
+const { inputSchema, outputSchema } = await actions.schema(catalog[0].id);
+const details = await actions.describe(catalog[0].id);
+const run = await actions.run(catalog[0].id, {
+  prompt: "a red bicycle on a beach at sunset",
+  output_path: "/images/bicycle.png",
+});
+const latest =
+  run.status === "queued" || run.status === "running" ? await actions.getRun(run.runId) : run;
+```
+
+The package is a lazy facade over `window.arg.actions`, not another transport. The viewer must enable the separate, session-only Actions grant in the preview toolbar or permissions menu. The grant is available only for cloud workspaces and is bound to the exact authored source revision, so any local or collaborative code change revokes it before changed code can execute. It is deliberately not covered by folder-scoped filesystem access: registry Actions can reach the whole workspace, spend credits, and act through the viewer's connected services. The iframe never receives a token or chooses the workspace/audit surface; its exact sitearg origin posts to the authenticated Arg parent, and the backend applies the signed-in viewer's permissions and validates the current registry schema.
+
+Use `list`, `schema`, and `describe` for reflection instead of hardcoding current inputs. `run` may return a queued/running record for an asynchronous Action; recover it with `getRun` or `listRuns`. This browser API applies only to framed `r-*.sitearg.com` previews inside Arg, not a deployed top-level Site.
+
+## From an in-app HTML preview - `window.arg.actions`
+
+Classic `.html` and `.htm` scripts use the equivalent injected namespace directly:
+
+```js
+await window.arg.actions.ready;
+const catalog = await window.arg.actions.list({ query: "generate image" });
+const { inputSchema, outputSchema } = await window.arg.actions.schema(catalog[0].id);
+```
+
+It has the same methods, grant, origin pinning, and backend validation as `@arg/actions`.
 
 ## What you can run (search_actions is authoritative)
 
