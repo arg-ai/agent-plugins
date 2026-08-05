@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.7.0"
+version: "2.7.1"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -168,7 +168,7 @@ export default function App() {
 }
 ```
 
-The exact native `<meta>` element must be present in JSX; a `<Meta>` component, comment, or string does not activate full view. Desktop supports full view for HTML, but deliberately ignores it for TSX/JSX because executable React previews require the isolated web render origin and are unavailable from Electron's `file://` parent. The marker takes effect after local saving and collaboration sync settle, and full view intentionally shows no floating source/app toggle.
+The exact native `<meta>` element must be present in JSX; a `<Meta>` component, comment, or string does not activate full view. Desktop supports full view for HTML, but deliberately ignores it for TSX/JSX because executable React previews require the isolated web render origin and are unavailable from Electron's `file://` parent. The marker takes effect after local saving and collaboration sync settle. The top More menu retains **View code** as an escape hatch; while source is visible, **View app** returns to the full-view preview.
 
 ## CRUD
 
@@ -206,6 +206,10 @@ There is no import and no token in authored code. The isolated iframe sends an o
 This is a broad whole-workspace authority, not an extension of the filesystem folder scope. The viewer must explicitly grant it for that file session. Degrade gracefully when it is disabled, and never auto-retry an expensive Action without a stable `idempotencyKey`.
 
 This API exists only in framed `r-*.sitearg.com` previews inside Arg. A deployed top-level `<slug>.sitearg.com` Site has no authenticated Arg parent and cannot run as its current viewer through `postMessage`; use a reviewed `.server`/worker backend or an explicit external sign-in/API design for deployed sites.
+
+External links in an authenticated workspace preview can use `<a href="https://example.com" target="_blank" rel="noopener noreferrer">`; the user click opens a sandboxed popup without replacing the live preview. Do not target `_top`. Anonymous public previews keep popups disabled, so they must provide a copyable URL or another non-popup fallback.
+
+HTML and React previews remove the browser's default `html`/`body` margin so apps render edge to edge. Set an explicit `body` margin or padding when the design needs an inset; authored styles override the host reset.
 
 ### Boilerplate
 
