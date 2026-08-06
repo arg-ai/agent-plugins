@@ -205,7 +205,7 @@ There is no import and no token in authored code. The isolated iframe sends an o
 
 This is a broad whole-workspace authority, not an extension of the filesystem folder scope. The viewer must explicitly grant it for that file session. Degrade gracefully when it is disabled, and never auto-retry an expensive Action without a stable `idempotencyKey`.
 
-This API exists only in framed `r-*.sitearg.com` previews inside Arg. A deployed top-level `<slug>.sitearg.com` Site has no authenticated Arg parent and cannot run as its current viewer through `postMessage`; use a reviewed `.server`/worker backend or an explicit external sign-in/API design for deployed sites.
+This API exists only inside Arg: framed `r-*.sitearg.com` previews on web and desktop, and the native `.html` viewers on iOS and Android, which inject the same namespace over a platform transport instead of `postMessage`. A deployed top-level `<slug>.sitearg.com` Site has no authenticated Arg parent and cannot run as its current viewer; use a reviewed `.server`/worker backend or an explicit external sign-in/API design for deployed sites.
 
 External links in an authenticated workspace preview can use `<a href="https://example.com" target="_blank" rel="noopener noreferrer">`; the user click opens a sandboxed popup without replacing the live preview. Do not target `_top`. Anonymous public previews keep popups disabled, so they must provide a copyable URL or another non-popup fallback.
 

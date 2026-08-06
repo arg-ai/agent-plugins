@@ -123,7 +123,7 @@ const catalog = await window.arg.actions.list({ query: "generate image" });
 const { inputSchema, outputSchema } = await window.arg.actions.schema(catalog[0].id);
 ```
 
-It has the same methods, grant, origin pinning, and backend validation as `@arg/actions`.
+It has the same methods, grant, and backend validation as `@arg/actions`. On web and desktop the page is a framed sitearg preview and the grant is origin-pinned; on iOS and Android `.html` renders in a native WebView, so the same namespace arrives over a platform transport that the viewer enables per file from the "…" menu. Either way the page never sees a token and never picks the workspace or audit surface.
 
 ## What you can run (search_actions is authoritative)
 
