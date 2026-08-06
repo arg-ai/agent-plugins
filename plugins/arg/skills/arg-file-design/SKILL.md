@@ -174,6 +174,16 @@ arg design render poster.design --artboard "Hero"   # → poster.png (single art
 
 Flags: `--format svg|png|jpg` (default png), `--scale <n>` (default 2), `--quality <0..1>` (jpeg, default 0.92), `--artboard <index|name>` (single artboard), `--all-artboards` (zip), `--outline-text`, `--include-id`, `--no-bounding-box`, `--ignore-overlapping`, `--color-profile document|srgb|display-p3` (default srgb). Referenced image/shader/3D fills are fetched from the workspace automatically. Run `arg design render install` once to provision the headless browser.
 
+## Convert to Photoshop (`design_to_psd` action)
+
+Run the `design_to_psd` action to turn a `.design` into a layered `.psd`. Text objects and solid rect/ellipse/line shapes arrive as live, editable Photoshop text and vector-shape layers; anything a PSD layer can't express (paths, gradients, rotation, image/shader/3D fills) arrives as a raster layer at the same position.
+
+A `.psd` holds one canvas, so the artboard is the unit of conversion: pass `artboard` (index or name) for a single `.psd`, or omit it and a multi-artboard document comes back as a `.zip` with one `.psd` per artboard. The action writes ONE file and overwrites what is already at that path; `output_path` is optional and its extension is replaced with whatever the conversion produced (`.psd` or `.zip`), since that depends on the artboard count.
+
+The right-click menu of a `.design` file runs the same converter but saves differently: one `.psd` sibling per artboard, each on a fresh non-colliding path, never a `.zip` and never overwriting an existing file.
+
+The whole result travels back through a memory-bounded browser session, so a very large conversion is rejected up front - convert an artboard at a time with `artboard`, and keep `scale` low (a scaled artboard over 30000 px on either side is past Photoshop's canvas limit).
+
 ## Tips
 
 - Put the artboard background in the artboard's `fills`; everything else goes in `objects` with draw order in `order`.
