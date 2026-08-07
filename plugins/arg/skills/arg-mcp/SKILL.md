@@ -1,6 +1,6 @@
 ---
 name: arg-mcp
-version: "1.4.0"
+version: "1.4.1"
 description: Access method for Arg file CRUD over the MCP server (read_file, write_file, edit_file, multi_edit, grep, semantic_search, run_bash, list_files, move_files, create_upload_session, download_file). Load this when Arg is connected over MCP — the cloud endpoint or the desktop app's local loopback server over shared folders. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 ---
 
@@ -8,15 +8,15 @@ description: Access method for Arg file CRUD over the MCP server (read_file, wri
 
 Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.ai/mcp`. (Use `arg-cli` instead when MCP isn't connected and the `arg` command-line tool is installed.)
 
-| Operation           | Tool(s)                                                                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Create**          | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)       |
-| **Read**            | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                               |
-| **Update**          | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                                |
-| **Move / rename**   | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                    |
-| **Delete**          | `run_bash` (`rm`) — no dedicated tool                                                                                                                               |
-| **List / search**   | `list_files` (tree listing) · `grep` (exact text/regex) · `semantic_search` (semantic - find files by meaning when exact wording is unknown)                        |
-| **Run a generator** | `run_bash` — executes in the **remote Arg workspace sandbox**; the file it writes lands directly in the workspace (e.g. `python-pptx`, `sqlite3`, `ffmpeg`, Pillow) |
+| Operation           | Tool(s)                                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Create**          | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)    |
+| **Read**            | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                            |
+| **Update**          | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                             |
+| **Move / rename**   | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                 |
+| **Delete**          | `run_bash` (`rm`) — no dedicated tool                                                                                                                            |
+| **List / search**   | `list_files` (tree listing) · `grep` (exact text/regex) · `semantic_search` (semantic - find files by meaning when exact wording is unknown)                     |
+| **Run a generator** | `run_bash` — executes in the **remote Arg workspace sandbox**; the file it writes lands directly in the workspace (e.g. `sqlite3`, `ffmpeg`, Pillow, `openpyxl`) |
 
 ## Notes
 

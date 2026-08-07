@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.4.5"
+version: "2.4.6"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -18,7 +18,7 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 
 - **Read before you edit.** Fetch the current contents first, change only what was asked, and preserve the rest of the structure.
 - **Edit surgically** where the method supports targeted edits; otherwise rewrite the whole file.
-- **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, sqlite) can't be — create them by uploading bytes or by running a generator (`python-pptx`, `sqlite3`, `ffmpeg`, Pillow); your access-method skill says exactly how and where that runs.
+- **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, sqlite) can't be — create them by uploading bytes or by running a generator (`sqlite3`, `ffmpeg`, Pillow, `openpyxl`); your access-method skill says exactly how and where that runs.
 - **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card.
 - **Structured edit libraries:** the Design, Video, and Kanban skills bundle small dependency-free modules under `scripts/document-edit/`. Prefer their relationship-aware helpers over hand-editing linked ids and arrays; use their raw JSON edit operation for fields without a dedicated helper.
 - **Linked workspace files:** author the documented readable path field only. Editors such as `.video`, `.design`, `.kanban`, `.daw`, and `.dj` add or refresh their optional durable `argfile_...` fields when the file opens. Never invent a file id or replace a path with one.
@@ -72,7 +72,7 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 - **Data, feeds & config** — `.json` (graph viewer), `.xml`, `.rss` (RSS 2.0 XML), `.yaml`/`.yml`, `.toml`, `.ini`, `.env`, `.sql`. RSS files open as editable XML source and support news, magazine, blog, gallery, podcast, records-table, structure-explorer, and custom AI views.
 - **Spreadsheets** — `.csv`/`.tsv` (text — edit directly), `.xlsx`/`.xlsm` (binary — generate with `openpyxl` / `pandas` / `xlsxwriter`).
 - **Databases** — `.sqlite`/`.sqlite3`/`.db` (SQLite). Binary — create/query with the `sqlite3` CLI or Python's `sqlite3` module.
-- **Presentations** — `.pptx` (PowerPoint). Binary — generate with `python-pptx`.
+- **Presentations** — `.pptx` (PowerPoint). Binary — upload or open an existing deck in the slide editor (thumbnails, text/shape editing, add/reorder slides, present mode). Don't generate a new deck as `.pptx`; author it as `.html` or as a `.design` document whose artboards present as slides.
 - **Video** — `.mp4`, `.mov`, `.webm` (+ `.m4v`, `.ogv`, `.mkv`, `.avi`, `.3gp`, `.3g2`). Binary — generate/transcode with `ffmpeg`, or upload. (Multi-track edits use the `.video` NLE — see the table above.)
 - **Audio** — `.wav`, `.mp3` (+ `.ogg`, `.flac`, `.m4a`, `.aac`). Binary — generate/transcode with `ffmpeg`, or upload.
 - **Images** — `.png`, `.jpg`/`.jpeg`, `.exr`, `.bmp` (+ `.gif`, `.webp`, `.ico`, `.tif`/`.tiff`, `.hdr`, `.psd`). Binary — generate with Pillow / ImageMagick, or upload.
