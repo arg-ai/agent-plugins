@@ -38,6 +38,8 @@ Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDes
 
 Top-level: `version` (use `1`), optional `metadata` (`{ "defaultView": "design" | "creative" }`; use `creative` for social/content graphics that should open in the Canva-style UI), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`).
 
+Creative view presents artboards as a centered vertical page column in `artboards` array order. That layout is a transient editor projection: keep authoring normal document-space coordinates, and use the array itself to control Creative page order. Switching between Creative and Design views never rewrites artboard or object positions.
+
 Coordinates are document pixels. Each object has a `frame` `{ x, y, width, height, rotation? }` (top-left origin, rotation in degrees around center).
 
 **Object base fields:** `id` (matches the `objects` key and appears in `order` or a group's `children`), `type`, `name?`, `frame`, `fills` (bottom→top), `strokes`, `effects`, `opacity?` (0–1), `blendMode?`, `visible?`, `locked?`, `flipH?`/`flipV?` (booleans that mirror the object's raster fill content - image/video - across its centerline; the Flip commands set these).
