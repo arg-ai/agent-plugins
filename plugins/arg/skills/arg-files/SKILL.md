@@ -38,6 +38,7 @@ For these, **load the named skill first** for format-specific guidance:
 | Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/GIF clips)    |
 | DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                             |
 | Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`/`.svg`); `.fig` import-only         |
+| CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)              |
 | Whiteboard                | whiteboard                                                  | `arg-file-whiteboard` | Text (JSON)                                         |
 | Task / project management | kanban                                                      | `arg-file-kanban`     | Text (JSON)                                         |
 | Automation / workflow     | automation, `.arg/workflows/*.yml`, `.arg/workflows/*.yaml` | `arg-file-automation` | Text (JSON or YAML)                                 |
@@ -53,6 +54,7 @@ For a product feature map of the Arg **web** and **desktop** apps — what each 
 Arg defines native, agent-friendly formats. Load the dedicated format skill before authoring one:
 
 - `.design` — vector canvas — see the `arg-file-design` skill.
+- `.cad` — parametric CAD drawing (floor plans, buildings, structural frames, bridges), and LiDAR scan reconstruction — see the `arg-file-cad` skill.
 - `.whiteboard` — infinite canvas with font-selectable standalone text objects — see the `arg-file-whiteboard` skill.
 - `.kanban` — task board — see the `arg-file-kanban` skill.
 - `.automation` — visual workflow — see the `arg-file-automation` skill.
