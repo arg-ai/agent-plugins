@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.1.7"
+version: "1.1.8"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides.
 ---
 
@@ -178,7 +178,7 @@ Flags: `--format svg|png|jpg` (default png), `--scale <n>` (default 2), `--quali
 
 ## Convert to Photoshop (`design_to_psd` action)
 
-Run the `design_to_psd` action to turn a `.design` into a layered `.psd`. Text objects and solid rect/ellipse/line shapes arrive as live, editable Photoshop text and vector-shape layers; anything a PSD layer can't express (paths, gradients, rotation, image/shader/3D fills) arrives as a raster layer at the same position.
+Run the `design_to_psd` action to turn a `.design` into a layered `.psd`. Text objects and solid rect/ellipse/line shapes arrive as live, editable Photoshop text and vector-shape layers. An axis-aligned shape whose only paint is an image fill keeps the complete source image in its raster layer and gets a Photoshop layer mask for the shape, so cover/crop overhang can be reframed after conversion without changing the initial composition. Rotated or mirrored shapes, tiles, mixed fills or strokes, baked effects, and unusually large off-mask images use the existing tight raster fallback. Shader, video, and 3D fills remain baked raster layers rather than being presented as original image pixels.
 
 A `.psd` holds one canvas, so the artboard is the unit of conversion: pass `artboard` (index or name) for a single `.psd`, or omit it and a multi-artboard document comes back as a `.zip` with one `.psd` per artboard. The action writes ONE file and overwrites what is already at that path; `output_path` is optional and its extension is replaced with whatever the conversion produced (`.psd` or `.zip`), since that depends on the artboard count.
 
