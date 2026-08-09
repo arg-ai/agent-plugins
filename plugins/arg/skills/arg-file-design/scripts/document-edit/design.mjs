@@ -136,6 +136,54 @@ export function editDesign(document, edits) {
   assertValid(next);
   return next;
 }
+function validateDesignMetadata(value, artboardIds, errors) {
+  const metadata = value.metadata;
+  if (metadata === undefined) return;
+  if (!isJsonObject(metadata)) {
+    errors.push("metadata must be an object");
+    return;
+  }
+  const defaultView = metadata.defaultView;
+  if (
+    defaultView !== undefined &&
+    defaultView !== "design" &&
+    defaultView !== "creative" &&
+    defaultView !== "slides"
+  ) {
+    errors.push("metadata.defaultView must be design, creative, or slides");
+  }
+  const sections = metadata.sections;
+  if (sections === undefined) return;
+  if (!Array.isArray(sections)) {
+    errors.push("metadata.sections must be an array");
+    return;
+  }
+  const sectionIds = new Set();
+  const seenArtboards = new Set();
+  sections.forEach((entry, index) => {
+    const owner = `metadata.sections[${index}]`;
+    if (!isJsonObject(entry) || typeof entry.id !== "string" || !entry.id) {
+      errors.push(`${owner} must have an id`);
+      return;
+    }
+    if (sectionIds.has(entry.id)) errors.push(`duplicate section id: ${entry.id}`);
+    sectionIds.add(entry.id);
+    if (typeof entry.name !== "string" || !entry.name) errors.push(`${owner}.name must be set`);
+    if (!Array.isArray(entry.artboardIds)) {
+      errors.push(`${owner}.artboardIds must be an array`);
+      return;
+    }
+    entry.artboardIds.forEach((id, slide) => {
+      if (typeof id !== "string" || !artboardIds.has(id)) {
+        errors.push(`${owner}.artboardIds[${slide}] references a missing artboard: ${String(id)}`);
+        return;
+      }
+      // A slide in two sections has no defined position in the deck.
+      if (seenArtboards.has(id)) errors.push(`artboard is in more than one section: ${id}`);
+      seenArtboards.add(id);
+    });
+  });
+}
 export function validateDesign(value) {
   if (!isJsonObject(value)) return ["Design document must be an object"];
   const errors = [];
@@ -150,20 +198,27 @@ export function validateDesign(value) {
     }
   }
   const artboards = value.artboards;
+  const artboardIds = new Set();
   if (!Array.isArray(artboards) || artboards.length === 0) {
     errors.push("artboards must contain at least one artboard");
   } else {
-    const ids = new Set();
     artboards.forEach((entry, index) => {
       if (!isJsonObject(entry) || typeof entry.id !== "string" || !entry.id) {
         errors.push(`artboards[${index}] must have an id`);
-      } else if (ids.has(entry.id)) errors.push(`duplicate artboard id: ${entry.id}`);
+      } else if (artboardIds.has(entry.id)) errors.push(`duplicate artboard id: ${entry.id}`);
       else {
-        ids.add(entry.id);
+        artboardIds.add(entry.id);
         hasFiniteGeometry(entry, `artboards[${index}]`, errors);
+        if (entry.notes !== undefined && typeof entry.notes !== "string") {
+          errors.push(`artboards[${index}].notes must be a string`);
+        }
+        if (entry.skipped !== undefined && typeof entry.skipped !== "boolean") {
+          errors.push(`artboards[${index}].skipped must be a boolean`);
+        }
       }
     });
   }
+  validateDesignMetadata(value, artboardIds, errors);
   const objects = objectRecord(value);
   if (!objects) errors.push("objects must be an object");
   const order = value.order;
@@ -274,6 +329,20 @@ export function patchDesignArtboard(document, id, patch) {
     next.artboards[index] = { ...next.artboards[index], ...cloneJson(patch) };
   });
 }
+/**
+ * Drops a deleted artboard's slide reference. Validation rejects a section that
+ * points at a missing artboard, so leaving the id behind would make every
+ * removal on a sectioned deck fail as `invalid_document`.
+ *
+ * A section left with no slides is kept: the editor's Slides view treats an
+ * empty section as a legitimate place to add slides back into, and the two must
+ * agree on what a deletion leaves behind.
+ */
+function dropSlideFromSections(document, artboardId) {
+  for (const section of document.metadata?.sections ?? []) {
+    section.artboardIds = section.artboardIds.filter((entry) => entry !== artboardId);
+  }
+}
 export function removeDesignArtboard(document, id) {
   return mutate(document, (next) => {
     const index = next.artboards.findIndex((entry) => entry.id === id);
@@ -281,6 +350,7 @@ export function removeDesignArtboard(document, id) {
     if (next.artboards.length === 1)
       error("last_artboard", "A design must keep at least one artboard");
     next.artboards.splice(index, 1);
+    dropSlideFromSections(next, id);
   });
 }
 export function moveDesignArtboard(document, id, toIndex) {

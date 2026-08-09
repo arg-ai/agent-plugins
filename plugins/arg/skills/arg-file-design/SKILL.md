@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.1.8"
+version: "1.2.0"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides.
 ---
 
@@ -36,9 +36,15 @@ Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDes
 
 ## Schema essentials
 
-Top-level: `version` (use `1`), optional `metadata` (`{ "defaultView": "design" | "creative" }`; use `creative` for social/content graphics that should open in the Canva-style UI), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`).
+Top-level: `version` (use `1`), optional `metadata` (`{ "defaultView": "design" | "creative" | "slides", "sections": [...] }`; use `creative` for social/content graphics that should open in the Canva-style UI, and `slides` for decks), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`).
 
 Creative view presents artboards as a centered vertical page column in `artboards` array order. That layout is a transient editor projection: keep authoring normal document-space coordinates, and use the array itself to control Creative page order. Switching between Creative and Design views never rewrites artboard or object positions.
+
+**Slides view** treats each artboard as a slide. `metadata.sections` groups them: `[{ "id": "s1", "name": "Intro", "artboardIds": ["hero", "agenda"] }]`. Sections hold artboard **id references only**, so reordering a slide or a section never moves artboard geometry — the same projection rule as Creative view. Omit `sections` and the deck is one implicit section holding every artboard in `artboards` order. When present, `metadata.sections` is the presentation order (not the `artboards` array), every id must name a real artboard, and no artboard may appear in two sections.
+
+**Presenter notes:** each artboard takes an optional `notes` string holding **MDX** - the same dialect the `.mdx` editor reads, so headings, lists, callouts and embeds all render while editing beside the slide in Slides view. The presenter console shows notes as read-only Markdown, so wiki-style links and file embeds display as plain text there rather than resolving - keep notes meant to be read live plain-text-friendly. The other views carry `notes` through untouched.
+
+**Skipped slides:** set an artboard's optional `skipped` boolean to `true` to keep it editable in its section while omitting it from presentation playback. Omit the field or set it to `false` to include the slide.
 
 Coordinates are document pixels. Each object has a `frame` `{ x, y, width, height, rotation? }` (top-left origin, rotation in degrees around center).
 
