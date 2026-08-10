@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.7.1"
+version: "2.8.0"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -192,16 +192,19 @@ A `.html` page can read/write workspace files and read the signed-in user's iden
 
 On an in-app cloud HTML preview, the separate `window.arg.actions` namespace exposes:
 
-| Method                                                              | Result                                             |
-| ------------------------------------------------------------------- | -------------------------------------------------- |
-| `list({ query?, category?, runtime?, backend?, includeSchema? })`   | Matching Action catalog entries                    |
-| `schema(actionId)`                                                  | `{ id, inputSchema }`                              |
-| `describe(actionId, { field?, value?, query?, category?, limit? })` | Base or dynamic-field schema/options               |
-| `run(actionId, input, { idempotencyKey? })`                         | `{ runId, status, output?, error? }`               |
-| `getRun(runId)`                                                     | One durable run record with status/progress/output |
-| `listRuns({ actionId?, status?, limit? })`                          | Recent run records                                 |
+| Method                                                              | Result                                              |
+| ------------------------------------------------------------------- | --------------------------------------------------- |
+| `list({ query?, category?, runtime?, backend?, includeSchema? })`   | Matching Action catalog entries                     |
+| `schema(actionId)`                                                  | `{ id, inputSchema }`                               |
+| `describe(actionId, { field?, value?, query?, category?, limit? })` | Base or dynamic-field schema/options                |
+| `run(actionId, input, { idempotencyKey? })`                         | `{ runId, status, output?, error? }`                |
+| `runBatch([{ actionId, input?, idempotencyKey? }, ...])`            | Positionally aligned per-call success/error results |
+| `getRun(runId)`                                                     | One durable run record with status/progress/output  |
+| `listRuns({ actionId?, status?, limit? })`                          | Recent run records                                  |
 
 There is no import and no token in authored code. The isolated iframe sends an origin-pinned `postMessage` to the Arg editor; the parent fixes the current workspace and audit surface, calls the normal authenticated Action API as the signed-in viewer, and the backend rechecks workspace permissions plus the Action's current Zod schema. Call `await window.arg.actions.ready`, then check `window.arg.actions.enabled`.
+
+`runBatch` accepts 1-50 independent calls in one round trip. It is not a transaction: every result has its own `ok` discriminator, one failed call does not reject or roll back its siblings, and results stay in request order. Use it for independent reads or other fan-out where partial success is useful; do not use it when later calls depend on earlier outputs. If a transport failure makes a retry necessary, every write, billable, or provider-backed call needs its own stable `idempotencyKey`.
 
 This is a broad whole-workspace authority, not an extension of the filesystem folder scope. The viewer must explicitly grant it for that file session. Degrade gracefully when it is disabled, and never auto-retry an expensive Action without a stable `idempotencyKey`.
 

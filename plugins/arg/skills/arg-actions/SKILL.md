@@ -1,6 +1,6 @@
 ---
 name: arg-actions
-version: "1.2.2"
+version: "1.3.0"
 description: Run Arg's built-in actions - operations that generate or transform workspace files and data (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand - e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
@@ -110,6 +110,21 @@ const latest =
   run.status === "queued" || run.status === "running" ? await actions.getRun(run.runId) : run;
 ```
 
+For many independent calls, batch them into one request. Every result is positionally aligned with its input and has its own `ok` discriminator:
+
+```ts
+const { results } = await actions.runBatch([
+  { actionId: "file_read", input: { path: "/brief.md" } },
+  {
+    actionId: "image_generate",
+    input: { prompt: "A red bicycle", output_path: "/images/bike.png" },
+    idempotencyKey: "dashboard-bike-v1",
+  },
+]);
+```
+
+`runBatch` accepts 1-50 calls. It is not a transaction: one failed call neither rejects nor rolls back its siblings, and later calls cannot consume earlier outputs. Give every write, billable, or provider-backed call a stable `idempotencyKey` before retrying a batch after a transport failure.
+
 The package is a lazy facade over `window.arg.actions`, not another transport. The viewer must enable the separate, session-only Actions grant in the preview toolbar or permissions menu. The grant is available only for cloud workspaces and is bound to the exact authored source revision, so any local or collaborative code change revokes it before changed code can execute. It is deliberately not covered by folder-scoped filesystem access: registry Actions can reach the whole workspace, spend credits, and act through the viewer's connected services. The iframe never receives a token or chooses the workspace/audit surface; its exact sitearg origin posts to the authenticated Arg parent, and the backend applies the signed-in viewer's permissions and validates the current registry schema.
 
 Use `list`, `schema`, and `describe` for reflection instead of hardcoding current inputs. Poll only a queued/running asynchronous Action with `getRun` or `listRuns`. A succeeded sync read carries its output inline and its audit-only `runId` may return not found. This browser API applies only to framed `r-*.sitearg.com` previews inside Arg, not a deployed top-level Site.
@@ -124,7 +139,7 @@ const catalog = await window.arg.actions.list({ query: "generate image" });
 const { inputSchema, outputSchema } = await window.arg.actions.schema(catalog[0].id);
 ```
 
-It has the same methods, grant, and backend validation as `@arg/actions`. On web and desktop the page is a framed sitearg preview and the grant is origin-pinned; on iOS and Android `.html` renders in a native WebView, so the same namespace arrives over a platform transport that the viewer enables per file from the "…" menu. Either way the page never sees a token and never picks the workspace or audit surface.
+It has the same methods, including `runBatch`, grant, and backend validation as `@arg/actions`. On web and desktop the page is a framed sitearg preview and the grant is origin-pinned; on iOS and Android `.html` renders in a native WebView, so the same namespace arrives over a platform transport that the viewer enables per file from the "…" menu. Either way the page never sees a token and never picks the workspace or audit surface.
 
 ## What you can run (search_actions is authoritative)
 
