@@ -1,6 +1,6 @@
 ---
 name: arg-api
-version: "1.4.0"
+version: "1.4.1"
 description: Build against the Arg REST API (https://api.arg.ai) — API-key auth, workspace/file CRUD over HTTP, sandboxed bash + file tools, semantic search, actions, tunnels, share links, file invitations, notifications, service accounts. Load when writing code that calls Arg over HTTP — an integration, backend, script, CI job, or a custom agent harness that wires Arg tools into its own loop — or when the only available access is an API key and an HTTP client. For interactive file CRUD from an agent session prefer arg-mcp / arg-cli; this is the raw HTTP layer they wrap.
 ---
 
@@ -95,7 +95,7 @@ Writes are versioned and attributed to the key's principal, and show up in the w
 ## The rest of the surface
 
 - **Search** — `POST /api/workspaces/{id}/search` body `{ "query", "limit"?, "pathPrefix"? }` → `{ indexState, results }` (paths, scores, snippets; `limit` defaults 8, caps at 30). Semantic + keyword, permission-aware. Fan out across every workspace the caller can see with `POST /api/organizations/{orgId}/search` (narrow with `"workspaceIds": […]`; results add `workspaceName`). An unindexed workspace returns `indexState: "unindexed"` — the index is managed explicitly via `GET`/`PUT /api/workspaces/{id}/search/settings` and `POST …/search/reindex`, never built by searching.
-- **Actions** (media generation, transcription, scraping, html→pdf, …) — `GET /api/actions` to list, `GET /api/actions/{actionId}/schema` for inputs, `POST /api/workspaces/{id}/actions/{actionId}/run`, poll `GET /api/workspaces/{id}/actions/runs/{runId}`. Same catalog as the `arg-actions` skill.
+- **Actions** (media generation, transcription, scraping, html→pdf, …) — `GET /api/actions` to list, `GET /api/actions/{actionId}/schema` for inputs, `POST /api/workspaces/{id}/actions/{actionId}/run`. Poll `GET /api/workspaces/{id}/actions/runs/{runId}` only for queued/async durable runs. A succeeded sync read returns output inline; without an idempotency key its `runId` may be audit-only and the run lookup may return 404. Same catalog as the `arg-actions` skill.
 - **Tunnels** - expose a service running in the sandbox: `POST /api/tunnels` body `{ "workspace_id", "command", "port", "name"?, "timeout"?, "access"?, "actions"?, "bindings"? }` returns `{ url?, tunnel_id, access, … }`. `access` is `public`, `personal`, or `workspace`; omitted means `public`. Personal requires a human principal and only its launcher receives a URL. Workspace requires workspace-wide read access to open. Protected records return a bare URL that performs an Arg sign-in and authorization bounce when opened, not a shareable capability URL. Max 3 active per workspace; timeout defaults 5 min and caps at 30. Use `GET /api/tunnels?workspace_id=…`, `GET /api/tunnels/{id}`, and `DELETE /api/tunnels/{id}`. Delete remains a workspace-wide write administration action. `actions` is an explicit allowlist of up to 32 registered, non-integration Action ids. `bindings` is an explicit launch-time array such as `[{ "alias": "github", "provider": "github", "connectionId": "…" }]`. Portable declarations such as `{ "integrations": { "github": { "provider": "github" } } }` stay in the `.server` file and are not sent in the tunnel request. Do not store a connection id or secret in the file.
 
 ### Action access from a tunnel

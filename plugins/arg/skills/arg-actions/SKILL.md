@@ -1,6 +1,6 @@
 ---
 name: arg-actions
-version: "1.2.1"
+version: "1.2.2"
 description: Run Arg's built-in actions - operations that generate or transform workspace files and data (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand - e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
@@ -22,7 +22,7 @@ Prefer an action over doing it by hand whenever one fits — generating or editi
 | `run_action`      | Run one by id with its `input`. Waits for long jobs and reports progress in the tool UI.      |
 | `list_runs`       | Check past or in-flight runs - status, progress, output file.                                 |
 
-**Flow:** `search_actions` → `describe_action` (when you need a field's choices or the exact inputs) → `run_action`. Use `list_runs` to inspect history or recover an interrupted run.
+**Flow:** `search_actions` → `describe_action` (when you need a field's choices or the exact inputs) → `run_action`. Use `list_runs` to inspect durable queued/async runs or recover an interrupted run. A succeeded sync read returns its output inline; its `run_id` may identify only the audit event and need not resolve through `list_runs`.
 
 ### 1. Find it — `search_actions`
 
@@ -59,6 +59,7 @@ run_action({
 
 - `input` matches what `describe_action` showed. File actions usually take a `source_path` (input file) and/or `output_path` (often defaults next to the source if omitted).
 - Successful runs return `{ status: "succeeded", output }` - `output.output_path` is the saved file. Open it like any workspace file.
+- Do not poll an already-succeeded sync read. Its `run_id` can be audit-only and `list_runs` may not find it; use the inline `output`.
 - **Long/provider-backed jobs** (e.g. `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `video_generate`, `three_d_generate`) stay in the `run_action` tool call and report progress until they finish.
 - If the wait limit returns a queued/running `run_id`, check that run with `list_runs`. After an interrupted call with no result, list running runs to recover the in-flight work. Do not start it again, especially for paid provider work.
 - **Write actions need workspace write access** — a read-only session can't run them.
@@ -111,7 +112,7 @@ const latest =
 
 The package is a lazy facade over `window.arg.actions`, not another transport. The viewer must enable the separate, session-only Actions grant in the preview toolbar or permissions menu. The grant is available only for cloud workspaces and is bound to the exact authored source revision, so any local or collaborative code change revokes it before changed code can execute. It is deliberately not covered by folder-scoped filesystem access: registry Actions can reach the whole workspace, spend credits, and act through the viewer's connected services. The iframe never receives a token or chooses the workspace/audit surface; its exact sitearg origin posts to the authenticated Arg parent, and the backend applies the signed-in viewer's permissions and validates the current registry schema.
 
-Use `list`, `schema`, and `describe` for reflection instead of hardcoding current inputs. `run` may return a queued/running record for an asynchronous Action; recover it with `getRun` or `listRuns`. This browser API applies only to framed `r-*.sitearg.com` previews inside Arg, not a deployed top-level Site.
+Use `list`, `schema`, and `describe` for reflection instead of hardcoding current inputs. Poll only a queued/running asynchronous Action with `getRun` or `listRuns`. A succeeded sync read carries its output inline and its audit-only `runId` may return not found. This browser API applies only to framed `r-*.sitearg.com` previews inside Arg, not a deployed top-level Site.
 
 ## From an in-app HTML preview - `window.arg.actions`
 
@@ -156,11 +157,12 @@ schedule or a trigger. Two ways to author it:
 - **`.arg/workflows/*.yml`** — `uses: action/<action_id>`, with `with:` holding the
   action's own input.
 
-Either way the run lands in `action_runs` with `surface: "automation"`, so `list_runs` and
-the run history show it beside interactive runs. **Every** node with a dedicated kind - the file
+Either way the run is audited in ClickHouse `action_runs` with `surface: "automation"`. Durable
+write/async runs also land in Postgres for `list_runs`; a sync read returns inline and may be
+audit-only. **Every** node with a dedicated kind - the file
 nodes, `code`, `http-request`, `run-agent`, `send-notification`, the media nodes, `screenshot`,
 `fetch-web`, `extract-data`, `apify-actor` - bridges onto one of these actions underneath, so
-they all show up in run history too. Keep using those kinds; they just have a friendlier config
+they share this persistence rule too. Keep using those kinds; they just have a friendlier config
 shape, and they keep their own output key names (`output.path`, `output.image_url`) alongside
 the action's (`output.output_path`, `output.asset_url`).
 
