@@ -1,6 +1,6 @@
 ---
 name: arg-cli
-version: "1.10.5"
+version: "1.11.0"
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
@@ -87,7 +87,7 @@ For dynamic `.design` or `.video` output, fetch live data before rendering and m
 | **Create / update** | native Write / Edit / MultiEdit on the path                                               |
 | **Read / search**   | native Read / Grep / Glob                                                                 |
 | **Delete / move**   | `rm` / `mv` / `cp` / `mkdir` (bash)                                                       |
-| **Run a generator** | run it **locally** (`sqlite3`, `ffmpeg`, Pillow, `openpyxl`), writing to the mounted path |
+| **Run a generator** | run it **locally** (`sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`), writing to the mounted path |
 
 This is the **highest-fidelity, lowest-friction** mode: everything an agent already does with local files works unchanged, including binary files (read/write them like any local file). **Always read a file before editing it**, same as any local edit. The default `--mode watch` downloads the workspace and file-watches both sides (remote changes polled every few seconds) — no FUSE needed, works on macOS, Linux, and Windows. `--mode fuse` is an optional lazy on-touch mount that needs a FUSE provider (FUSE-T/macFUSE, libfuse2, or WinFsp). Local edits sync shortly after write; very large files may take a moment - resolve paths relative to the mount root. **Ignores (watch mode):** `.gitignore` files in the mounted tree are honored automatically - build artifacts, `.env`, coverage, and anything else the repo gitignores are excluded from sync and stay local-only. Pass `--no-gitignore` to opt out; add extra patterns with a `.argignore` file (`--ignore-file` to point elsewhere). `--mode fuse` still relies on defaults and `.argignore` only (lazy materialization means `.gitignore` files aren't loaded up front).
 
@@ -111,7 +111,7 @@ When you can't mount (or you only need a one-shot read/write), use the command v
 
 - There is **no in-place `edit`** command — `upload` replaces _whole files_.
 - **To edit a file:** `arg download` it → edit it locally → `arg upload` it back to the same path. For granular or iterative edits this is clumsy — prefer a **mount** (`arg mount`, above).
-- **Run a generator** (`sqlite3`, `ffmpeg`, Pillow, …): either build the file **locally** then `arg upload` it, or run it in the sandbox with `arg exec -- python3 …`.
+- **Run a generator** (`sqlite3`, `ffmpeg`, Pillow, …): either build the file **locally** then `arg upload` it, or run it in the sandbox with `arg exec -- python3 …`. The sandbox ships `requests`, `pandas`, `numpy`, `matplotlib`, `pillow`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter` and `python-docx` preinstalled; for anything else, `arg exec -- pip install <pkg> -q`. `arg-files` lists the recommended library per format.
 - **Binary files** are handled natively by `upload`/`download` (multipart, resumable) — no base64.
 
 If neither mode is available, fall back to `arg-mcp`.

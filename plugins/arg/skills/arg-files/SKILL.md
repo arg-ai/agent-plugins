@@ -1,7 +1,7 @@
 ---
 name: arg-files
-version: "2.4.7"
-description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
+version: "2.5.0"
+description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
 # Arg files
@@ -18,7 +18,7 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 
 - **Read before you edit.** Fetch the current contents first, change only what was asked, and preserve the rest of the structure.
 - **Edit surgically** where the method supports targeted edits; otherwise rewrite the whole file.
-- **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, docx, sqlite) can't be — create them by uploading bytes or, where the format guidance permits it, by running a generator (`sqlite3`, `ffmpeg`, Pillow, `openpyxl`, `python-docx`); your access-method skill says exactly how and where that runs.
+- **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, docx, sqlite) can't be — create them by uploading bytes or, where the format guidance permits it, by running a generator (`sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`, `python-docx` — see Recommended libraries below); your access-method skill says exactly how and where that runs.
 - **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card.
 - **Structured edit libraries:** the Design, Video, and Kanban skills bundle small dependency-free modules under `scripts/document-edit/`. Prefer their relationship-aware helpers over hand-editing linked ids and arrays; use their raw JSON edit operation for fields without a dedicated helper.
 - **Linked workspace files:** author the documented readable path field only. Editors such as `.video`, `.design`, `.kanban`, `.daw`, and `.dj` add or refresh their optional durable `argfile_...` fields when the file opens. Never invent a file id or replace a path with one.
@@ -73,7 +73,7 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 
 - **Diagrams & shaders** — `.excalidraw` (real Excalidraw JSON scene), `.mermaid`/`.mmd` (live SVG preview), `.shadertoy`/`.glsl`/`.frag` (WebGL render).
 - **Data, feeds & config** — `.json` (graph viewer), `.xml`, `.rss` (RSS 2.0 XML), `.yaml`/`.yml`, `.toml`, `.ini`, `.env`, `.sql`. RSS files open as editable XML source and support news, magazine, blog, gallery, podcast, records-table, structure-explorer, and custom AI views.
-- **Spreadsheets** — `.csv`/`.tsv` (text — edit directly), `.xlsx`/`.xlsm` (binary — generate with `openpyxl` / `pandas` / `xlsxwriter`).
+- **Spreadsheets** — `.csv`/`.tsv` (text — edit directly), `.xlsx`/`.xlsm` (binary — generate with `xlsxwriter`, edit an existing workbook with `openpyxl`; see Recommended libraries below).
 - **Databases** — `.sqlite`/`.sqlite3`/`.db` (SQLite). Binary — create/query with the `sqlite3` CLI or Python's `sqlite3` module.
 - **Presentations** — `.pptx` (PowerPoint). Binary — upload or open an existing deck in the slide editor (thumbnails, text/shape editing, add/reorder slides, present mode). Don't generate a new deck as `.pptx`; author it as `.html` or as a `.design` document whose artboards present as slides.
 - **Documents (Word)** — `.docx` (binary — generate with `python-docx`).
@@ -92,3 +92,29 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 - **Games & misc** — `.pgn` (chess), `.solitaire` (playable Klondike solitaire, JSON).
 - **Archives** — `.zip`, `.tar`, `.gz`/`.tgz`, `.rar`, `.7z`, `.jar`, `.war`, `.apk` (upload/view only — no blank-file creation).
 - **Workspace meta** — `.skills/<name>/SKILL.md` (reusable skills) and `.agents/<name>.md` (subagents) — see the `arg-skills-and-agents` skill.
+
+## Recommended libraries
+
+When a format needs a generator, reach for the library below rather than hand-rolling a writer or picking one at random — these are the ones the sandbox is provisioned for. Where they run is your access-method skill's business (`run_bash` over MCP, `arg` locally).
+
+**Installing.** Check the preinstalled list below first — the user waits through every install. When you do need something else, `pip install <pkg> -q`. Never `apt-get install` a Python package; apt is for system binaries (`ffmpeg`, `sqlite3`) and its Python packages are older than PyPI's.
+
+**Already installed — import, don't install:** `requests`, `pandas`, `numpy`, `matplotlib`, `pillow`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter`, `python-docx`.
+
+| Task                     | Use                       | Notes                                                                                              |
+| ------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------- |
+| Excel — write formatted  | `xlsxwriter`              | Best writer: charts, sparklines, number formats, low memory. Write-only — cannot reopen a file.    |
+| Excel — read / edit      | `openpyxl`                | Round-trips styles, formulas, validations. It rebuilds the file, so charts, images and pivot tables in a workbook it loads are **dropped on save** — write with `xlsxwriter` when output fidelity matters. |
+| Excel — read fast / bulk | `python-calamine`         | Rust-backed, values only, no styles. Also `pandas.read_excel(..., engine="calamine")`.             |
+| Excel — evaluate formulas | `formulas`               | A workbook may cache no results (`fullCalcOnLoad`), so reading cells alone returns blanks.         |
+| Word                     | `python-docx`             |                                                                                                      |
+| PDF — read / edit        | `pypdf`                   | `pdfplumber` for text and table extraction.                                                          |
+| PDF — generate           | HTML → the `html`→`pdf` action | Prefer the action over a Python PDF writer — see the `arg-actions` skill.                       |
+| CSV / tabular analysis   | `pandas`                  | For plain row I/O the stdlib `csv` module is lighter and preserves exact values.                    |
+| Images                   | `pillow`                  | `ffmpeg` for animated/video frames.                                                                  |
+| Audio / video            | `ffmpeg` (CLI)            | Transcode, trim, extract frames. Don't shell out to a Python wrapper.                               |
+| SQLite                   | stdlib `sqlite3`          | Or the `sqlite3` CLI.                                                                                |
+| HTTP                     | `requests`                | `httpx` if you need async.                                                                           |
+| HTML scraping            | `beautifulsoup4`          | Prefer the `web_scrape` action first — it handles auth-walled sites.                                |
+| Calendar                 | `icalendar`               |                                                                                                      |
+| 3D / CAD                 | `trimesh`                 | `cadquery` for parametric STEP work.                                                                 |
