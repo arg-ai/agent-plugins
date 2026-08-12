@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.2.0"
+version: "1.4.0"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides.
 ---
 
@@ -52,7 +52,7 @@ Coordinates are document pixels. Each object has a `frame` `{ x, y, width, heigh
 
 **`type` values & type-specific fields:** `rect` (`cornerRadius`: one non-negative number when all four corners are equal, or `{tl,tr,br,bl}` with non-negative values for independent corners; store a plain number again once all four match), `ellipse`, `polygon` (`sides` ≥3), `star` (`points`, `innerRatio` 0–1), `line` (`x1,y1,x2,y2`; optional `markerStart`/`markerEnd` end caps: `arrow` open V / `triangle` solid head / `circle` / `diamond` / `bar`, drawn at the `x1,y1` / `x2,y2` end in the stroke's color, scaling with stroke width — the way to draw a connector/arrow between things), `path` (`d` SVG path data; `closed`, `fillRule`, `viewBox`), `text` (`text`, `textMode` `point` auto-fits width / `area` wraps inside `frame`, `style` with `fontFamily`, `fontSize`, `fontWeight`, `align` `left`/`center`/`right`/`justify` — plus optional `fontStyle`, `textDecoration`, `letterSpacing`, `lineHeight`, `verticalAlign`; glyphs are painted by `fills` — gradients/images work — and outlined by `strokes`; legacy `color` still parses but is folded into `fills` on load), `group` (`children` ids; `clipChildren?`).
 
-**Fills:** `solid` (`color`), `linear-gradient` (`angle`, `stops`, optional paired `start`/`end` points and `space` `local`/`world`), `radial-gradient`/`angular`/`diamond` (`cx`,`cy`,`stops`), `image` (`src`, `fit`; mirror it with the object-level `flipH`/`flipV`), `shader` (procedural GLSL - see below), `webcam` (source-less live camera; portable fields only: `fit` `cover`/`contain`/`fill`, `mirrored` default true, optional neutral `color`, `opacity`, `visible`), `none`. For a linear gradient, `start` and `end` are `{x,y}` and override `angle`: omit `space` or use `local` for object-bounding-box coordinates (`0,0` top-left; `1,1` bottom-right, values outside that range allowed), or use `world` for absolute document-pixel coordinates that remain canvas-anchored when the object moves or rotates. Always provide both endpoints together. Never put a webcam device id, label, stream id, or other capture identifier in a document. Camera access starts only from an explicit action in the editable editor; read-only/headless export uses `color` as a static fallback. Advanced fills paint a shape's interior with an already-uploaded workspace asset (not creatable via write_file; both export as a baked still image): `model3d` (`src` model path + optional `model3d` camera pose) and `video` (`src` clip path, `fit` `cover`/`contain`/`fill`, `loop` default true) - the clip plays muted + looping on-canvas. Workspace-backed image/model3d/video fills may also carry a UI-managed `fileId`; a linked shader pairs `shaderSrc` with `fileId`. Author the path only, preserve a valid existing id, and never invent one.
+**Fills:** Non-file paints are `solid` (`color`), `linear-gradient` (`angle`, `stops`, optional paired `start`/`end` points and `space` `local`/`world`), `radial-gradient`/`angular-gradient`/`diamond-gradient` (`cx`,`cy`,`stops`), internal `shader` (`shaderId` plus optional `values`/`speed` - see below), `webcam` (source-less live camera), and `none`. Every paint backed by a file uses one shape: `{ "type": "file", "fileType": "image"|"model3d"|"video"|"design"|"kml"|"cad"|"shader", "src": "...", "fileId"?: "..." }`; subtype settings stay alongside those common fields (`fit` for image/video/design, `model3d` pose, `kml` settings, `cad` settings, or `speed` for a shader file). Never author the old top-level `image`/`model3d`/`video`/`design`/`kml`/`cad` fill types or `shaderSrc`; the parser accepts and migrates them only for existing documents. Author a workspace path and preserve a valid existing `fileId`, but never invent one. A webcam stores only portable visual fields (`fit`, `mirrored`, `color`, `opacity`, `visible`) and never a device id, label, or stream identifier.
 **Image fill `src`:** any workspace path the renderer can display — raster images (`.png`, `.jpg`, `.webp`, `.gif`, `.avif`), `.svg` (rendered natively), `.psd` (live reference: the renderer composites the Photoshop document to a flattened raster at display/export time; edits to the source PSD reflow on reload). On export, `.psd` fills bake to an inline PNG so the output is self-contained. Reference a real workspace path or a data URL; don't invent a path.
 **Strokes:** `color`, `width`, `dash` (solid/dash/dot), `cap`, `join`, `align`, and optional `paint` containing a gradient fill. When `paint` is present it paints the stroke; keep `color` as a solid compatibility fallback for line markers and older readers. A linear-gradient stroke paint uses the same `start`/`end` and `space` rules as a fill.
 
@@ -133,9 +133,67 @@ A `{ "type": "shader" }` fill paints any shape or artboard with a live WebGL fra
 
 **7 built-in shaders** — reference by id without a `shaders` entry: `builtin-water-caustic`, `builtin-moire`, `builtin-nebula`, `builtin-glowing-wave`, `builtin-pattern-grid`, `builtin-fractal-noise`, `builtin-concentric`. Copy one into `shaders` (with a new id) to make it editable.
 
-**Workspace file shaders** — instead of `shaderId`, set `"shaderSrc": "/path/to/file.glsl"` (`.glsl`/`.frag`/`.shadertoy`). The fill stays linked to the file; `shaderId`/`values` are ignored. `speed` still applies. Shadertoy files use `iResolution`/`iTime`/`void mainImage(out vec4 fragColor, in vec2 fragCoord)` convention.
+**Workspace file shaders** — use `{ "type": "file", "fileType": "shader", "src": "/path/to/file.glsl", "speed": 1 }` (`.glsl`/`.frag`/`.shadertoy`). The fill stays linked to the file and has no `shaderId`/`values`; those belong only to an internal `shader` fill. Shadertoy files use the `iResolution`/`iTime`/`void mainImage(out vec4 fragColor, in vec2 fragCoord)` convention.
 
 Shader fills bake to a static raster on SVG/PNG/JPEG export.
+
+## Nested design fills
+
+A `{ "type": "file", "fileType": "design" }` fill paints a shape with another workspace `.design` document — a live reference, not a copy. Editing the referenced file updates every shape painted by it, and the same file used N times is fetched and parsed once.
+
+**Fields:** `src` (workspace path of the `.design` file, e.g. `"/boards/logo.design"`), `artboardId` (which artboard of that document to paint; omit for the first), `fit` (`contain` default — shows the whole artboard letterboxed — plus `cover` and `fill`), `opacity`, `visible`, and the UI-managed `fileId`.
+
+Unlike every other dynamic fill, this one is **not** baked to a raster on export: a `.design` document already serializes to SVG, so the referenced artboard is inlined as real vector inside a clipped, transformed group. Its own image, shader, 3D, video and map fills are resolved first, so nested content survives the export intact.
+
+Nesting is bounded. A document that paints itself - directly, or through a chain of references - is refused rather than recursed into, and references more than 4 levels deep are dropped; both cases show a placard on canvas instead of content. Point a fill at a different file than the one you are editing.
+
+```json
+{
+  "type": "file",
+  "fileType": "design",
+  "src": "/boards/logo.design",
+  "artboardId": "art1",
+  "fit": "contain"
+}
+```
+
+## KML map fills
+
+A `{ "type": "file", "fileType": "kml" }` fill paints a shape with a workspace `.kml`/`.kmz` document rendered as a map - a raster basemap under the document's points, lines and polygons.
+
+**Fields:** `src` (workspace path of the `.kml`/`.kmz` file), `kml` (the view and styling settings below), `opacity`, `visible`, and the UI-managed `fileId`.
+
+**`kml` settings:** `basemap` (`none`/`light`/`dark`/`streets`/`satellite`/`satellite-labels`), `fitBounds` (true auto-frames the document's extent; false uses `centerLng`/`centerLat`/`zoom`), `centerLng`, `centerLat`, `zoom` (0–22), `padding` (px around the fitted bounds, 0–256), `background` (hex, painted under the basemap), `strokeWidth` (0.25–8 multiplier), `pointRadius` (0–40 px), `showLabels`, `labelColor` (hex or `null` to follow each feature), `labelOutlineColor` (hex, default `#ffffff`, or `null` to follow `background`), `labelOutlineWidth` (0–8 px), `labelFontSize` (8–48 px), and `basemapOpacity` (0–1). A placemark's own KML `<LabelStyle><color>` overrides `labelColor`. Out-of-range values are clamped on load, so a partial settings object is safe.
+
+Map fills bake to a static image on SVG/PNG/JPEG export, the same way `model3d` and `video` fills do.
+
+```json
+{
+  "type": "file",
+  "fileType": "kml",
+  "src": "/maps/route.kml",
+  "kml": { "basemap": "light", "fitBounds": true, "padding": 24, "showLabels": true }
+}
+```
+
+## CAD drawing fills
+
+A `{ "type": "file", "fileType": "cad" }` fill paints a shape with a workspace `.cad` document drawn as a still - either its plan (the drawing plane) or the view through one of the document's saved cameras. Only the exact `.cad` format works; `.dxf`/`.dwg` are a different format this fill cannot read.
+
+**Fields:** `src` (workspace path of the `.cad` file), `cad` (the view and styling settings below), `opacity`, `visible`, and the UI-managed `fileId`.
+
+**`cad` settings:** `view` (`plan` or `camera`), `cameraId` (which saved camera `camera` looks through; `null` uses the document's first, and a document with no cameras falls back to the plan), `style` (`technical` / `blueprint` / `sketch` / `mono` / `night`), `level` (a storey id to draw on its own, or `null` for every level), `padding` (px around the fitted drawing, 0–256), `zoom` (0.1–16 multiplier over the fit), `lineWidth` (0.1–8 multiplier on every stroke), `showText` (room names, labels, dimension strings), `showFills` (false is a pure line drawing), and `background` (hex paper colour, or `null` to use the style preset's own paper - which is what makes `blueprint` look like a blueprint). Out-of-range values are clamped on load, so a partial settings object is safe.
+
+Drawing fills bake to a static image on SVG/PNG/JPEG export, the same way `kml`, `model3d` and `video` fills do.
+
+```json
+{
+  "type": "file",
+  "fileType": "cad",
+  "src": "/plans/house.cad",
+  "cad": { "view": "plan", "style": "blueprint", "padding": 32, "showText": true }
+}
+```
 
 ```json
 {
@@ -201,7 +259,7 @@ The whole result travels back through a memory-bounded browser session, so a ver
 
 - Put the artboard background in the artboard's `fills`; everything else goes in `objects` with draw order in `order`.
 - Keep ids consistent across the `objects` key, the object's own `id`, and `order` / group `children`.
-- There is no `image` object type — place a photo by giving a shape (usually a `rect`) an `image` fill (`{ "type": "image", "src", "fit" }`, `fit` `cover`/`contain`/`fill`/`tile`/`crop`). Valid `src` values: any workspace image path (`.png`, `.jpg`, `.webp`, `.gif`, `.avif`), `.svg` workspace paths, `.psd` workspace paths (live reference — composited to a raster at display/export time), or a data URL. Don't invent a path.
+- There is no `image` object type - place a photo by giving a shape (usually a `rect`) a file fill (`{ "type": "file", "fileType": "image", "src", "fit" }`, with `fit` `cover`/`contain`/`fill`/`tile`/`crop`). Valid `src` values: any workspace image path (`.png`, `.jpg`, `.webp`, `.gif`, `.avif`), `.svg` workspace paths, `.psd` workspace paths (live reference - composited to a raster at display/export time), or a data URL. Don't invent a path.
 - `rect` corner radius UI: the Properties panel's frame icon toggles between the single-radius input and the 2×2 per-corner grid. Dragging a canvas corner grip rounds all corners together; hold Option (macOS) / Ctrl (Windows) to round only the dragged corner.
 - `line` endpoints (`x1,y1,x2,y2`) and `path` `d` coordinates are relative to the object's `frame` origin, not document space — reposition the whole object by moving its `frame`, not by rewriting the point coords.
 - For `.svg`, edit the markup directly; keep `viewBox` and existing ids/groups/styles intact. On open the editor parses standard primitives (`rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `path`, `text`, `image`, `g` + nested transforms) and re-emits SVG on save.

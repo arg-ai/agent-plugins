@@ -10,6 +10,15 @@ import {
   setJsonProperty,
   stringifyJsonDocument,
 } from "./common.mjs";
+const DESIGN_FILE_FILL_TYPES = new Set([
+  "image",
+  "model3d",
+  "video",
+  "design",
+  "kml",
+  "cad",
+  "shader",
+]);
 export const BUILTIN_DESIGN_SHADER_IDS = [
   "builtin-water-caustic",
   "builtin-moire",
@@ -34,10 +43,62 @@ function assertValid(document) {
   const errors = validateDesign(document);
   if (errors.length > 0) error("invalid_document", errors.join("; "));
 }
-function mutate(document, change) {
-  assertValid(document);
+function normalizeDesignFileFillsInPlace(document) {
+  for (const { fills } of fillArrays(document)) {
+    fills.forEach((value, index) => {
+      if (!isJsonObject(value) || value.type === "file") return;
+      const fileType =
+        typeof value.type === "string" && DESIGN_FILE_FILL_TYPES.has(value.type)
+          ? value.type
+          : undefined;
+      const source = fileType === "shader" ? value.shaderSrc : value.src;
+      if (!fileType || typeof source !== "string" || (fileType === "shader" && !source.trim())) {
+        if (
+          fileType === "shader" &&
+          (value.shaderSrc !== undefined || value.fileId !== undefined)
+        ) {
+          const fill = cloneJson(value);
+          delete fill.shaderSrc;
+          delete fill.fileId;
+          fills[index] = fill;
+        }
+        return;
+      }
+      const fill = cloneJson(value);
+      fill.type = "file";
+      fill.fileType = fileType;
+      fill.src = source;
+      if (fileType === "shader") {
+        delete fill.shaderSrc;
+        delete fill.shaderId;
+        delete fill.values;
+      }
+      fills[index] = fill;
+    });
+  }
+}
+function normalizedDesign(document) {
+  const needsMigration = fillArrays(document).some(({ fills }) =>
+    fills.some(
+      (fill) =>
+        isJsonObject(fill) &&
+        fill.type !== "file" &&
+        typeof fill.type === "string" &&
+        DESIGN_FILE_FILL_TYPES.has(fill.type) &&
+        (fill.type !== "shader" || fill.shaderSrc !== undefined || fill.fileId !== undefined),
+    ),
+  );
+  if (!needsMigration) return document;
   const next = cloneJson(document);
+  normalizeDesignFileFillsInPlace(next);
+  return next;
+}
+function mutate(document, change) {
+  const next = cloneJson(document);
+  normalizeDesignFileFillsInPlace(next);
+  assertValid(next);
   change(next);
+  normalizeDesignFileFillsInPlace(next);
   assertValid(next);
   return next;
 }
@@ -124,15 +185,18 @@ export function parseDesign(text) {
       ],
     };
   }
+  normalizeDesignFileFillsInPlace(document);
   assertValid(document);
   return document;
 }
 export function stringifyDesign(document) {
-  assertValid(document);
-  return stringifyJsonDocument(document);
+  const normalized = normalizedDesign(document);
+  assertValid(normalized);
+  return stringifyJsonDocument(normalized);
 }
 export function editDesign(document, edits) {
-  const next = applyJsonEdits(document, edits);
+  const next = applyJsonEdits(normalizedDesign(document), edits);
+  normalizeDesignFileFillsInPlace(next);
   assertValid(next);
   return next;
 }
@@ -478,11 +542,15 @@ export function collectDesignFileReferences(document) {
     fills.forEach((fill, fillIndex) => {
       if (!isJsonObject(fill)) return;
       const field =
-        fill.type === "shader"
-          ? "shaderSrc"
-          : fill.type === "image" || fill.type === "model3d" || fill.type === "video"
-            ? "src"
-            : undefined;
+        fill.type === "file" &&
+        typeof fill.fileType === "string" &&
+        DESIGN_FILE_FILL_TYPES.has(fill.fileType)
+          ? "src"
+          : fill.type === "shader"
+            ? "shaderSrc"
+            : typeof fill.type === "string" && DESIGN_FILE_FILL_TYPES.has(fill.type)
+              ? "src"
+              : undefined;
       if (!field) return;
       const filePath = fill[field];
       if (typeof filePath !== "string" || !isWorkspacePath(filePath)) return;
@@ -500,10 +568,24 @@ export function collectDesignFileReferences(document) {
 }
 export function replaceDesignFillSource(fill, filePath) {
   const next = cloneJson(fill);
-  if (next.type === "shader") next.shaderSrc = filePath;
-  else if (next.type === "image" || next.type === "model3d" || next.type === "video")
-    next.src = filePath;
-  else error("invalid_fill", "Only file-backed fills have replaceable sources");
+  const fileType =
+    next.type === "file" &&
+    typeof next.fileType === "string" &&
+    DESIGN_FILE_FILL_TYPES.has(next.fileType)
+      ? next.fileType
+      : typeof next.type === "string" && DESIGN_FILE_FILL_TYPES.has(next.type)
+        ? next.type
+        : undefined;
+  if (!fileType) error("invalid_fill", "Only file-backed fills have replaceable sources");
+  next.type = "file";
+  next.fileType = fileType;
+  next.src = filePath;
+  if (fileType === "shader") {
+    delete next.shaderSrc;
+    delete next.shaderId;
+    delete next.values;
+  }
+  if (fileType === "design") delete next.artboardId;
   delete next.fileId;
   return next;
 }

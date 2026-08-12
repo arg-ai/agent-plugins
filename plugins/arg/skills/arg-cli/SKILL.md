@@ -82,11 +82,11 @@ For dynamic `.design` or `.video` output, fetch live data before rendering and m
 
 `arg mount [flags] -- <harness> [harness args...]` mounts the active workspace as a **local directory with two-way sync**, then launches your coding harness inside it. From there the workspace is just files on disk, so **use your harness's own native tools directly on the mounted paths** — no Arg-specific verbs, no base64. Edits sync back to Arg automatically.
 
-| Operation           | How                                                                                       |
-| ------------------- | ----------------------------------------------------------------------------------------- |
-| **Create / update** | native Write / Edit / MultiEdit on the path                                               |
-| **Read / search**   | native Read / Grep / Glob                                                                 |
-| **Delete / move**   | `rm` / `mv` / `cp` / `mkdir` (bash)                                                       |
+| Operation           | How                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| **Create / update** | native Write / Edit / MultiEdit on the path                                                 |
+| **Read / search**   | native Read / Grep / Glob                                                                   |
+| **Delete / move**   | `rm` / `mv` / `cp` / `mkdir` (bash)                                                         |
 | **Run a generator** | run it **locally** (`sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`), writing to the mounted path |
 
 This is the **highest-fidelity, lowest-friction** mode: everything an agent already does with local files works unchanged, including binary files (read/write them like any local file). **Always read a file before editing it**, same as any local edit. The default `--mode watch` downloads the workspace and file-watches both sides (remote changes polled every few seconds) — no FUSE needed, works on macOS, Linux, and Windows. `--mode fuse` is an optional lazy on-touch mount that needs a FUSE provider (FUSE-T/macFUSE, libfuse2, or WinFsp). Local edits sync shortly after write; very large files may take a moment - resolve paths relative to the mount root. **Ignores (watch mode):** `.gitignore` files in the mounted tree are honored automatically - build artifacts, `.env`, coverage, and anything else the repo gitignores are excluded from sync and stay local-only. Pass `--no-gitignore` to opt out; add extra patterns with a `.argignore` file (`--ignore-file` to point elsewhere). `--mode fuse` still relies on defaults and `.argignore` only (lazy materialization means `.gitignore` files aren't loaded up front).

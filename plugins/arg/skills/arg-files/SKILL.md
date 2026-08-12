@@ -21,7 +21,7 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 - **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, docx, sqlite) can't be — create them by uploading bytes or, where the format guidance permits it, by running a generator (`sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`, `python-docx` — see Recommended libraries below); your access-method skill says exactly how and where that runs.
 - **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card.
 - **Structured edit libraries:** the Design, Video, and Kanban skills bundle small dependency-free modules under `scripts/document-edit/`. Prefer their relationship-aware helpers over hand-editing linked ids and arrays; use their raw JSON edit operation for fields without a dedicated helper.
-- **Linked workspace files:** author the documented readable path field only. Editors such as `.video`, `.design`, `.kanban`, `.daw`, and `.dj` add or refresh their optional durable `argfile_...` fields when the file opens. Never invent a file id or replace a path with one.
+- **Linked workspace files:** the durable stored form carries both a stable `argfile_...` id and a readable path snapshot. Author the documented path field only because editors such as `.video`, `.design`, `.kanban`, `.daw`, and `.dj` own id minting and refresh both fields when a linked file moves. Preserve a valid existing pair, and never invent a file id or replace a path with one.
 - **Delete / move:** to remove part of a structured file (a card, a node), edit the JSON rather than deleting the file; your access-method skill covers deleting/moving whole files.
 - **Respect locked files.** A file can be locked ("editing locked"): writing to or editing it is refused with an error. Don't fight the lock or route around it - surface it to the user, who can unlock the file if they want the change. A lock freezes content only, so moving/renaming/copying/deleting a locked file still works - but confirm with the user first, since the lock says they care about that file.
 - **Leave `.arg/editors/` (and `.views/`) alone.** A workspace-root `.arg/editors/` folder holds UI-managed alternate HTML views ("custom editors") of files (tabular data views; 3D/outline for whiteboards, table/calendar/timeline/map/dashboard/intake/whiteboard for kanbans, slides/dashboard/whiteboard for documents, places/itinerary/whiteboard for KML/KMZ maps, whiteboard for M3U playlists, records-table/structure-explorer for JSON/YAML/XML data files, news/magazine/blog/gallery/podcast/records-table/structure-explorer for RSS feeds, artboard gallery/palette for designs, calendar for diaries), keyed by each source file's path. Older workspaces may still have some under a legacy `.views/` folder. Never hand-edit, rename, move, or delete anything under either — the editor's App switcher owns them, and views read their source file live (no baked data to fix up).
@@ -36,7 +36,7 @@ For these, **load the named skill first** for format-specific guidance:
 | Document / notes          | md, mdx, txt, markdown                                      | `arg-file-document`   | Text (`.mdx` adds custom JSX components)            |
 | React UI / apps           | tsx, jsx                                                    | `arg-apps`            | Text (live preview on an isolated sitearg origin)   |
 | HTML / web / apps         | html, htm                                                   | `arg-apps`            | Text (file-backed apps via the `window.arg` FS SDK) |
-| Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/GIF clips)    |
+| Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/projects)     |
 | DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                             |
 | Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`/`.svg`); `.fig` import-only         |
 | CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)              |
@@ -60,6 +60,7 @@ Arg defines native, agent-friendly formats. Load the dedicated format skill befo
 - `.kanban` — task board — see the `arg-file-kanban` skill.
 - `.automation` — visual workflow — see the `arg-file-automation` skill.
 - `.arg/workflows/*.yml` — YAML workflow that compiles to the automation engine — see the `arg-file-automation` skill.
+- `.video` - an NLE timeline that can also be referenced as a normal video clip from another `.video`, making reusable compositions, stingers, title packages, and prebuilt sequences without copying child tracks - see the `arg-file-video-edit` skill.
 
 Two more custom surfaces:
 
@@ -101,20 +102,20 @@ When a format needs a generator, reach for the library below rather than hand-ro
 
 **Already installed — import, don't install:** `requests`, `pandas`, `numpy`, `matplotlib`, `pillow`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter`, `python-docx`.
 
-| Task                     | Use                       | Notes                                                                                              |
-| ------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------- |
-| Excel — write formatted  | `xlsxwriter`              | Best writer: charts, sparklines, number formats, low memory. Write-only — cannot reopen a file.    |
-| Excel — read / edit      | `openpyxl`                | Round-trips styles, formulas, validations. It rebuilds the file, so charts, images and pivot tables in a workbook it loads are **dropped on save** — write with `xlsxwriter` when output fidelity matters. |
-| Excel — read fast / bulk | `python-calamine`         | Rust-backed, values only, no styles. Also `pandas.read_excel(..., engine="calamine")`.             |
-| Excel — evaluate formulas | `formulas`               | A workbook may cache no results (`fullCalcOnLoad`), so reading cells alone returns blanks.         |
-| Word                     | `python-docx`             |                                                                                                      |
-| PDF — read / edit        | `pypdf`                   | `pdfplumber` for text and table extraction.                                                          |
-| PDF — generate           | HTML → the `html`→`pdf` action | Prefer the action over a Python PDF writer — see the `arg-actions` skill.                       |
-| CSV / tabular analysis   | `pandas`                  | For plain row I/O the stdlib `csv` module is lighter and preserves exact values.                    |
-| Images                   | `pillow`                  | `ffmpeg` for animated/video frames.                                                                  |
-| Audio / video            | `ffmpeg` (CLI)            | Transcode, trim, extract frames. Don't shell out to a Python wrapper.                               |
-| SQLite                   | stdlib `sqlite3`          | Or the `sqlite3` CLI.                                                                                |
-| HTTP                     | `requests`                | `httpx` if you need async.                                                                           |
-| HTML scraping            | `beautifulsoup4`          | Prefer the `web_scrape` action first — it handles auth-walled sites.                                |
-| Calendar                 | `icalendar`               |                                                                                                      |
-| 3D / CAD                 | `trimesh`                 | `cadquery` for parametric STEP work.                                                                 |
+| Task                      | Use                            | Notes                                                                                                                                                                                                      |
+| ------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Excel — write formatted   | `xlsxwriter`                   | Best writer: charts, sparklines, number formats, low memory. Write-only — cannot reopen a file.                                                                                                            |
+| Excel — read / edit       | `openpyxl`                     | Round-trips styles, formulas, validations. It rebuilds the file, so charts, images and pivot tables in a workbook it loads are **dropped on save** — write with `xlsxwriter` when output fidelity matters. |
+| Excel — read fast / bulk  | `python-calamine`              | Rust-backed, values only, no styles. Also `pandas.read_excel(..., engine="calamine")`.                                                                                                                     |
+| Excel — evaluate formulas | `formulas`                     | A workbook may cache no results (`fullCalcOnLoad`), so reading cells alone returns blanks.                                                                                                                 |
+| Word                      | `python-docx`                  |                                                                                                                                                                                                            |
+| PDF — read / edit         | `pypdf`                        | `pdfplumber` for text and table extraction.                                                                                                                                                                |
+| PDF — generate            | HTML → the `html`→`pdf` action | Prefer the action over a Python PDF writer — see the `arg-actions` skill.                                                                                                                                  |
+| CSV / tabular analysis    | `pandas`                       | For plain row I/O the stdlib `csv` module is lighter and preserves exact values.                                                                                                                           |
+| Images                    | `pillow`                       | `ffmpeg` for animated/video frames.                                                                                                                                                                        |
+| Audio / video             | `ffmpeg` (CLI)                 | Transcode, trim, extract frames. Don't shell out to a Python wrapper.                                                                                                                                      |
+| SQLite                    | stdlib `sqlite3`               | Or the `sqlite3` CLI.                                                                                                                                                                                      |
+| HTTP                      | `requests`                     | `httpx` if you need async.                                                                                                                                                                                 |
+| HTML scraping             | `beautifulsoup4`               | Prefer the `web_scrape` action first — it handles auth-walled sites.                                                                                                                                       |
+| Calendar                  | `icalendar`                    |                                                                                                                                                                                                            |
+| 3D / CAD                  | `trimesh`                      | `cadquery` for parametric STEP work.                                                                                                                                                                       |
