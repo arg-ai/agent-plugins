@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.5.0"
+version: "2.5.1"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -98,7 +98,7 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 
 When a format needs a generator, reach for the library below rather than hand-rolling a writer or picking one at random — these are the ones the sandbox is provisioned for. Where they run is your access-method skill's business (`run_bash` over MCP, `arg` locally).
 
-**Installing.** Check the preinstalled list below first — the user waits through every install. When you do need something else, `pip install <pkg> -q`. Never `apt-get install` a Python package; apt is for system binaries (`ffmpeg`, `sqlite3`) and its Python packages are older than PyPI's.
+**Installing.** Check the preinstalled list below first — the user waits through every install. When you do need something else, `pip install <pkg> -q`. Never `apt-get install` a Python package; apt is for system binaries (`ffmpeg`, `sqlite3`) and its Python packages are older than PyPI's. Sandbox installs are session-local: after ~10 minutes of inactivity or a cold start they are gone, so reinstall is normal. Keep venvs/`node_modules` in `/tmp` or `$HOME` for the run - do not put dependency trees in the workspace tree (slow network mount, pollutes search and the file browser).
 
 **Already installed — import, don't install:** `requests`, `pandas`, `numpy`, `matplotlib`, `pillow`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter`, `python-docx`.
 

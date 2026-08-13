@@ -1,6 +1,6 @@
 ---
 name: arg-api
-version: "1.4.1"
+version: "1.4.2"
 description: Build against the Arg REST API (https://api.arg.ai) — API-key auth, workspace/file CRUD over HTTP, sandboxed bash + file tools, semantic search, actions, tunnels, share links, file invitations, notifications, service accounts. Load when writing code that calls Arg over HTTP — an integration, backend, script, CI job, or a custom agent harness that wires Arg tools into its own loop — or when the only available access is an API key and an HTTP client. For interactive file CRUD from an agent session prefer arg-mcp / arg-cli; this is the raw HTTP layer they wrap.
 ---
 
@@ -90,7 +90,7 @@ Writes are versioned and attributed to the key's principal, and show up in the w
 | `multi-edit` | `{ "path", "edits": [{ "old_string", "new_string" }, …] }`                                                             |
 | `grep`       | `{ "pattern", "path"?: ".", "include"?: "*.ts" }`                                                                      |
 
-`run-bash` (and any write tool) needs workspace **write** access on the key's principal. It returns `{ status: "completed"|"failed", stdout, stderr, duration_ms }`; pass a `sandbox_id` to run in a named, isolated container scoped to the workspace (parallel runs don't collide; omit it for the shared sandbox).
+`run-bash` (and any write tool) needs workspace **write** access on the key's principal. It returns `{ status: "completed"|"failed", stdout, stderr, duration_ms }`. Optional `sandbox_id` runs in a **named** workspace-scoped container (parallel named runs don't collide). **Omit** it for the default container for that call path - do not pass the string `"default"` as a name. The container is ephemeral: after ~10 minutes of inactivity (or a cold start), local installs, `/tmp`, and shell state are gone; only workspace-mounted files persist. Reinstall on cold start is expected; keep venvs/`node_modules` off the workspace tree (use `/tmp` or `$HOME` for the session).
 
 ## The rest of the surface
 

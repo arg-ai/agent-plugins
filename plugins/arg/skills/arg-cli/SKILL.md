@@ -1,6 +1,6 @@
 ---
 name: arg-cli
-version: "1.11.0"
+version: "1.11.1"
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
@@ -111,7 +111,7 @@ When you can't mount (or you only need a one-shot read/write), use the command v
 
 - There is **no in-place `edit`** command — `upload` replaces _whole files_.
 - **To edit a file:** `arg download` it → edit it locally → `arg upload` it back to the same path. For granular or iterative edits this is clumsy — prefer a **mount** (`arg mount`, above).
-- **Run a generator** (`sqlite3`, `ffmpeg`, Pillow, …): either build the file **locally** then `arg upload` it, or run it in the sandbox with `arg exec -- python3 …`. The sandbox ships `requests`, `pandas`, `numpy`, `matplotlib`, `pillow`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter` and `python-docx` preinstalled; for anything else, `arg exec -- pip install <pkg> -q`. `arg-files` lists the recommended library per format.
+- **Run a generator** (`sqlite3`, `ffmpeg`, Pillow, …): either build the file **locally** then `arg upload` it, or run it in the sandbox with `arg exec -- python3 …`. The sandbox ships `requests`, `pandas`, `numpy`, `matplotlib`, `pillow`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter` and `python-docx` preinstalled; for anything else, `arg exec -- pip install <pkg> -q`. `arg-files` lists the recommended library per format. The sandbox container is ephemeral (~10 minutes idle / cold start wipes local installs and `/tmp`); reinstall is normal. Prefer `--sandbox <name>` only for intentional named reuse while warm - omit for the default path, and do not use the name `default`. Keep venvs/`node_modules` in `/tmp` or `$HOME` for the session, not in the workspace tree.
 - **Binary files** are handled natively by `upload`/`download` (multipart, resumable) — no base64.
 
 If neither mode is available, fall back to `arg-mcp`.
