@@ -1,7 +1,7 @@
 ---
 name: arg-file-design
-version: "1.4.0"
-description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides.
+version: "1.4.1"
+description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; for presentation-specific workflow load arg-slides alongside it.
 ---
 
 # Design files (`.design`, `.svg`, `.fig`)
@@ -41,6 +41,8 @@ Top-level: `version` (use `1`), optional `metadata` (`{ "defaultView": "design" 
 Creative view presents artboards as a centered vertical page column in `artboards` array order. That layout is a transient editor projection: keep authoring normal document-space coordinates, and use the array itself to control Creative page order. Switching between Creative and Design views never rewrites artboard or object positions.
 
 **Slides view** treats each artboard as a slide. `metadata.sections` groups them: `[{ "id": "s1", "name": "Intro", "artboardIds": ["hero", "agenda"] }]`. Sections hold artboard **id references only**, so reordering a slide or a section never moves artboard geometry — the same projection rule as Creative view. Omit `sections` and the deck is one implicit section holding every artboard in `artboards` order. When present, `metadata.sections` is the presentation order (not the `artboards` array), every id must name a real artboard, and no artboard may appear in two sections.
+
+For a slide deck, also load `arg-slides`. It makes `.design` the default presentation format and covers reference-first authoring, live content, presenter workflow, and restrained GLSL motion.
 
 **Presenter notes:** each artboard takes an optional `notes` string holding **MDX** - the same dialect the `.mdx` editor reads, so headings, lists, callouts and embeds all render while editing beside the slide in Slides view. The presenter console shows notes as read-only Markdown, so wiki-style links and file embeds display as plain text there rather than resolving - keep notes meant to be read live plain-text-friendly. The other views carry `notes` through untouched.
 

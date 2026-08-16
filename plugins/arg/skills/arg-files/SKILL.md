@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.5.1"
+version: "2.5.2"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -46,6 +46,8 @@ For these, **load the named skill first** for format-specific guidance:
 | Diary / journal           | diary                                                       | `arg-file-document`   | Text (JSON, per-day rich text)                      |
 | Shareable form / survey   | form                                                        | `arg-file-document`   | Text (MDX with form field components)               |
 
+For slide decks and presentations, load `arg-slides` alongside `arg-file-design`. It makes a multi-artboard `.design` the default and covers presentation structure, live inter-file content, presenter notes, and animated GLSL fills.
+
 Plus a meta skill, **`arg-skills-and-agents`**, for authoring reusable workspace skills (`.skills/<name>/SKILL.md`) and subagents (`.agents/<name>.md`).
 
 For a product feature map of the Arg **web** and **desktop** apps — what each surface can do, and which capabilities are desktop-only (local-folder workspaces, folder sync, local CLI agents, native notifications) — load **`arg-ui`**. For the full product overview — what Arg is, every offering, plans, and who it's for (e.g. to answer questions about Arg or onboard a new user) — load **`arg-overview`**.
@@ -76,7 +78,7 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 - **Data, feeds & config** — `.json` (graph viewer), `.xml`, `.rss` (RSS 2.0 XML), `.yaml`/`.yml`, `.toml`, `.ini`, `.env`, `.sql`. RSS files open as editable XML source and support news, magazine, blog, gallery, podcast, records-table, structure-explorer, and custom AI views.
 - **Spreadsheets** — `.csv`/`.tsv` (text — edit directly), `.xlsx`/`.xlsm` (binary — generate with `xlsxwriter`, edit an existing workbook with `openpyxl`; see Recommended libraries below).
 - **Databases** — `.sqlite`/`.sqlite3`/`.db` (SQLite). Binary — create/query with the `sqlite3` CLI or Python's `sqlite3` module.
-- **Presentations** — `.pptx` (PowerPoint). Binary — upload or open an existing deck in the slide editor (thumbnails, add/reorder slides, text and shape editing across the DrawingML shape gallery, tables, charts, groups, pictures, speaker notes, slide transitions and animations, and present mode). Anything the editor does not model is preserved byte-for-byte through a save. Don't generate a new deck as `.pptx`; author it as `.html` or as a `.design` document whose artboards present as slides.
+- **Presentations** — `.pptx` (PowerPoint). Binary — upload or open an existing deck in the slide editor (thumbnails, add/reorder slides, text and shape editing across the DrawingML shape gallery, tables, charts, groups, pictures, speaker notes, slide transitions and animations, and present mode). Anything the editor does not model is preserved byte-for-byte through a save. Don't generate a new deck as `.pptx` unless the user explicitly needs PowerPoint; load `arg-slides` and author a `.design` document whose artboards present as slides.
 - **Documents (Word)** — `.docx` (binary — generate with `python-docx`).
 - **Video** — `.mp4`, `.mov`, `.webm` (+ `.m4v`, `.ogv`, `.mkv`, `.avi`, `.3gp`, `.3g2`). Binary — generate/transcode with `ffmpeg`, or upload. (Multi-track edits use the `.video` NLE — see the table above.)
 - **Audio** — `.wav`, `.mp3` (+ `.ogg`, `.flac`, `.m4a`, `.aac`). Binary — generate/transcode with `ffmpeg`, or upload.
