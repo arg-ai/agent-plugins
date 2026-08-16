@@ -1,6 +1,6 @@
 ---
 name: arg-cli
-version: "1.11.1"
+version: "1.11.2"
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
@@ -81,6 +81,8 @@ For dynamic `.design` or `.video` output, fetch live data before rendering and m
 ## Preferred: mount as a filesystem (`arg mount`)
 
 `arg mount [flags] -- <harness> [harness args...]` mounts the active workspace as a **local directory with two-way sync**, then launches your coding harness inside it. From there the workspace is just files on disk, so **use your harness's own native tools directly on the mounted paths** — no Arg-specific verbs, no base64. Edits sync back to Arg automatically.
+
+The mount prepends that disk-first rule to a local `AGENTS.md` or `CLAUDE.md`, creating the harness's context file when needed. The generated block is mount-only and is stripped from uploads; edits you make around it still sync to the workspace.
 
 | Operation           | How                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------------- |
