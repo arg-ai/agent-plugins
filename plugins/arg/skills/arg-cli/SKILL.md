@@ -1,6 +1,6 @@
 ---
 name: arg-cli
-version: "1.11.2"
+version: "1.11.3"
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
@@ -110,6 +110,8 @@ When you can't mount (or you only need a one-shot read/write), use the command v
 | **Delete**                       | `arg rm <path>...` (`-r` for folders)          |
 
 `rm`/`mv` are destructive: preview first with `--dry-run` (they never prompt; `-y`/`--yes` is accepted but reserved). To run a generator or arbitrary shell in the workspace, use `arg exec -- <cmd>` (sandbox) instead of building locally.
+
+Every successful `arg upload` result includes its full, openable Arg URL. In JSON output, read `summary.uploaded[].url`; the human-readable table exposes the same value in its `URL` column. Surface that URL directly instead of making a separate lookup after uploading.
 
 ### Limits of the direct commands
 

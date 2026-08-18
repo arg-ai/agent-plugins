@@ -1,6 +1,6 @@
 ---
 name: arg-mcp
-version: "1.6.1"
+version: "1.6.2"
 description: Access method for Arg file CRUD over the MCP server (read_file, write_file, edit_file, multi_edit, grep, semantic_search, run_bash, list_files, move_files, create_upload_session, download_file). Load this when Arg is connected over MCP — the cloud endpoint or the desktop app's local loopback server over shared folders. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 ---
 
@@ -22,6 +22,7 @@ Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.a
 ## Notes
 
 - **Endpoints:** the **organization** endpoint adds a required `workspace_id` to every tool — call `list_workspaces` to discover ids. The **workspace** endpoint `/mcp/{workspace_id}` omits it.
+- **Created-file links:** successful cloud `write_file` results include a full canonical Arg URL. `create_upload_session` includes the same URL in its manifest, and the `completeUrl` response returns it as `url` after the multipart upload finishes.
 - **Binary formats** (image/video/audio/pptx/xlsx/sqlite): you cannot `write_file` them. Create with `create_upload_session` (follow the `instructions` in its response) or generate with `run_bash`; read with `download_file`.
 - **Always `read_file` first** before an edit. Prefer `edit_file`/`multi_edit` for big files; `write_file` overwrites the whole file.
 - **Workspace is network-mounted:** the remote sandbox accesses files over the network, so per-file access is slow and a recursive walk can hang. When using `run_bash`, never run `grep -r`, `find`, or `ls -R` from the workspace root — use `grep`, `list_files`, or `semantic_search` instead, or scope a bash search to a specific subdirectory.
