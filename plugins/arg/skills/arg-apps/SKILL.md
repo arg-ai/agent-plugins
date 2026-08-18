@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.8.1"
+version: "2.8.2"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -33,6 +33,20 @@ React previews support:
 - `@arg/ui`, the same component package Arg uses internally, bundled with standalone theme styles for the isolated preview.
 - `@arg/actions`, the typed facade for Action discovery, schema reflection, execution, and run history.
 - Bare npm imports when the package has an exact version in the nearest workspace `package.json`. React and React DOM are pinned by the editor. A versioned `https://esm.sh/package@version` import is also accepted.
+
+Static workspace JSON uses a normal default import in both `.tsx` and `.jsx`:
+
+```tsx
+import runs from "./data/runs.json";
+
+export default function RunCount() {
+  return <p>{runs.length} runs</p>;
+}
+```
+
+Named and namespace imports work too, and an imported module may be up to 100 MB, so a real dataset can be bundled rather than fetched.
+
+Use `window.arg.fs.readJSON()` instead when the app needs to reload changing data at runtime or write it back to the workspace.
 
 React previews use the typed `@arg/actions` module for Action discovery, schema reflection, execution, and run history. It delegates to the same isolated `window.arg.actions` bridge used by HTML; it does not fetch directly or expose a token. The viewer must explicitly click **Allow Actions** for the current file session before a call succeeds. The grant is separate from filesystem access because Actions are workspace-wide and may spend credits or use the viewer's connected services.
 
