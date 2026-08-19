@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.4.1"
+version: "1.5.0"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; for presentation-specific workflow load arg-slides alongside it.
 ---
 
@@ -32,7 +32,7 @@ await writeFile(path, stringifyDesign(updated));
 
 Use the artboard, object, and shader helpers for relationship-aware edits; `collectDesignFileReferences` and `replaceDesignFillSource` handle linked fills. Use `editDesign` with JSON `set`, `merge`, `delete`, `insert`, or `move` operations for uncommon leaf fields. Every structural helper validates before returning. With MCP or direct CLI access, read and write through that access method instead of `node:fs`; the library itself performs no network or authentication work.
 
-Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDesignObject(doc, id, { parentId?, index? })`, and `patchDesignObject(doc, id, patch)`. Raw paths are arrays, for example `editDesign(doc, [{ op: "set", path: ["objects", "title", "name"], value: "New name" }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
+Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDesignObject(doc, id, { parentId?, index? })`, and `patchDesignObject(doc, id, patch)`. For auto layout (below): `createDesignFlexGroup(doc, { id, name?, layout?, frame?, children? }, { parentId?, index? })` wraps existing objects in a laid-out group, `setDesignLayout(doc, groupId, layout | null)` and `patchDesignLayout(doc, groupId, patch)` manage the group's `layout`, and `setDesignLayoutSizing(doc, objectId, sizing | null)` sets a child's per-axis sizing. Raw paths are arrays, for example `editDesign(doc, [{ op: "set", path: ["objects", "title", "name"], value: "New name" }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
 
 ## Schema essentials
 
@@ -61,7 +61,47 @@ Coordinates are document pixels. Each object has a `frame` `{ x, y, width, heigh
 Canvas-anchored gradient stroke: `{ "color": "#7c3aed", "width": 8, "paint": { "type": "linear-gradient", "angle": 90, "space": "world", "start": { "x": 120, "y": 200 }, "end": { "x": 960, "y": 680 }, "stops": [{ "offset": 0, "color": "#7c3aed" }, { "offset": 1, "color": "#06b6d4" }] } }`.
 **Effects:** `shadow` (`offsetX/Y`,`blur`,`color`,`inner?`), `blur` (`radius`), `glow` (`radius`,`color`).
 
-Minimal document — an artboard (background in its `fills`), a gradient card, and a title on top:
+## Layout
+
+A `group` can carry a `layout`, and then it positions its own `children` in the Layers hierarchy's visible top-to-bottom order - flexbox/grid, the same model as Figma auto layout. A group's raw `children` array remains painter order (last renders on top), so its last id takes the first layout slot. Prefer `createDesignFlexGroup`, whose `children` option accepts the intended hierarchy/layout order and stores the painter stack correctly. **Reach for layout before hand-computing absolute coordinates:** anything repeated (rows of cards, galleries, stacked slide content) is fewer tokens this way, and re-ordering or resizing re-flows the group instead of forcing you to recompute every `x`.
+
+Inside a laid-out group the child's geometry is **derived** - `frame.x`/`frame.y` always, and `frame.width`/`frame.height` on any axis whose `layoutSizing` is `fill` or `hug`. Omit those numbers entirely; the editor recomputes them on load. A child with `layoutSizing: { "width": "fill", "height": "hug" }` usually needs no `frame` at all. Removing a group's `layout` writes explicit frames onto its children, since their positions were derived until then.
+
+**Flex** - `{ "type": "flex", "direction": "row"|"column", "gap", "rowGap", "padding", "justify", "align", "wrap" }`. `justify` (main axis) is `start`/`center`/`end`/`space-between`/`space-around`/`space-evenly`; `align` (cross axis) is `start`/`center`/`end`/`stretch`. `padding` is one number for all four edges, or `{ "top", "right", "bottom", "left" }`.
+
+```json
+{
+  "id": "cards",
+  "type": "group",
+  "frame": { "x": 80, "y": 320, "width": 920, "height": 280 },
+  "layout": { "type": "flex", "gap": 24, "padding": 24, "align": "stretch" },
+  "children": ["card3", "card2", "card1"]
+}
+```
+
+Each card is then just `{ "id": "card1", "type": "rect", "cornerRadius": 16, "layoutSizing": { "width": "fill" }, "fills": [...] }` - three equal columns, no coordinates anywhere.
+
+**Grid** - `{ "type": "grid", "columns", "rows", "gap", "rowGap", "columnGap", "padding", "justify", "align", "autoFlow" }`. `columns`/`rows` are either a count (that many equal `1fr` tracks) or explicit tracks `[{ "size": 1, "unit": "fr" }, { "size": 240, "unit": "px" }]` with `unit` `px`/`fr`/`auto`. `rows` may be omitted to generate rows on demand. `justify`/`align` place a child inside its cell (`start`/`center`/`end`/`stretch`), and `autoFlow` (`row`/`column`) picks the axis auto-placement advances along.
+
+```json
+{
+  "id": "gallery",
+  "type": "group",
+  "frame": { "x": 60, "y": 200, "width": 960, "height": 640 },
+  "layout": { "type": "grid", "columns": 3, "gap": 16, "padding": 32 },
+  "children": ["t5", "t4", "t3", "t2", "t1", "hero"]
+}
+```
+
+`hero` spans the whole first row with `"gridArea": { "column": 1, "columnSpan": 3 }`; the rest auto-place into the cells after it.
+
+**Per-child fields** (on the child object, not the group): `layoutSizing` `{ "width", "height" }` each `fixed` (default - keeps the frame's own number) / `fill` / `hug`; `layoutGrow` (weight when several `fill` siblings split the free space, default 1); `layoutAlign` (this child's override of the container's `align`); `gridArea` `{ "column", "row", "columnSpan", "rowSpan" }`, 1-based, to pin a child instead of auto-placing it.
+
+**Omit anything that equals its default.** Every one of `opacity` (1), `visible` (true), `locked` (false), `flipH`/`flipV` (false), `frame.rotation` (0), `fills`, `strokes` and `effects` is optional, and an absent value reads as the default everywhere - so `"opacity": 1` and `"effects": []` are pure token cost. Author the difference from the default, not the whole shape.
+
+Measured on a 3×2 gallery of six tiles: 1317 characters of minified JSON hand-placed with the defaults spelled out, 921 with the defaults dropped, 791 as a grid group whose tiles carry no `frame` at all - 40% smaller end to end. A layout group has a fixed cost of its own, so it is roughly break-even for two or three one-off objects and pulls ahead from there.
+
+Minimal document - an artboard (background in its `fills`) and a laid-out column holding a title and a gradient card:
 
 ```json
 {
@@ -80,46 +120,49 @@ Minimal document — an artboard (background in its `fills`), a gradient card, a
     }
   ],
   "objects": {
+    "stack": {
+      "id": "stack",
+      "type": "group",
+      "name": "Poster stack",
+      "frame": { "x": 120, "y": 200, "width": 840, "height": 640 },
+      "layout": { "type": "flex", "direction": "column", "gap": 32 },
+      "children": ["card", "title"]
+    },
+    "title": {
+      "id": "title",
+      "type": "text",
+      "text": "Hello, world",
+      "textMode": "area",
+      "layoutSizing": { "width": "fill", "height": "hug" },
+      "fills": [{ "type": "solid", "color": "#0a0a0a" }],
+      "style": {
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontSize": 72,
+        "fontWeight": 700
+      }
+    },
     "card": {
       "id": "card",
       "type": "rect",
       "name": "Hero card",
-      "frame": { "x": 120, "y": 200, "width": 840, "height": 480, "rotation": 0 },
+      "layoutSizing": { "width": "fill", "height": "fill" },
+      "cornerRadius": 24,
       "fills": [
         {
           "type": "linear-gradient",
           "angle": 135,
-          "space": "local",
-          "start": { "x": 0, "y": 0 },
-          "end": { "x": 1, "y": 1 },
           "stops": [
             { "offset": 0, "color": "#7c3aed" },
             { "offset": 1, "color": "#ec4899" }
           ]
         }
       ],
-      "cornerRadius": 24,
       "effects": [
         { "type": "shadow", "offsetX": 0, "offsetY": 16, "blur": 32, "color": "rgba(0,0,0,0.25)" }
       ]
-    },
-    "title": {
-      "id": "title",
-      "type": "text",
-      "name": "Title",
-      "frame": { "x": 160, "y": 280, "width": 760, "height": 96 },
-      "text": "Hello, world",
-      "textMode": "point",
-      "fills": [{ "type": "solid", "color": "#ffffff" }],
-      "style": {
-        "fontFamily": "Inter, system-ui, sans-serif",
-        "fontSize": 72,
-        "fontWeight": 700,
-        "align": "left"
-      }
     }
   },
-  "order": ["card", "title"]
+  "order": ["stack"]
 }
 ```
 

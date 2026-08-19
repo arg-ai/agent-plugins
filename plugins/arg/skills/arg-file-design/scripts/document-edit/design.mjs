@@ -10,6 +10,23 @@ import {
   setJsonProperty,
   stringifyJsonDocument,
 } from "./common.mjs";
+// ---------- auto layout ----------
+// Names and value sets mirror frontend/src/components/editors/design-editor/types.ts;
+// design-layout-contract in test/design-document.test.ts pins them together.
+// The types are derived from these arrays rather than spelled twice, so the
+// runtime validator below cannot accept a value the type rejects.
+export const DESIGN_LAYOUT_SIZINGS = ["fixed", "fill", "hug"];
+export const DESIGN_LAYOUT_ALIGNS = ["start", "center", "end", "stretch"];
+export const DESIGN_LAYOUT_JUSTIFIES = [
+  "start",
+  "center",
+  "end",
+  "space-between",
+  "space-around",
+  "space-evenly",
+];
+export const DESIGN_LAYOUT_AXES = ["row", "column"];
+export const DESIGN_GRID_TRACK_UNITS = ["px", "fr", "auto"];
 const DESIGN_FILE_FILL_TYPES = new Set([
   "image",
   "model3d",
@@ -93,11 +110,54 @@ function normalizedDesign(document) {
   normalizeDesignFileFillsInPlace(next);
   return next;
 }
+/**
+ * Geometry for an object that has just lost the layout which owned its position.
+ * Deliberate hand-mirror of `FALLBACK_FRAME` in
+ * `frontend/src/components/editors/design-editor/layout-engine.ts` - the SDK
+ * ships standalone and cannot import from the frontend, so a change there has to
+ * be repeated here or the editor and the SDK would place the same frameless
+ * child differently.
+ */
+const LAYOUT_FALLBACK_FRAME = { x: 0, y: 0, width: 100, height: 100 };
+/** Fills in only the frame fields the object never wrote, so an axis it did
+ *  specify survives untouched. */
+function materializeFrame(object) {
+  const frame = isJsonObject(object.frame) ? { ...object.frame } : {};
+  for (const field of ["x", "y", "width", "height"]) {
+    if (frame[field] === undefined) frame[field] = LAYOUT_FALLBACK_FRAME[field];
+  }
+  object.frame = frame;
+}
+/**
+ * A child of a laid-out group is allowed to carry no `frame` at all, because the
+ * group recomputes one on load. Any edit that takes it back out of that group
+ * therefore leaves a real object with no geometry anywhere, which `validateDesign`
+ * rightly rejects - so the edit has to give it one rather than the caller getting
+ * a validation error for a document they never wrote.
+ *
+ * Diffing the laid-out set across the whole change (rather than patching each
+ * builder) covers every operation that can release a child: clearing a layout,
+ * moving a child out, patching a group's `layout` away. Moving between two
+ * laid-out groups leaves the id in the set, so nothing is materialized.
+ */
+function materializeReleasedFrames(released, next) {
+  if (released.size === 0) return;
+  const objects = objectRecord(next);
+  if (!objects) return;
+  const stillLaidOut = laidOutChildIds(objects);
+  for (const id of released) {
+    if (stillLaidOut.has(id)) continue;
+    const object = Object.hasOwn(objects, id) ? objects[id] : undefined;
+    if (isJsonObject(object)) materializeFrame(object);
+  }
+}
 function mutate(document, change) {
   const next = cloneJson(document);
   normalizeDesignFileFillsInPlace(next);
   assertValid(next);
+  const laidOutBefore = laidOutChildIds(objectRecord(next) ?? {});
   change(next);
+  materializeReleasedFrames(laidOutBefore, next);
   normalizeDesignFileFillsInPlace(next);
   assertValid(next);
   return next;
@@ -135,19 +195,138 @@ function internalShaderId(fill) {
   if (typeof fill.shaderSrc === "string" && fill.shaderSrc.trim()) return undefined;
   return typeof fill.shaderId === "string" ? fill.shaderId : undefined;
 }
-function hasFiniteGeometry(value, label, errors) {
+/**
+ * `derivable` relaxes the check for a child of a layout group: the layout owns
+ * those numbers and recomputes them on load, so a document is allowed to leave
+ * them off disk entirely. A value that IS written still has to be usable, since
+ * a fixed axis keeps whatever the frame says.
+ */
+function hasFiniteGeometry(value, label, errors, derivable = false) {
   for (const field of ["x", "y", "width", "height"]) {
     const number = value[field];
-    if (
-      typeof number !== "number" ||
-      !Number.isFinite(number) ||
-      ((field === "width" || field === "height") && number <= 0)
-    ) {
-      errors.push(
-        `${label}.${field} must be ${field === "x" || field === "y" ? "finite" : "positive"}`,
-      );
+    if (number === undefined && derivable) continue;
+    const positive = field === "width" || field === "height";
+    if (typeof number !== "number" || !Number.isFinite(number) || (positive && number <= 0)) {
+      errors.push(`${label}.${field} must be ${positive ? "positive" : "finite"}`);
     }
   }
+}
+function validateEnum(value, allowed, label, errors) {
+  if (value === undefined) return;
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    errors.push(`${label} must be one of ${allowed.join(", ")}`);
+  }
+}
+function validateNonNegative(value, label, errors) {
+  if (value === undefined) return;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    errors.push(`${label} must be a non-negative number`);
+  }
+}
+function validateLayoutPadding(value, label, errors) {
+  if (value === undefined || typeof value === "number") {
+    validateNonNegative(value, label, errors);
+    return;
+  }
+  if (!isJsonObject(value)) {
+    errors.push(`${label} must be a non-negative number or a per-edge object`);
+    return;
+  }
+  for (const edge of ["top", "right", "bottom", "left"]) {
+    validateNonNegative(value[edge], `${label}.${edge}`, errors);
+  }
+}
+function validateGridTracks(value, label, errors) {
+  if (typeof value === "number") {
+    if (!Number.isInteger(value) || value < 1) {
+      errors.push(`${label} must be a positive integer or an array of tracks`);
+    }
+    return;
+  }
+  if (!Array.isArray(value)) {
+    errors.push(`${label} must be a positive integer or an array of tracks`);
+    return;
+  }
+  if (value.length === 0) {
+    errors.push(`${label} must contain at least one track`);
+    return;
+  }
+  value.forEach((track, index) => {
+    const owner = `${label}[${index}]`;
+    if (!isJsonObject(track)) {
+      errors.push(`${owner} must be an object`);
+      return;
+    }
+    validateNonNegative(track.size, `${owner}.size`, errors);
+    if (track.size === undefined) errors.push(`${owner}.size must be a non-negative number`);
+    if (track.unit === undefined) errors.push(`${owner}.unit must be one of px, fr, auto`);
+    else validateEnum(track.unit, DESIGN_GRID_TRACK_UNITS, `${owner}.unit`, errors);
+  });
+}
+function validateLayout(value, label, errors) {
+  if (value === undefined) return;
+  if (!isJsonObject(value)) {
+    errors.push(`${label} must be an object`);
+    return;
+  }
+  if (value.type !== "flex" && value.type !== "grid") {
+    errors.push(`${label}.type must be one of flex, grid`);
+    return;
+  }
+  validateNonNegative(value.gap, `${label}.gap`, errors);
+  validateNonNegative(value.rowGap, `${label}.rowGap`, errors);
+  validateLayoutPadding(value.padding, `${label}.padding`, errors);
+  validateEnum(value.align, DESIGN_LAYOUT_ALIGNS, `${label}.align`, errors);
+  if (value.type === "flex") {
+    validateEnum(value.direction, DESIGN_LAYOUT_AXES, `${label}.direction`, errors);
+    validateEnum(value.justify, DESIGN_LAYOUT_JUSTIFIES, `${label}.justify`, errors);
+    if (value.wrap !== undefined && typeof value.wrap !== "boolean") {
+      errors.push(`${label}.wrap must be a boolean`);
+    }
+    return;
+  }
+  validateNonNegative(value.columnGap, `${label}.columnGap`, errors);
+  validateEnum(value.justify, DESIGN_LAYOUT_ALIGNS, `${label}.justify`, errors);
+  validateEnum(value.autoFlow, DESIGN_LAYOUT_AXES, `${label}.autoFlow`, errors);
+  if (value.columns === undefined) {
+    errors.push(`${label}.columns must be a positive integer or an array of tracks`);
+  } else validateGridTracks(value.columns, `${label}.columns`, errors);
+  if (value.rows !== undefined) validateGridTracks(value.rows, `${label}.rows`, errors);
+}
+function validateObjectLayoutFields(entry, label, errors) {
+  const sizing = entry.layoutSizing;
+  if (sizing !== undefined) {
+    if (!isJsonObject(sizing)) errors.push(`${label}.layoutSizing must be an object`);
+    else {
+      validateEnum(sizing.width, DESIGN_LAYOUT_SIZINGS, `${label}.layoutSizing.width`, errors);
+      validateEnum(sizing.height, DESIGN_LAYOUT_SIZINGS, `${label}.layoutSizing.height`, errors);
+    }
+  }
+  validateNonNegative(entry.layoutGrow, `${label}.layoutGrow`, errors);
+  validateEnum(entry.layoutAlign, DESIGN_LAYOUT_ALIGNS, `${label}.layoutAlign`, errors);
+  const area = entry.gridArea;
+  if (area === undefined) return;
+  if (!isJsonObject(area)) {
+    errors.push(`${label}.gridArea must be an object`);
+    return;
+  }
+  for (const field of ["column", "row", "columnSpan", "rowSpan"]) {
+    const number = area[field];
+    if (number === undefined) continue;
+    if (typeof number !== "number" || !Number.isInteger(number) || number < 1) {
+      errors.push(`${label}.gridArea.${field} must be an integer of at least 1`);
+    }
+  }
+}
+/** Ids whose frame geometry a parent's layout owns and recomputes on load. */
+function laidOutChildIds(objects) {
+  const ids = new Set();
+  for (const entry of Object.values(objects)) {
+    if (!isJsonObject(entry) || entry.layout === undefined || !Array.isArray(entry.children))
+      continue;
+    for (const child of entry.children) if (typeof child === "string") ids.add(child);
+  }
+  return ids;
 }
 export function createDesignDocument(options = {}) {
   const width = options.width ?? 1080;
@@ -300,6 +479,7 @@ export function validateDesign(value) {
     if (typeof id === "string") rootIds.add(id);
     countPlacement(id, "order");
   }
+  const derivedFrames = laidOutChildIds(objects);
   const groups = new Map();
   for (const [id, entry] of Object.entries(objects)) {
     if (!isJsonObject(entry)) {
@@ -309,8 +489,13 @@ export function validateDesign(value) {
     if (entry.id !== id) errors.push(`objects.${id}.id must equal its map key`);
     if (typeof entry.type !== "string" || !entry.type)
       errors.push(`objects.${id} must have a type`);
-    if (!isJsonObject(entry.frame)) errors.push(`objects.${id}.frame must be an object`);
-    else hasFiniteGeometry(entry.frame, `objects.${id}.frame`, errors);
+    const derivable = derivedFrames.has(id);
+    if (entry.frame === undefined) {
+      if (!derivable) errors.push(`objects.${id}.frame must be an object`);
+    } else if (!isJsonObject(entry.frame)) errors.push(`objects.${id}.frame must be an object`);
+    else hasFiniteGeometry(entry.frame, `objects.${id}.frame`, errors, derivable);
+    validateObjectLayoutFields(entry, `objects.${id}`, errors);
+    validateLayout(entry.layout, `objects.${id}.layout`, errors);
     if (entry.type !== "group") continue;
     if (!Array.isArray(entry.children)) {
       errors.push(`group ${id} must have children`);
@@ -491,6 +676,78 @@ export function moveDesignObject(document, id, placement = {}) {
     removePlacements(next, new Set([id]));
     const order = targetOrder(next, placement.parentId);
     order.splice(0, order.length, ...insertAt(order, id, placement.index));
+  });
+}
+function requireObject(document, id) {
+  const object = Object.hasOwn(document.objects, id) ? document.objects[id] : undefined;
+  if (!object) error("not_found", `Object not found: ${id}`);
+  return object;
+}
+/** Sets or clears a group's auto layout. `null` removes it, which hands the
+ *  children's geometry back to their own frames - any child that had none gets
+ *  the fallback frame. Setting a layout leaves existing frames alone; the editor
+ *  overwrites the derived axes at runtime. */
+export function setDesignLayout(document, groupId, layout) {
+  return mutate(document, (next) => {
+    const group = requireObject(next, groupId);
+    if (group.type !== "group") error("invalid_parent", `Object is not a group: ${groupId}`);
+    if (layout === null) delete group.layout;
+    else group.layout = cloneJson(layout);
+  });
+}
+/** Shallow-merges into an existing layout, leaving unmentioned fields alone. */
+export function patchDesignLayout(document, groupId, patch) {
+  return mutate(document, (next) => {
+    const group = requireObject(next, groupId);
+    const layout = group.layout;
+    if (!isJsonObject(layout)) error("not_found", `Object has no layout: ${groupId}`);
+    group.layout = { ...layout, ...cloneJson(patch) };
+  });
+}
+export function setDesignLayoutSizing(document, objectId, sizing) {
+  return mutate(document, (next) => {
+    const object = requireObject(next, objectId);
+    if (sizing === null) delete object.layoutSizing;
+    else object.layoutSizing = cloneJson(sizing);
+  });
+}
+export function createDesignFlexGroup(document, options, placement = {}) {
+  return mutate(document, (next) => {
+    if (Object.hasOwn(next.objects, options.id))
+      error("duplicate_id", `Object already exists: ${options.id}`);
+    const adopted = new Set();
+    for (const child of options.children ?? []) {
+      if (!Object.hasOwn(next.objects, child)) error("not_found", `Object not found: ${child}`);
+      if (adopted.has(child)) error("duplicate_id", `Duplicate child: ${child}`);
+      adopted.add(child);
+    }
+    const pending = [...adopted];
+    while (pending.length > 0) {
+      const objectId = pending.pop();
+      if (placement.parentId === objectId)
+        error("group_cycle", `Cannot place ${options.id} inside its own child ${objectId}`);
+      pending.push(...(groupChildren(next.objects[objectId]) ?? []));
+    }
+    // Resolve the destination before detaching, so an unusable parentId fails
+    // without having already pulled the adopted children out of the tree.
+    targetOrder(next, placement.parentId);
+    const parentLaidOut =
+      !!placement.parentId && isJsonObject(next.objects[placement.parentId]?.layout);
+    removePlacements(next, adopted);
+    const group = {
+      id: options.id,
+      type: "group",
+      layout: cloneJson(options.layout ?? { type: "flex" }),
+      // The document stores a painter's stack (last child on top), while auto
+      // layout follows that same top-to-bottom order shown in Layers.
+      children: [...adopted].reverse(),
+    };
+    if (options.name !== undefined) group.name = options.name;
+    if (options.frame !== undefined) group.frame = cloneJson(options.frame);
+    else if (!parentLaidOut) group.frame = { ...LAYOUT_FALLBACK_FRAME };
+    setJsonProperty(next.objects, options.id, group);
+    const order = targetOrder(next, placement.parentId);
+    order.splice(0, order.length, ...insertAt(order, options.id, placement.index));
   });
 }
 export function upsertDesignShader(document, shader) {
