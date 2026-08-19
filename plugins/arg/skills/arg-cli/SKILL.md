@@ -1,6 +1,6 @@
 ---
 name: arg-cli
-version: "1.11.3"
+version: "1.12.1"
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
@@ -14,7 +14,23 @@ The `arg` CLI wraps Arg's REST API and provides three ways to work with a worksp
 
 **Headless / CI / agents:** skip the browser login. Create an API key at `arg.ai/platform/api-keys` and set `ARG_API_KEY` (or pass `--api-key`) — it authenticates **every** command and needs no OS keychain. With a key, set `ARG_ACTIVE_ORG=<org-id>` (and `ARG_WORKSPACE=<id>` or `--workspace`) for context, since `orgs` is user-session-only. `arg whoami` does work under a key - it reports the principal the key resolves to (service account or creating user) and the org it's bound to.
 
-Beyond file CRUD: `arg agent [message]` (start a workspace-aware terminal chat with live MCP context and skills), `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk - see **Native renderers** below), `arg action` (list/run built-in actions - see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), `arg onboard` (import a local coding-agent setup - Claude Code, Cursor, Copilot, Gemini - into a workspace, see below), `arg sites deploy` (deploy a local folder as a hosted site, see below), and `arg init` / `arg skills` (install the Arg skill bundle into the current project for your coding harness; add `--scope user` to install into `~/.claude/skills/` so every project on the machine sees them).
+Beyond file CRUD: `arg agent [message]` (start a workspace-aware terminal chat with live MCP context and skills), `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk - see **Native renderers** below), `arg action` (list/run built-in actions - see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), `arg onboard` (import a local coding-agent setup - Claude Code, Cursor, Copilot, Gemini - into a workspace, see below), `arg sites deploy` (deploy a local folder as a hosted site, see below), `arg share create <path>` (mint a public, sign-in-free link and print the URL that serves the file's bytes - see below), and `arg init` / `arg skills` (install the Arg skill bundle into the current project for your coding harness; add `--scope user` to install into `~/.claude/skills/` so every project on the machine sees them).
+
+## Share a file outside Arg (`arg share`)
+
+Every ordinary Arg URL for a file needs a sign-in, so it is useless to an outside recipient and can never render as an image. `arg share create <path>` mints a public one and prints the URL that serves the file's **bytes** on stdout:
+
+```bash
+arg share create demo.mp4 --expires-hours 0     # a link that never expires
+```
+
+That bytes URL (`/api/share/<id>/view`) is the one an image proxy can fetch, so it is what a Markdown image in a GitHub PR body, a Slack unfurl, or an `<img>` needs. Pass `--expires-hours 0` whenever the link goes somewhere durable - the default is 24 hours, which leaves a dead link behind. Other flags mirror the API: `--max-downloads`, `--password`, `--snapshot`, `--allow-edit`, `--no-comments`, `--include-references` (pass this when sharing a document that embeds other workspace files, or the recipient sees placeholders).
+
+Some share kinds serve no single byte stream - a folder link, a booking link, a response-collecting `.form` - and the command says so instead of printing a URL. A `--password` link is fetchable only with `?password=` appended, which an image proxy cannot supply.
+
+`arg share list` shows what is currently exposed (omit `--path` for that question; the filter matches a path exactly, so a folder does not cover the files inside it). `arg share rm <share-id>` revokes one, though it cannot un-send bytes a proxy already cached.
+
+The link is public with no sign-in: treat creating one as publishing, and don't do it to anything carrying customer data or private work unless you were asked to.
 
 ## Terminal agent (`arg agent`)
 
