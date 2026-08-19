@@ -1,6 +1,6 @@
 ---
 name: arg-file-automation
-version: "1.9.0"
+version: "1.10.0"
 description: Create, read, update, delete, and deploy Arg automation files (.automation) and YAML workflows (.arg/workflows/*.yml) for scheduled jobs, webhooks, file-change reactions, and multi-step pipelines. Load when building, editing, or deploying workflow automations.
 ---
 
@@ -24,7 +24,7 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
 - **Triggers** (`category: "trigger"`): `manual` `{}`, `webhook` `{method,path}`, `schedule` `{cron}`, `file-change` `{pattern}`, `notification` `{notification_types}`.
 - **Actions** (`category: "action"`): `code`, `http-request`, `read-file`, `write-file`, `append-file`, `list-files`, `grep`, `edit-file` (`{path, edits: [{operator, value, replacement, replace_all}]}`), `copy-file` / `move-file` (`{sourcePath, destinationPath, onConflict}`; `onConflict` is `"append"` (default - keep both, suffixing `(1)`, `(2)`, … on collision) or `"overwrite"` - replace the existing destination file), `delete-file`, `run-llm`, `screenshot`, `fetch-web`, `download-file` (raw GET of a URL saved to a workspace file, keeping the source's content type - `{url, savePath?, contentType?, headers?}`; good for RSS feeds), `extract-data`, `apify-actor` (curated Apify web scrapers; `actorKey` picks the scraper, `input` is that actor's input object; returns `{items, itemCount, actorId}`), `send-notification` (`{title, body, notifyRunner, recipientUserIds}`: delivers a workspace notification. `notifyRunner` defaults `true` and notifies whoever runs the automation - the running user on manual runs, the workspace owner on scheduled runs. `recipientUserIds` is an optional array of workspace-member user ids to also notify; ids outside the workspace's org are ignored).
 - **Registry actions** (`category: "action"`, `kind: "run-action"`): runs any action from the central Action registry with `config: {action_id, input}`. This is the generic path for anything without a dedicated kind above - media generation, transcription, web scraping, stock/people/company data, and every integration action. Discover ids and input schemas with `search_actions` / `describe_action`.
-- **Flow control** (`category: "flow"`): `if` (has a `false` output handle for the else branch), `switch` (one handle per case), `loop`, `merge` (`mode`: `wait-all` / `first`).
+- **Flow control** (`category: "flow"`): `if` (has a `false` output handle for the else branch), `switch` (one handle per case), `loop`, `merge` (`mode`: `wait-all` / `first`), `delay` (`{amount, unit}`; `unit` is `seconds` / `minutes` / `hours` / `days`, capped at 7 days total — pauses this branch of a deployed run without using any compute; a manual live-preview run in the editor caps to a short simulated wait instead, since it has no durable step to sleep on).
 
 **Edge** — `id`, `source`, `target`, `sourceHandle` (`output`, or `false` for an `if` node's else branch), `targetHandle` (`input`).
 
@@ -48,7 +48,7 @@ Step keys:
 
 - `id` — stable id used in templates such as `{{ read.output.content }}`.
 - `name` — display label.
-- `uses` — an action kind (`read-file`, `write-file`, `copy-file`, `move-file`, `run-llm`, `http-request`, `send-notification`, …), `action/<action_id>` to run any action from the central registry (`with:` is then that action's own input, e.g. `uses: action/image_generate`), or a flow kind (`switch`, `merge`, or `loop` — see Loops below). **`uses: if` is a compile error** — conditionals are the step-level `if:` key below.
+- `uses` — an action kind (`read-file`, `write-file`, `copy-file`, `move-file`, `run-llm`, `http-request`, `send-notification`, …), `action/<action_id>` to run any action from the central registry (`with:` is then that action's own input, e.g. `uses: action/image_generate`), or a flow kind (`switch`, `merge`, `delay` (`with: {amount, unit}`), or `loop` — see Loops below). **`uses: if` is a compile error** — conditionals are the step-level `if:` key below.
 - `with` — config object for the selected kind.
 - `run` + `shell` — shorthand for a `code` step.
 - `if` — expression guard on the step (see Expressions).
