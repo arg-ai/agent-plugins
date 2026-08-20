@@ -1,4 +1,4 @@
 interface:
   display_name: "Arg Slides"
-  short_description: "Build live presentations with .design"
-  default_prompt: "Use $arg-slides to create a dynamic Arg presentation as a .design deck."
+  short_description: "Build live presentations as self-contained HTML decks"
+  default_prompt: "Use $arg-slides to create a dynamic Arg presentation as a self-contained .html deck."

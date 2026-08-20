@@ -42,7 +42,7 @@ Creative view presents artboards as a centered vertical page column in `artboard
 
 **Slides view** treats each artboard as a slide. `metadata.sections` groups them: `[{ "id": "s1", "name": "Intro", "artboardIds": ["hero", "agenda"] }]`. Sections hold artboard **id references only**, so reordering a slide or a section never moves artboard geometry — the same projection rule as Creative view. Omit `sections` and the deck is one implicit section holding every artboard in `artboards` order. When present, `metadata.sections` is the presentation order (not the `artboards` array), every id must name a real artboard, and no artboard may appear in two sections.
 
-For a slide deck, also load `arg-slides`. It makes `.design` the default presentation format and covers reference-first authoring, live content, presenter workflow, and restrained GLSL motion.
+For a slide deck, also load `arg-slides`. New decks default to a self-contained `.html` file; that skill covers when a `.design` deck is the right call instead (an editable canvas, or a PowerPoint / PDF hand-off) plus reference-first authoring, live content, presenter workflow, and restrained GLSL motion.
 
 **Presenter notes:** each artboard takes an optional `notes` string holding **MDX** - the same dialect the `.mdx` editor reads, so headings, lists, callouts and embeds all render while editing beside the slide in Slides view. The presenter console shows notes as read-only Markdown, so wiki-style links and file embeds display as plain text there rather than resolving - keep notes meant to be read live plain-text-friendly. The other views carry `notes` through untouched.
 
