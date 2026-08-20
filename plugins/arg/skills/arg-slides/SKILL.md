@@ -105,7 +105,7 @@ For a shared workspace shader, use:
 
 Implement internal sources as `vec4 surface(vec2 uv)`. Use the injected `uTime`, `uResolution`, `vUv`, `fbm`, `vnoise`, and `hash21` symbols without redeclaring them. Workspace Shadertoy files may instead use `mainImage`, `iTime`, and `iResolution` as documented in `arg-file-design`.
 
-Keep animation subtle enough that text remains readable. Use uniform definitions for meaningful parameters instead of burying every choice in source. A `speed` of `0` freezes the shader; positive values scale time. Live presentation mode runs shaders and video, while SVG, PNG, and JPEG exports are static and bake one frame. Any conversion to PowerPoint is likewise a static derivative.
+Keep animation subtle enough that text remains readable. Use uniform definitions for meaningful parameters instead of burying every choice in source. A `speed` of `0` freezes the shader; positive values scale time. Live presentation mode runs shaders and video, while SVG, PNG, and JPEG exports are static and bake one frame. A PowerPoint export bakes shader and 3D motion to a still frame but keeps a video clip playable - see below.
 
 ## Build and verify
 
@@ -118,4 +118,29 @@ Keep animation subtle enough that text remains readable. Use uniform definitions
 7. Open the `.design` in Slides view and step through presentation mode. Confirm section order, skipped slides, notes, clipping, linked content, and live animation.
 8. Optionally run `arg design render <deck.design> --all-artboards` for static visual QA. Treat that render as a still-image check, not proof that motion works.
 
-Deliver the `.design` deck as the primary artifact. If the user also requests a static or PowerPoint-compatible output, create it as a secondary derivative and state that live references, video, 3D, and GLSL motion cannot remain live there.
+Deliver the `.design` deck as the primary artifact.
+
+## Exporting to PowerPoint
+
+In Slides view, **Download as .pptx** (the Export pill, or the More menu) writes the deck as an editable PowerPoint file - real shapes, text runs, pictures and notes pages, not one flat image per slide. Author for `.design` first and treat `.pptx` as the hand-off format; there is no need to build a second deck by hand. **Download as .pdf** sits beside it and is a page-per-artboard render, so it is the right choice when exact visual fidelity matters more than editability.
+
+What carries over:
+
+| Deck feature                                             | In the `.pptx`                                                                          |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Artboards, in section order                              | Slides, in the same order                                                               |
+| Sections                                                 | Native PowerPoint sections                                                              |
+| Skipped slides                                           | Hidden slides - still in the deck, skipped in the show                                  |
+| Presenter notes                                          | Notes pages, with the MDX flattened to plain text                                       |
+| Text                                                     | Editable runs keeping family, size, weight, colour, alignment, tracking and line height |
+| Fonts                                                    | Embedded, so the deck renders the same on a machine without them                        |
+| Rectangles, ellipses, rounded corners                    | Native preset shapes with working adjust handles                                        |
+| Polygons, stars, pen paths, boolean results              | Exact freeform shapes                                                                   |
+| Images                                                   | Pictures, with cover/contain/fill/tile preserved as a source crop                       |
+| Video                                                    | A playable embedded clip, with its poster as the frame                                  |
+| Solid and gradient paint, strokes, shadows, blurs, glows | Native DrawingML equivalents                                                            |
+| Document palette and typefaces                           | The deck's theme colours and font scheme                                                |
+
+What does not, and what to tell the user: an angular (conic) gradient approximates to a linear ramp; blend modes and backdrop blur are dropped; auto-layout is baked to the positions it resolved to. Shader, 3D, KML, CAD, nested-design and `.psd` fills bake to a still image - they keep their look, not their motion.
+
+Sizing: the FIRST slide sets the deck's slide size, and any artboard of a different size is scaled to fit and centred. Keep every slide the same size unless you intend that letterboxing.
