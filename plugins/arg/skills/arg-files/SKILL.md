@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.6.2"
+version: "2.7.0"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -32,20 +32,20 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 
 For these, **load the named skill first** for format-specific guidance:
 
-| Type                      | Extensions                                                  | Skill                 | Storage                                             |
-| ------------------------- | ----------------------------------------------------------- | --------------------- | --------------------------------------------------- |
-| Document / notes          | md, mdx, txt, markdown                                      | `arg-file-document`   | Text (`.mdx` adds custom JSX components)            |
-| React UI / apps           | tsx, jsx                                                    | `arg-apps`            | Text (live preview on an isolated sitearg origin)   |
-| HTML / web / apps         | html, htm                                                   | `arg-apps`            | Text (file-backed apps via the `window.arg` FS SDK) |
-| Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/projects)     |
-| DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                             |
-| Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`/`.svg`); `.fig` import-only         |
-| CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)              |
-| Whiteboard                | whiteboard                                                  | `arg-file-whiteboard` | Text (JSON)                                         |
-| Task / project management | kanban                                                      | `arg-file-kanban`     | Text (JSON)                                         |
-| Automation / workflow     | automation, `.arg/workflows/*.yml`, `.arg/workflows/*.yaml` | `arg-file-automation` | Text (JSON or YAML)                                 |
-| Diary / journal           | diary                                                       | `arg-file-document`   | Text (JSON, per-day rich text)                      |
-| Shareable form / survey   | form                                                        | `arg-file-document`   | Text (MDX with form field components)               |
+| Type                      | Extensions                                                  | Skill                 | Storage                                                                                           |
+| ------------------------- | ----------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
+| Document / notes          | md, mdx, txt, markdown                                      | `arg-file-document`   | Text (`.mdx` adds custom JSX components)                                                          |
+| React UI / apps           | tsx, jsx                                                    | `arg-apps`            | Text (live preview on an isolated sitearg origin)                                                 |
+| HTML / web / apps         | html, htm                                                   | `arg-apps`            | Text (file-backed apps via the `window.arg` FS SDK; also HyperFrames motion-graphic compositions) |
+| Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/projects)                                                   |
+| DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                                                                           |
+| Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`/`.svg`); `.fig` import-only                                                       |
+| CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)                                                            |
+| Whiteboard                | whiteboard                                                  | `arg-file-whiteboard` | Text (JSON)                                                                                       |
+| Task / project management | kanban                                                      | `arg-file-kanban`     | Text (JSON)                                                                                       |
+| Automation / workflow     | automation, `.arg/workflows/*.yml`, `.arg/workflows/*.yaml` | `arg-file-automation` | Text (JSON or YAML)                                                                               |
+| Diary / journal           | diary                                                       | `arg-file-document`   | Text (JSON, per-day rich text)                                                                    |
+| Shareable form / survey   | form                                                        | `arg-file-document`   | Text (MDX with form field components)                                                             |
 
 For slide decks and presentations, load `arg-slides` alongside `arg-file-design`. It makes a multi-artboard `.design` the default and covers presentation structure, live inter-file content, presenter notes, and animated GLSL fills.
 

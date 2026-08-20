@@ -1,7 +1,7 @@
 ---
 name: arg-apps
-version: "2.8.2"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, and .server files that call third-party APIs through the integration broker.
+version: "2.10.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -366,6 +366,91 @@ Use `dataUrlById(id)` only for small inline images. Id helpers resolve id-to-pat
 - The user's access scope bounds every **file** path: `"folder"` (this subtree) or `"workspace"` (everything). Identity is workspace-level regardless. The backend still enforces the user's own permissions.
 - Id helpers (`readById`, `assetUrlById`, `resolveId`, `infoById`, etc.) accept a prefixed `argfile_<uuid>` (or a bare legacy UUID), resolve the id to its current path first, then enforce the same scope.
 - Calls reject with an `Error` whose `.code` is one of `out_of_scope`, `bad_request`, `access_denied`, `not_found`, `binary_file`, `request_failed`, `disabled`, `read_only`, `unavailable`, `unknown_op`. Wrap in `try/catch`; treat `not_found` / a `null` `info()` as first-run and seed defaults. Treat `read_only` as a host-level mutation lock, and treat `unavailable` from `open()` / `openById()` as "this host cannot open editor tabs".
+
+## Motion graphics: HyperFrames compositions (`.html`)
+
+An `.html` file can also be a **[HyperFrames](https://hyperframes.heygen.com) composition** — HeyGen's "write HTML, render video" format. Arg detects one from its markup, gives its preview a video transport, and lets a `.video` project carry it as a timeline clip that seeks with the playhead and rasterises into the exported MP4.
+
+Reach for it when the user asks for a **motion graphic**: an animated title card, a kinetic-typography intro, a lower third, an animated explainer, a launch or release video. Use a plain `.html` page for anything interactive, and `.design` for a static layout.
+
+A composition is an ordinary HTML document plus two things:
+
+1. **A declaration on `<html>`** — `data-composition-id`, `data-composition-duration` (seconds), and `data-resolution` (e.g. `1920x1080`).
+2. **A seekable animation.** A **paused** GSAP timeline is the norm; Lottie and CSS/Web Animations also work.
+
+```html
+<!DOCTYPE html>
+<html data-composition-id="intro" data-composition-duration="6" data-resolution="1920x1080">
+  <head>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #07080b;
+      }
+      #title {
+        position: absolute;
+        top: 40%;
+        left: 120px;
+        font: 800 140px system-ui;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="title">Ship it</div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#title", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 1 }, 0.2);
+    </script>
+  </body>
+</html>
+```
+
+That example loads no GSAP: **you do not need a `<script src>` for it.** When a document declares the composition attributes but no animation library, Arg supplies a pinned GSAP build. Add your own tag only to pin a different version or to use Lottie.
+
+Rules that decide whether it renders at all:
+
+- **The timeline must be `paused: true` and driven only by seeking.** Never animate from `setInterval`, `requestAnimationFrame` state, or a wall clock — none of those can be parked on a frame, so the composition exports as a frozen or wrong frame even though it looks right playing.
+- **Prefer `fromTo` with explicit endpoints.** GSAP applies a `fromTo`'s from-state when the tween is built, so a scene's _exit_ tween can overwrite its _entry_ — give exits `immediateRender: false`. Otherwise every later scene is visible from frame 0.
+- **Keep assets inline or in the workspace.** Export rasterises the frame through an SVG snapshot; a cross-origin image taints it and the clip drops that frame. Inline SVG, data URIs and CSS gradients are safe.
+- **Use system font stacks** unless a webfont is embedded as a data URI — an external font does not load inside the export snapshot, so the exported type falls back and reflows.
+- **Make it resolution-independent** if it will also be previewed at pane size: set `html { font-size: min(<100/W>vw, <100/H>vh) }` and lay out in `rem` so 1rem is one design pixel, then animate with `scale` / `opacity` / `xPercent` / `yPercent` / `clip-path` rather than raw pixel offsets.
+- **The last tween sets the length.** If the authored `data-composition-duration` is longer than the final tween's end, pin it (`tl.set({}, {}, 14)`) or the composition is cut short.
+
+### Audio in a composition
+
+A composition carries its own mix. Put an `<audio>` (or a `<video>` with sound) in the markup and give it timing attributes; Arg plays it in the preview and **mixes it into the exported video**.
+
+```html
+<audio src="/audio/vo.mp3" data-start="2" data-duration="6" data-volume="0.9"></audio>
+<audio
+  src="/audio/bed.mp3"
+  data-start="0"
+  data-duration="14"
+  data-volume="0.5"
+  data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":1},{"t":2,"v":0.35}]}]}'
+></audio>
+```
+
+| attribute                                     | meaning                                                                                        |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `data-start`                                  | composition seconds it starts at - **required**, and what marks an element as scheduled at all |
+| `data-duration`                               | composition seconds it occupies; omit to run to the end of the source                          |
+| `data-media-start` (or `data-playback-start`) | seconds into the source to start from                                                          |
+| `data-playback-rate`                          | 0.1-5                                                                                          |
+| `data-volume`                                 | level, 0-1                                                                                     |
+| `data-automation`                             | volume envelope: `t` is seconds from the element's own start, `v` is 0-1                       |
+
+An `<audio>` with **no** `data-start` is left entirely alone - it is yours to drive.
+
+Automation lanes hold their first value backwards and their last forwards, so a bed that begins before a voiceover needs an explicit `{"t":0,"v":1}` point or it starts out already ducked. `data-volume` and a lane multiply: a bed at `0.5` ducking to `0.35` reaches `0.175`.
+
+Reference workspace audio by path (`/audio/vo.mp3`) - Arg signs those before mounting the composition.
+
+**Not supported:** `data-fx-chain` and `data-fx-carve` (EQ, compressor, limiter, gate, delay, reverb, chorus, phaser, bitcrush, and voiceover carve). A composition that declares them still plays and still exports, but **dry** - Arg says so rather than shipping a mix that sounds plausible and is wrong. Bake the effect into the source file, or mix on the `.video` timeline instead.
+
+To use one in a video: open a `.video` and drag the `.html` file onto the timeline, or use **Insert → Composition**. See `arg-file-video-edit` for the `hyperframes` clip's fields.
 
 ## Guidance
 
