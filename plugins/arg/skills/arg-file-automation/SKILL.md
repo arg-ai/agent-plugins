@@ -1,6 +1,6 @@
 ---
 name: arg-file-automation
-version: "1.10.0"
+version: "1.11.0"
 description: Create, read, update, delete, and deploy Arg automation files (.automation) and YAML workflows (.arg/workflows/*.yml) for scheduled jobs, webhooks, file-change reactions, and multi-step pipelines. Load when building, editing, or deploying workflow automations.
 ---
 
@@ -28,6 +28,8 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
 
 **Edge** — `id`, `source`, `target`, `sourceHandle` (`output`, or `false` for an `if` node's else branch), `targetHandle` (`input`).
 
+**Tolerating a node's own failure** — any action/flow node (not `loop`) can set `config.continue_on_error: true`. By default a failed node stops its branch and the run reports `error`; with this set, the failure still emits a `node_error` event but execution continues along the node's normal output edges with `{ failed: true, error_message: "..." }` (plus any fields the failed result carried, e.g. a `code` node's `stdout`/`stderr`) as the downstream input — reference it as `{{ id.output.failed }}` / `{{ id.output.error_message }}`, never `{{ id.output.error }}` (a node result with a literal `error` field is what the engine's strict template resolver refuses to reference). Use this so one optional/flaky step (an enrichment lookup, a non-critical notification) can't take down an otherwise-working automation — wire an `if` after it to branch on `{{ id.output.failed }}`.
+
 ## YAML workflow essentials
 
 YAML workflows live under `.arg/workflows/` with a `.yml` or `.yaml` extension. One file is one workflow.
@@ -53,6 +55,7 @@ Step keys:
 - `run` + `shell` — shorthand for a `code` step.
 - `if` — expression guard on the step (see Expressions).
 - `enabled` — optional boolean.
+- `continue-on-error` — optional boolean (default `false`). Tolerates this step's own failure — see "Tolerating a node's own failure" above. Not valid on `uses: loop`.
 
 Loops use `uses: loop` with nested `steps` and `with: { over: "{{ ... }}" }`; inside the body, `{{ <loop-id>.item }}` is the current element. Nested loops are not supported.
 
