@@ -1,7 +1,7 @@
 ---
 name: arg-cli
-version: "1.12.1"
-description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
+version: "1.13.0"
+description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), launching the user's own Claude Code, Codex, Pi, Hermes Agent, or OpenClaw with temporary Arg integration, direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
 # Arg access: `arg` CLI
@@ -14,7 +14,7 @@ The `arg` CLI wraps Arg's REST API and provides three ways to work with a worksp
 
 **Headless / CI / agents:** skip the browser login. Create an API key at `arg.ai/platform/api-keys` and set `ARG_API_KEY` (or pass `--api-key`) — it authenticates **every** command and needs no OS keychain. With a key, set `ARG_ACTIVE_ORG=<org-id>` (and `ARG_WORKSPACE=<id>` or `--workspace`) for context, since `orgs` is user-session-only. `arg whoami` does work under a key - it reports the principal the key resolves to (service account or creating user) and the org it's bound to.
 
-Beyond file CRUD: `arg agent [message]` (start a workspace-aware terminal chat with live MCP context and skills), `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk - see **Native renderers** below), `arg action` (list/run built-in actions - see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), `arg onboard` (import a local coding-agent setup - Claude Code, Cursor, Copilot, Gemini - into a workspace, see below), `arg sites deploy` (deploy a local folder as a hosted site, see below), `arg share create <path>` (mint a public, sign-in-free link and print the URL that serves the file's bytes - see below), and `arg init` / `arg skills` (install the Arg skill bundle into the current project for your coding harness; add `--scope user` to install into `~/.claude/skills/` so every project on the machine sees them).
+Beyond file CRUD: `arg agent [message]` (start a workspace-aware terminal chat with live MCP context and skills), `arg claude` / `arg codex` / `arg pi` / `arg hermes` / `arg claw` (launch the user's own local harness in the current directory with temporary Arg skills and MCP - see below), `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk - see **Native renderers** below), `arg action` (list/run built-in actions - see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), `arg onboard` (import a local coding-agent setup - Claude Code, Cursor, Copilot, Gemini - into a workspace, see below), `arg sites deploy` (deploy a local folder as a hosted site, see below), `arg share create <path>` (mint a public, sign-in-free link and print the URL that serves the file's bytes - see below), and `arg init` / `arg skills` (install the Arg skill bundle into the current project for your coding harness; add `--scope user` to install into `~/.claude/skills/` so every project on the machine sees them).
 
 ## Share a file outside Arg (`arg share`)
 
@@ -56,6 +56,25 @@ The Pi terminal UI is an implementation detail. By default, `arg agent` disables
 Node.js `22.19.0+`, npm, and GitHub access are required only for `arg agent`; its exact Pi and MCP packages are downloaded through npm, and the public Arg Pi package is cached and refreshed through Git. The command is interactive and does not support Arg's JSON/NDJSON/projection flags.
 
 **Discovering Arg's skills without the CLI:** the same bundle is published at two well-known endpoints, so any agent that speaks either convention can find and install it. `https://arg.ai/.well-known/skills/index.json` is the `vercel-labs/skills-handler` format (what `hermes skills install --source well-known` reads; `SKILL.md` is served with frontmatter intact at `/.well-known/skills/<name>/SKILL.md`). `https://arg.ai/.well-known/agent-skills/index.json` is Cloudflare's Agent Skills Discovery v0.2.0 format, which adds a sha256 digest per skill.
+
+## Launch a local coding harness
+
+`arg claude`, `arg codex`, `arg pi`, `arg hermes`, and `arg claw` launch the **user's own** Claude Code, Codex, Pi, Hermes Agent, or OpenClaw binary in the current directory with current Arg skills and an `arg` MCP server for the selected workspace.
+
+Pick it when the user wants to keep working in their own repo with their own harness and just needs it connected to Arg. Pick `arg agent` when they want an Arg agent with no harness setup at all, and `arg mount` when the **workspace** should be the working directory - `arg claude` mounts nothing and syncs no files.
+
+```bash
+arg claude
+arg claude --arg-workspace "Q3 Planning"   # default: the active workspace
+arg codex --arg-org=acme                   # org-scoped MCP server instead
+arg pi --arg-system-prompt --continue       # add Arg product context for this session
+arg hermes --arg-no-sync                   # launch without temporary integration
+arg claw --arg-sync-only                   # validate setup and exit
+```
+
+Only the `--arg-*` options are Arg's, and they must come first: parsing stops at the first argument Arg does not recognise, and a bare `--` ends it too. Everything else, `-h`/`--help` included, is passed to the harness untouched, and the harness's exit code is returned. Arg's global flags (`--json`, `--quiet`, …) are not available here. `--arg-org` and `--arg-workspace` are mutually exclusive, and `--arg-org` needs the equals form to take a value. `--arg-system-prompt` opts the child into a short arg.ai description and guidance to use Arg for artifacts and internal apps; it is session-only and cannot be combined with `--arg-no-sync`.
+
+Arg stages the integration under a private temporary directory, passes it through invocation-only flags or environment overrides, and removes it after the harness exits. It never installs skills or edits project and user harness configuration, so there is no install-location picker on these commands. A failed preparation is a warning and the harness still starts - except under `--arg-sync-only`, where it is an error. With no workspace selected the MCP server uses the active org; with neither, Arg loads the temporary skills, warns, and launches without MCP.
 
 ## Import a local coding-agent setup (`arg onboard`)
 
