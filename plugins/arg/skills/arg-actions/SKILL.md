@@ -148,7 +148,7 @@ A sampling — there are more:
 - **image** — `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `html_to_image` (render HTML → png/jpeg/webp), plus `image_crop` / `image_resize` / `image_recolor` / `image_metadata` / `image_blank`.
 - **video / 3d / audio** — `video_generate` (text/image/video→video; also drives audio-driven avatar / lip-sync models like Kling AI Avatar - pass the portrait as `source_path` and the voice track as `audio_path`), `three_d_generate`, `video_to_audio`, `music_generate`, `tts_generate` (text→speech), `transcribe_audio`.
 - **web / data / document** — `screenshot_webpage`, `web_to_markdown` (one-shot page → Markdown), `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`), `extract_webpage_data`, `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …), `get_stock_data`, `html_to_pdf`.
-- **integration** — calls to connected services where a connector is set up: Airtable, Confluence, GitHub, Google (Gmail/Calendar/Drive), HubSpot, Jira, Linear, Microsoft, Monday.com, Notion, Salesforce, Slack. Each takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available.
+- **integration** — calls to connected services where a connector is set up: Airtable, Confluence, Firmable (ANZ company/people data), GitHub, Google (Gmail/Calendar/Drive), HubSpot, Jira, Linear, Microsoft, Monday.com, Notion, Salesforce, Slack. Each takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available.
 
 ### Acting on a connected service
 
