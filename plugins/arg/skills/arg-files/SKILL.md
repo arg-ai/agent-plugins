@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.7.0"
+version: "2.8.0"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -70,6 +70,7 @@ Two more custom surfaces:
 - **`.mdx` documents** carry Arg's custom JSX components (callouts, toggles, embeds, columns, tabs, math, mentions, recordings, and more) — documented in full in the `arg-file-document` skill.
 - **`.server`** is a JSON config that launches a process in a sandboxed container and exposes a port with Personal, Workspace, or Public access - see the `arg-apps` skill.
 - **`.form`** is an MDX document with form field components; shared externally, it collects responses as rows — see the `arg-file-document` skill.
+- **`.tools/<slug>.yaml`** wires Arg to one third-party HTTP API. YAML: a `base` URL, an `auth:` block naming a stored secret, and an `operations:` mapping. The whole file becomes one tool you call by its slug (`stripe({})` lists its operations, `stripe({ operation, input })` runs one). Never write a literal credential into it - it is an ordinary workspace file, and the secret has to already exist in Settings -> Secrets, because no tool can create one. Arg attaches the credential itself on the way out, so the value never reaches you. A file you write is callable on your NEXT turn; a new operation added to a tool that already exists is callable immediately.
 
 ## Other supported formats (no dedicated skill — handle directly)
 
@@ -95,7 +96,7 @@ Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XM
 - **Code** - `.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.c`/`.cpp`/`.h`, `.rb`, `.php`, `.swift`, `.kt`, `.css`/`.scss`, `.vue`, `.svelte`, `.astro`, `.sh`, and more.
 - **Games & misc** — `.pgn` (chess), `.solitaire` (playable Klondike solitaire, JSON).
 - **Archives** — `.zip`, `.tar`, `.gz`/`.tgz`, `.rar`, `.7z`, `.jar`, `.war`, `.apk` (upload/view only — no blank-file creation).
-- **Workspace meta** — `.skills/<name>/SKILL.md` (reusable skills) and `.agents/<name>.md` (subagents) — see the `arg-skills-and-agents` skill.
+- **Workspace meta** — `.skills/<name>/SKILL.md` (reusable skills), `.agents/<name>.md` (subagents) — see the `arg-skills-and-agents` skill — and `.tools/<slug>.yaml` (third-party HTTP APIs, above).
 
 ## Recommended libraries
 
