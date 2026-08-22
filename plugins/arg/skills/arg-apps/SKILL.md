@@ -1,7 +1,7 @@
 ---
 name: arg-apps
-version: "2.10.0"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
+version: "2.11.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -366,6 +366,99 @@ Use `dataUrlById(id)` only for small inline images. Id helpers resolve id-to-pat
 - The user's access scope bounds every **file** path: `"folder"` (this subtree) or `"workspace"` (everything). Identity is workspace-level regardless. The backend still enforces the user's own permissions.
 - Id helpers (`readById`, `assetUrlById`, `resolveId`, `infoById`, etc.) accept a prefixed `argfile_<uuid>` (or a bare legacy UUID), resolve the id to its current path first, then enforce the same scope.
 - Calls reject with an `Error` whose `.code` is one of `out_of_scope`, `bad_request`, `access_denied`, `not_found`, `binary_file`, `request_failed`, `disabled`, `read_only`, `unavailable`, `unknown_op`. Wrap in `try/catch`; treat `not_found` / a `null` `info()` as first-run and seed defaults. Treat `read_only` as a host-level mutation lock, and treat `unavailable` from `open()` / `openById()` as "this host cannot open editor tabs".
+
+## Layout: mobile web, iOS, and Android
+
+Every arg-app is also a mobile app. The iOS and Android Arg apps open workspace files in **full-screen web views**, and on the web an app renders in a pane that can be half a window wide. Author for the narrow end from the start — a layout that only holds together at desktop width ships as a broken phone app.
+
+How much of the screen the app owns depends on the file type, and only one of them has to think about the notch:
+
+| surface        | how the mobile apps host it                                                                                                                                                                | what to handle               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| `.html`/`.htm` | the **top-level document of an edge-to-edge web view** — it draws behind the status bar, notch, and home indicator, with the native back / chat / "…" controls floating on top of the page | breakpoints _and_ safe areas |
+| `.tsx`/`.jsx`  | the editor host, which already reserves room for the native chrome above the preview and the composer below it                                                                             | breakpoints only             |
+| `.server`      | a full-screen view with a real native top bar above the web view                                                                                                                           | breakpoints only             |
+
+### Breakpoints
+
+Every one of those surfaces runs the app in its own frame or web view, so `@media (max-width: …)` and `100vw` measure **the pane the app is in**, not the device. That is what you want: one set of queries gives you a phone layout on a phone and a narrow-pane layout when the app sits beside the code editor on desktop. Author mobile-first, then widen.
+
+```css
+/* base: one column, comfortable at ~320px */
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  } /* large phone, narrow pane */
+}
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  } /* tablet, desktop */
+}
+```
+
+- Assume the narrowest real width is **320 CSS px**. Don't put a fixed width or a `min-width` wider than that on a top-level container, and let tables, toolbars, and card rows wrap or scroll rather than overflow.
+- Use `100dvh` rather than `100vh` for a full-height shell — mobile browser chrome makes `vh` overshoot.
+- Touch targets want ~44px of height, and a control that only appears on `:hover` has no equivalent on touch — keep the action visible or reachable from a tap.
+- Give text inputs `font-size: 16px` or larger. iOS zooms the page in when a smaller input takes focus.
+
+### Safe areas (`.html` apps)
+
+An `.html` app is the top-level document and nothing is injected into its `<head>`, so the viewport tag is yours to write. Write it **together with** the padding below, never on its own:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+```
+
+`viewport-fit=cover` does two things at once. It makes `env(safe-area-inset-*)` report real values on iOS — without it they are all `0` and safe-area padding silently does nothing — and it opts the page into drawing under the system chrome, which iOS otherwise keeps a scrolling page clear of on its own. Adding the tag and then padding only a fixed header pushes the rest of the body under the clock, so take both halves or neither.
+
+```css
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Android's web view reports the status bar as 0 - it tracks display cutouts only -
+   so the native case needs a floor of its own. The mobile apps load an .html app as
+   the top-level document; inside Arg on the web it is framed, with app chrome around
+   it and no system chrome behind it. */
+html[data-arg-fullscreen] {
+  --safe-top: max(env(safe-area-inset-top, 0px), 24px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+
+.app-bar {
+  padding-top: var(--safe-top);
+}
+.bottom-bar {
+  padding-bottom: var(--safe-bottom);
+}
+.page {
+  padding-left: max(var(--safe-left), 1rem);
+  padding-right: max(var(--safe-right), 1rem);
+}
+```
+
+```html
+<script>
+  if (window.top === window.self) document.documentElement.dataset.argFullscreen = "";
+</script>
+```
+
+This costs nothing anywhere else: the insets resolve to `0` in a framed preview on desktop and mobile web, and the floor only applies to the top-level native case, so every other layout renders exactly as it did.
+
+**The native controls float over the page rather than beside it.** iOS puts back at the top-left, chat and "…" at the top-right, and a collapsed chat control at the bottom-left that expands into a full composer; Android puts back at the top-left, "…" at the top-right, and chat at the bottom-left. Keep your own controls out of those corners at narrow widths, or put them in a bar that the safe-area padding above has already pushed clear.
+
+A `.tsx`/`.jsx` app needs none of this, and cannot do it anyway: Arg builds that document, so the viewport tag is not yours, and a nested preview frame never inherits the device insets — `env(safe-area-inset-*)` is `0` there on every platform. The host reserves the room instead. Reach for `.html` when an app genuinely has to sit against a phone's edges.
+
+None of this applies to a HyperFrames composition — those are fixed-resolution motion graphics and scale through the `html { font-size: min(…vw, …vh) }` rule described below, not through breakpoints.
 
 ## Motion graphics: HyperFrames compositions (`.html`)
 
