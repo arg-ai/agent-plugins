@@ -2,7 +2,7 @@
 name: arg-skills-and-agents
 description: Create and edit Arg workspace skills (SKILL.md files under .skills) and subagents (markdown files under .agents). Load when asked to save a prompt, workflow, or set of instructions as a reusable skill, or to define a specialist subagent for a recurring task in an Arg workspace.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # Workspace skills & subagents

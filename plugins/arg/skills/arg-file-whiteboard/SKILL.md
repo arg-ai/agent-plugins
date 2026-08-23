@@ -2,7 +2,7 @@
 name: arg-file-whiteboard
 description: Create, read, update, and delete Arg whiteboard files (.whiteboard) — the native infinite-canvas / visual-canvas format with shapes, sticky notes, text, tables, sections, images, icons, emoji, 3D models, live embeds/bookmarks/stock/weather cards, generator nodes, and connectors/arrows. Load when authoring or editing diagrams, flowcharts, architecture maps, mind maps, or any node-and-edge visual board.
 metadata:
-  version: "1.1.8"
+  version: "1.1.9"
 ---
 
 # Whiteboard files (`.whiteboard`)

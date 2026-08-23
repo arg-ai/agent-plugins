@@ -2,7 +2,7 @@
 name: arg-cli
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), launching the user's own Claude Code, Codex, Pi, Hermes Agent, or OpenClaw with temporary Arg integration, direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 metadata:
-  version: "1.14.0"
+  version: "1.14.1"
 ---
 
 # Arg access: `arg` CLI

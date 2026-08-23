@@ -2,7 +2,7 @@
 name: arg-ui
 description: Feature overview of the Arg web app and desktop (macOS/Windows/Linux) app — what a user or agent can do in each surface, and what the desktop app adds on top of the web app. Load this to explain Arg's product functionality, decide which surface a capability lives on, or point a user at the right feature. For file CRUD, load arg-files plus the access-method and arg-file-* skills instead.
 metadata:
-  version: "1.0.3"
+  version: "1.0.4"
 ---
 
 # Arg apps — web & desktop

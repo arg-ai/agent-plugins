@@ -2,7 +2,7 @@
 name: arg-mcp
 description: Access method for Arg file CRUD over the MCP server (read_file, write_file, edit_file, multi_edit, grep, semantic_search, run_bash, list_files, move_files, create_upload_session, download_file). Load this when Arg is connected over MCP — the cloud endpoint or the desktop app's local loopback server over shared folders. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 metadata:
-  version: "1.7.0"
+  version: "1.7.1"
 ---
 
 # Arg access: MCP

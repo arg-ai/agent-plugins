@@ -2,7 +2,7 @@
 name: arg-file-document
 description: Create, read, update, and delete Arg documents — .md/.mdx/.txt text docs with Arg's custom JSX components (callouts, toggles, embeds, columns, tabs, math, mentions, …), .diary dated journals, and .form shareable forms/surveys. Load when authoring or editing any Arg document, note, journal/daily log, or form.
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # Documents (`.md`, `.mdx`, `.txt`, `.diary`, `.form`)

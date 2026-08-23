@@ -2,7 +2,7 @@
 name: arg-files
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 metadata:
-  version: "2.8.0"
+  version: "2.8.1"
 ---
 
 # Arg files

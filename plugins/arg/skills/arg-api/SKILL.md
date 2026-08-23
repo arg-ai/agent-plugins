@@ -2,7 +2,7 @@
 name: arg-api
 description: Build against the Arg REST API (https://api.arg.ai) — API-key auth, workspace/file CRUD over HTTP, sandboxed bash + file tools, semantic search, actions, tunnels, share links, file invitations, notifications, service accounts. Load when writing code that calls Arg over HTTP — an integration, backend, script, CI job, or a custom agent harness that wires Arg tools into its own loop — or when the only available access is an API key and an HTTP client. For interactive file CRUD from an agent session prefer arg-mcp / arg-cli; this is the raw HTTP layer they wrap.
 metadata:
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # Arg REST API

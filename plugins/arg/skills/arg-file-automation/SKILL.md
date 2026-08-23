@@ -2,7 +2,7 @@
 name: arg-file-automation
 description: Create, read, update, delete, and deploy Arg automation files (.automation) and YAML workflows (.arg/workflows/*.yml) for scheduled jobs, webhooks, file-change reactions, and multi-step pipelines. Load when building, editing, or deploying workflow automations.
 metadata:
-  version: "1.13.0"
+  version: "1.13.1"
 ---
 
 # Automation files (`.automation`, `.arg/workflows/*.yml`)

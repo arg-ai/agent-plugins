@@ -2,7 +2,7 @@
 name: arg-apps
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 metadata:
-  version: "2.11.0"
+  version: "2.11.1"
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
