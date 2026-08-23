@@ -1,7 +1,8 @@
 ---
 name: arg-slides
-version: "2.0.0"
 description: Create, edit, and present Arg slide decks. Load for presentations, pitch decks, keynote-style talks, slide redesigns, or deck generation. Default to a single self-contained .html deck; build a multi-artboard .design deck when the user wants an editable design canvas or a PowerPoint / PDF deliverable.
+metadata:
+  version: "2.0.1"
 ---
 
 # Arg slides

@@ -1,7 +1,8 @@
 ---
 name: arg-sites
-version: "1.1.0"
 description: Publish an Arg workspace folder as a hosted website on its own subdomain - static sites, framework builds, and server-side apps - via the workspace agent's site tools or the arg CLI (arg sites deploy). Load this whenever you are asked to deploy, publish, host, or update a website, dashboard, or internal tool from workspace files, or to roll one back, share it, or take it offline.
+metadata:
+  version: "1.1.1"
 ---
 
 # Arg Sites

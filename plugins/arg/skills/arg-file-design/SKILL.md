@@ -1,7 +1,8 @@
 ---
 name: arg-file-design
-version: "1.5.0"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; for presentation-specific workflow load arg-slides alongside it.
+metadata:
+  version: "1.5.1"
 ---
 
 # Design files (`.design`, `.svg`, `.fig`)

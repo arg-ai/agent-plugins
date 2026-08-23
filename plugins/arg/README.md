@@ -4,6 +4,8 @@
 
 Arg is a collaborative, fast, cloud file system for humans and agents to collaborate and work together. With this plugin, your agent connects to your Arg workspace over MCP and can read and write files natively — turning your workspace into a shared surface between you and your agent.
 
+This directory is a portable [Agent Plugins 1.0.0](https://agent-plugins.org/specification) package. `plugin.json`, `skills/`, and `mcp.json` are its portable core; the hidden harness manifest directories add marketplace metadata for Claude Code, Cursor, and Codex.
+
 ## Features
 
 - **Native read/write for many file types**: images, video, audio, presentations, documents, spreadsheets, databases, designs, whiteboards, and kanban boards.

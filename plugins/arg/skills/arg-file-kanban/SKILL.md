@@ -1,7 +1,8 @@
 ---
 name: arg-file-kanban
-version: "2.2.2"
 description: Create, read, update, and delete Arg kanban boards (.kanban) for task and project management — columns of cards with labels, due dates, assignees, and nested sub-task boards. Load when building or editing task boards, project trackers, or status boards.
+metadata:
+  version: "2.2.3"
 ---
 
 # Kanban files (`.kanban`)

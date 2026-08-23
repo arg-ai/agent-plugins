@@ -1,7 +1,8 @@
 ---
 name: arg-file-video-edit
-version: "1.5.0"
 description: Create, read, and update Arg's .video non-linear editor (NLE) timeline projects — multi-track video/audio/GIF/text/effects edits, including reusable nested .video compositions, stingers, title packages, and prebuilt sequences, that composite a live preview and render to MP4/WebM. Load when building or editing a .video timeline (montages, animated GIFs, titles, transitions, color grades, or nested video projects). For raw video files (mp4/mov/webm), see arg-files.
+metadata:
+  version: "1.5.1"
 ---
 
 # Video editor / NLE timeline (`.video`)

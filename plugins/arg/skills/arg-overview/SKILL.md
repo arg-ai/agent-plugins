@@ -1,7 +1,8 @@
 ---
 name: arg-overview
-version: "1.3.1"
 description: The map of the Arg (arg.ai) product — what Arg is, every offering (workspace, agent, editors, skills, automations, actions, apps, developer/agent APIs, platform surfaces, plans), who it's for, and which skill or URL to go deeper with. Load this to answer any question about Arg itself ("what is Arg", "can Arg do X", "what does it cost"), to build a get-started or onboarding guide for someone who just signed up, or to orient another agent before it loads a specialist arg-* skill.
+metadata:
+  version: "1.3.2"
 ---
 
 # Arg overview
