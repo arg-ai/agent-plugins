@@ -175,8 +175,8 @@ schedule or a trigger. Two ways to author it:
 Either way the run is audited in ClickHouse `action_runs` with `surface: "automation"`. Durable
 write/async runs also land in Postgres for `list_runs`; a sync read returns inline and may be
 audit-only. **Every** node with a dedicated kind - the file
-nodes, `code`, `http-request`, `run-agent`, `send-notification`, the media nodes, `screenshot`,
-`fetch-web`, `extract-data`, `apify-actor` - bridges onto one of these actions underneath, so
+nodes, `code`, `http-request`, `run-agent`, `run-automation`, `send-notification`, the media nodes,
+`screenshot`, `fetch-web`, `extract-data`, `apify-actor` - bridges onto one of these actions underneath, so
 they share this persistence rule too. Keep using those kinds; they just have a friendlier config
 shape, and they keep their own output key names (`output.path`, `output.image_url`) alongside
 the action's (`output.output_path`, `output.asset_url`).
