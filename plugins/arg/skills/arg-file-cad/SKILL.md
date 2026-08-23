@@ -1,7 +1,8 @@
 ---
 name: arg-file-cad
-version: "1.0.0"
 description: Create, read, update, and delete .cad files in Arg — the native parametric CAD format for interior floor plans, buildings, site plans, structural frames and bridges. Also covers reconstructing an accurate measured drawing from a LiDAR scan (.glb/.gltf mesh, or .las/.ply/.xyz/.pts point cloud). Load when authoring or editing architectural, structural or civil drawings, or when working from a scan.
+metadata:
+  version: "1.0.0"
 ---
 
 # CAD files (`.cad`)

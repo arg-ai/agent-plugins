@@ -2,6 +2,10 @@
 
 Thanks for helping improve the Arg plugins and skills. This repo is a public plugin **marketplace** that lets Claude Code, Cursor, and Codex connect to [Arg](https://arg.ai) over MCP, plus a library of **skills** that teach agents how to read/write each Arg file format. It also ships as a [pi package](https://pi.dev/docs/latest/packages), which loads `plugins/arg/skills/` via the `pi` key in the root `package.json` — new skills are picked up automatically, no manifest edit needed.
 
+The plugin directory also conforms to the portable [Agent Plugins 1.0.0 specification](https://agent-plugins.org/specification). Its root `plugin.json`, `skills/`, and `mcp.json` are the portable package; the hidden harness directories retain client-specific marketplace metadata.
+
+`plugins/arg/skills/` is generated distribution content. Arg maintainers must make skill, skill-generator, and skill-metadata validation changes in the main Arg repository's root `skills/` tree first; its `Sync Agent Plugin Skills` workflow copies the result here and bumps the plugin versions. A skills-only change made directly in this repository will be overwritten by that sync. External contributors can still propose a skill change here, but maintainers will port accepted changes to the source repository before release.
+
 There is one plugin — `arg` — and most contributions are **adding or editing skills**.
 
 ## How to contribute
@@ -21,6 +25,8 @@ PRs and issues are genuinely reviewed and taken into consideration. If a schema 
 
 | Need | Where |
 | --- | --- |
+| Portable plugin manifest, layout, and MCP configuration | `https://agent-plugins.org/specification` and its canonical 1.0.0 schemas |
+| Agent Skills frontmatter and directory format | `https://agentskills.io/specification` |
 | Public custom formats (design / whiteboard / kanban / automation) | `https://arg.ai/docs/files/<slug>/llms.txt` |
 | `window.arg` FS SDK | `https://arg.ai/docs/sdks/fs/llms.txt` |
 | MCP tools, the CLI, and broader guides | `https://developers.arg.ai` |
@@ -63,16 +69,17 @@ description: One line — what it does, when to load it, the extensions/CRUD ver
 ## Adding a new skill — checklist
 
 1. **Verify the format** against Arg's public docs (see the table above); for formats without a published doc, match the schema already inlined in the sibling skills. Don't guess.
-2. Create `plugins/arg/skills/<name>/SKILL.md` — frontmatter `name` == directory name, no angle brackets in `description`.
+2. Create `<main-arg-repo>/skills/<name>/SKILL.md` — frontmatter `name` == directory name, no angle brackets in `description`. Let the source repository's sync workflow populate `plugins/arg/skills/<name>/` here.
 3. Write the body: keep CRUD transport-neutral (defer the verbs to `arg-core` / the access-method skills), document only format deltas + schema, cross-link siblings.
-4. **Update `arg-core`** (`plugins/arg/skills/arg-core/SKILL.md`): add a row to the dedicated-skill table (and remove the format from the "Other supported formats" list if it was there).
+4. **Update `arg-core`** (`<main-arg-repo>/skills/arg-core/SKILL.md`): add a row to the dedicated-skill table (and remove the format from the "Other supported formats" list if it was there).
 5. **Update `skills.sh.json`**: add the skill to a grouping. Every skill must be grouped — keep coverage at 100%.
 6. **Update `plugins/arg/README.md`**: add a row to the supported-types table.
-7. **Run `bun run build`** and confirm all three validators pass.
+7. **Run `bun run build`** and confirm all validators pass.
 
 ## Validation
 
-`bun run build` runs three validators (also run in CI via `.github/workflows/build.yml`):
+`bun run build` runs the portable validator and the three client validators (also run in CI via `.github/workflows/build.yml`):
+- `validate-agent-plugins` — root manifest and MCP configuration against the canonical Agent Plugins 1.0.0 schemas, the specification's path/MCP rules, and every bundled skill against Agent Skills frontmatter rules.
 - `validate-cursor-schema` — manifests against `schemas/`.
 - `validate-cursor-structure` — plugin structure + frontmatter on rules/skills/agents/commands.
 - `validate-codex` — Codex marketplace + skill name/description rules.

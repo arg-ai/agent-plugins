@@ -1,7 +1,8 @@
 ---
 name: arg-file-daw
-version: "1.0.3"
 description: Create, read, and update Arg's .daw multi-track audio sessions — a JSON DAW project with a transport, instrument/audio/MIDI tracks, MIDI clips (inline notes), instruments (multi-engine synth, 808/909/707 drum machines, and a sampler that pitches a workspace audio file), MIDI + audio effect chains, a mixer with sends/returns, a master bus, and VST3/AU plugin slots. Plays and bounces to WAV/MP3 in the browser; also renderable offline via `arg daw render` (wav/mp3/flac/aac/ogg/opus). Load when building or editing a .daw song, beat, MIDI part, podcast mix, film cue, or when mixing/mastering a multi-track session. For raw audio files (wav/mp3), see arg-files.
+metadata:
+  version: "1.0.3"
 ---
 
 # DAW session (`.daw`)

@@ -7,6 +7,8 @@ Missing one? [Request it in an issue](https://github.com/arg-ai/agent-plugins/is
 
 Arg is a collaborative, fast, cloud file system for humans and agents to collaborate and work together.
 
+The Arg package conforms to the published [Agent Plugins 1.0.0 specification](https://agent-plugins.org/specification): its portable root manifest, Agent Skills, and Streamable HTTP MCP configuration work in compatible clients. The Claude Code, Cursor, and Codex manifests remain alongside that portable package for their marketplace-specific metadata and installation flows.
+
 ## Cursor
 
 ```sh

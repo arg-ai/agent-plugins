@@ -7,12 +7,14 @@
     "skills": ["./plugins/arg/skills"]
   },
   "scripts": {
-    "build": "bun ./scripts/validate-cursor-schema.mjs && bun ./scripts/validate-cursor-structure.mjs && bun ./scripts/validate-codex.mjs"
+    "build": "bun run test && bun ./scripts/validate-agent-plugins.mjs && bun ./scripts/validate-cursor-schema.mjs && bun ./scripts/validate-cursor-structure.mjs && bun ./scripts/validate-codex.mjs",
+    "test": "node --test scripts/validate-agent-plugins.test.mjs"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "ajv": "^8.18.0",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.9.0"
   },
   "peerDependencies": {
     "typescript": "^5"
