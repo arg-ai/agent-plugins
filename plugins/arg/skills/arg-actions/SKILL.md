@@ -1,6 +1,6 @@
 ---
 name: arg-actions
-version: "1.3.0"
+version: "1.4.0"
 description: Run Arg's built-in actions - operations that generate or transform workspace files and data (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand - e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
@@ -148,7 +148,7 @@ A sampling — there are more:
 - **image** — `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `html_to_image` (render HTML → png/jpeg/webp), plus `image_crop` / `image_resize` / `image_recolor` / `image_metadata` / `image_blank`.
 - **video / 3d / audio** — `video_generate` (text/image/video→video; also drives audio-driven avatar / lip-sync models like Kling AI Avatar - pass the portrait as `source_path` and the voice track as `audio_path`), `three_d_generate`, `video_to_audio`, `music_generate`, `tts_generate` (text→speech), `transcribe_audio`.
 - **web / data / document** — `screenshot_webpage`, `web_to_markdown` (one-shot page → Markdown), `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`), `extract_webpage_data`, `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …), `get_stock_data`, `html_to_pdf`.
-- **integration** — calls to connected services where a connector is set up: Airtable, Confluence, Firmable (ANZ company/people data), GitHub, Google (Gmail/Calendar/Drive), HubSpot, Jira, Linear, Microsoft, Monday.com, Notion, Salesforce, Slack, treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id), Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs), Gong (what was said on sales calls - briefs, key points, trackers, transcripts). Each takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available.
+- **integration** — calls to connected services where a connector is set up: Airtable, Confluence, Firmable (ANZ company/people data), GitHub, Google (Gmail/Calendar/Drive/Sheets - `google_append_sheet_row`/`google_read_sheet_range` read and write a spreadsheet), HubSpot, Jira, Linear, Microsoft, Monday.com, Notion, Salesforce, Slack, treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id), Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs), Gong (what was said on sales calls - briefs, key points, trackers, transcripts). Each takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available.
 
 ### Acting on a connected service
 
