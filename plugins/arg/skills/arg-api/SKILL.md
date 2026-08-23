@@ -1,6 +1,6 @@
 ---
 name: arg-api
-version: "1.5.1"
+version: "1.6.0"
 description: Build against the Arg REST API (https://api.arg.ai) — API-key auth, workspace/file CRUD over HTTP, sandboxed bash + file tools, semantic search, actions, tunnels, share links, file invitations, notifications, service accounts. Load when writing code that calls Arg over HTTP — an integration, backend, script, CI job, or a custom agent harness that wires Arg tools into its own loop — or when the only available access is an API key and an HTTP client. For interactive file CRUD from an agent session prefer arg-mcp / arg-cli; this is the raw HTTP layer they wrap.
 ---
 
@@ -112,7 +112,7 @@ The server process receives `ARG_INTEGRATIONS_URL` and `ARG_INTEGRATIONS_TOKEN`.
 
 Never log, persist, or return `ARG_INTEGRATIONS_TOKEN`. Never put a provider credential, connection id, or provider base URL in server source or the `.server` file. A broker token is tunnel-scoped and revocable, but it still lets server code use the approved connection while the tunnel is active. Servers run from the live workspace mount, so collaborators who change server code can change what the approved audience executes until the tunnel is stopped or relaunched. Public access permits every requester, workspace access permits workspace-wide readers, and personal access permits only the human launcher. Use the narrowest provider scopes available for unattended servers.
 
-- **Notifications** — reach a human when a job finishes, fails, or needs a decision: `POST /api/notifications` body `{ "title", "body"?, "type"?, "users"?: [ids or emails in the org], "metadata"?: { "filePath", "workspaceId", … } }` → `202` (omit `users` to notify yourself; service-account keys must name recipients). Delivery fans out to email, mobile, desktop, and the in-app inbox per each recipient's preferences. Read the inbox with `GET /api/notifications` (`unread_count` included), mark read via `PATCH /api/notifications/{id}/read` / `POST /api/notifications/read-all`, or listen live on the WebSocket `wss://api.arg.ai/api/notifications/stream`.
+- **Notifications** — reach a human when a job finishes, fails, or needs a decision: `POST /api/notifications` body `{ "target"?: <Arg file|folder|chat|Action-run URL>, "title"?, "body"?, "type"?, "users"?: ["me"|ids|emails in the org], "channels"?: ["ios"|"email"|"in-app"], "metadata"? }` → `202`. Supply `title` or `target`; a target derives the title and safe CTA. Omit `users` to notify yourself; service-account keys must name recipients. Omit `channels` for all channels. Recipient preferences still gate selected delivery. Read the inbox with `GET /api/notifications` (`unread_count` included), mark read via `PATCH /api/notifications/{id}/read` / `POST /api/notifications/read-all`, or listen live on the WebSocket `wss://api.arg.ai/api/notifications/stream`.
 - **Service accounts & keys** — `POST /api/service-accounts` (`organization_id`, `name`), then `POST /api/keys` (`organization_id`, `name`, `service_account_id?`). Omit `service_account_id` from a user session to mint a user-owned key. Revoke with `POST /api/keys/{keyId}/revoke?organization_id=…`.
 - **MCP over the same host** — headless MCP clients connect to `https://api.arg.ai/mcp/{workspaceId}` with the same `x-api-key` header (see `arg-mcp`).
 
