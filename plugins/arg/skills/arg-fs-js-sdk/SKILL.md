@@ -1,6 +1,6 @@
 ---
 name: arg-fs-js-sdk
-version: "1.2.2"
+version: "1.2.3"
 description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html files. Load when building or modifying a single-file HTML app that reads or writes workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
 ---
 
@@ -76,6 +76,8 @@ All methods return Promises. Paths are strings (see **Paths & scope** below).
 | `mkdir(path)`                       | `{ path }`                                        | Create a folder.                                                                                                     |
 | `move(from, to)`                    | `{ from, to, path }`                              | Move/rename.                                                                                                         |
 | `copy(from, to)`                    | `{ from, to, path }`                              | Copy.                                                                                                                |
+
+Desktop local-only workspaces support every path-based method in this table, including `list`, `glob`, and `search`, directly against the opened folder. The stable registry-ID methods (`*ById`, `resolveId`, and `getId`) are cloud-workspace features because local files have no Arg registry rows.
 
 **Shapes:**
 
@@ -228,7 +230,7 @@ const cols = await arg.db.schema("/data/app.db", "users");
 
 - Works on `.sqlite` / `.db` files. Reads and writes go through the same authenticated file routes as `arg.fs`, so the backend still enforces the signed-in user's own FGA permissions on every call — `exec` requires write access to the file.
 - Errors reject with the same `.code` values as the Files API (e.g. `not_found`, `access_denied`); SQL errors surface as `request_failed`.
-- **Availability:** `arg.db` executes in the **web editor** only. The native iOS and Android file bridges reject database operations. Feature-detect and degrade gracefully.
+- **Availability:** `arg.db` executes in web and desktop previews, including desktop local-only workspaces. The native iOS and Android file bridges reject database operations. Feature-detect and degrade gracefully.
 
 ## Identity — `arg.me` and `arg.team`
 
@@ -247,6 +249,8 @@ const cols = await arg.db.schema("/data/app.db", "users");
   ```
 
   Members carry **names + avatars only — no emails** (cross-org enumeration guard). For the current user's email, use `arg.me.email`. Members are workspace-level and are returned regardless of the file-path access scope.
+
+  A desktop local-only workspace has no cloud membership roster, so `arg.team.members()` returns an empty array there.
 
 ## Context — what this file knows about itself
 
@@ -269,7 +273,7 @@ const cols = await arg.db.schema("/data/app.db", "users");
   - `"folder"` — only this file's folder and its subtree. A path outside it throws `code: "out_of_scope"`. (A file living at the workspace root effectively gets whole-workspace reach, since its folder _is_ the root.)
   - `"workspace"` — the entire workspace.
 - Scope clamps **file paths only**. `arg.me` and `arg.team.members()` are workspace-level either way.
-- The backend independently enforces the signed-in user's own permissions on every call, so the SDK can never exceed what that user could already do by hand.
+- Cloud calls are independently authorized by the backend. Desktop local-only calls are resolved and scope-clamped in Electron's main process against the folder the user opened; path traversal and symlink escapes are rejected.
 - UUID helpers (`readFileById`, `assetUrlById`, `resolveId`, etc.) resolve the id to its current path first, then apply the same access scope. If a `<FileEmbed id="…">` points outside this file's folder, switch the preview's Workspace access scope to `"workspace"`.
 
 **Prefer storing data in plain `.json` files** so it stays inspectable and editable inside arg.
@@ -319,8 +323,8 @@ Wrap calls in `try/catch` and show a friendly message; treat `not_found` / a `nu
 
 ## Portability
 
-- **Web + desktop**: supported. The SDK is injected inline, so it works on the desktop app's null `file://` origin where an absolute `<script src>` wouldn't resolve.
-- **iOS + Android**: supported through native WebView bridges with the same file, identity, relative-fetch, and bounded static script/stylesheet behavior. `arg.db` remains web-only.
+- **Web + desktop**: supported. The SDK is injected inline, so it works from the desktop app's on-device `arg-preview:` origin where an absolute `<script src>` wouldn't resolve. Desktop local-only workspaces support the full path-based filesystem and SQLite surfaces; cloud registry IDs and team membership are unavailable locally.
+- **iOS + Android**: supported through native WebView bridges with the same file, identity, relative-fetch, and bounded static script/stylesheet behavior. `arg.db` remains unavailable in the native mobile bridges.
 - **Outside Arg**: unsupported. Pages must feature-detect `window.arg` and degrade gracefully.
 
 ## Complete pattern — a single-document, file-backed page

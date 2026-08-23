@@ -10,6 +10,8 @@ description: Create, read, update, and delete .cad files in Arg — the native p
 
 Imported AutoCAD drawings (`.dxf`, `.dwg`) open in a separate **read-only** viewer. DWG has no open write path and DXF cannot carry a parametric model, so **author new work as `.cad`**, not as DXF.
 
+Imported solid-model exchange formats (`.step`/`.stp`, `.iges`/`.igs`, `.brep`) open **read-only** in the 3D viewer, tessellated to a mesh. There is no writer for any of them, so never hand-author or edit one - author new work as `.cad` for a dimensioned 2D drawing, or as `.gltf`/`.glb` for a mesh.
+
 ## CRUD
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. `.cad` is text — read and edit the JSON directly.
