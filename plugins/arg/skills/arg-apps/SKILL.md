@@ -46,7 +46,33 @@ export default function RunCount() {
 
 Named and namespace imports work too, and an imported module may be up to 100 MB, so a real dataset can be bundled rather than fetched.
 
-Use `window.arg.fs.readJSON()` instead when the app needs to reload changing data at runtime or write it back to the workspace.
+Use `window.arg.fs.readJSON()` plus `window.arg.fs.watch()` when data changes must update the mounted app without rebuilding it. A static workspace import is part of the bundle, so changing that imported file rebuilds and restarts the preview.
+
+```tsx
+import { useEffect, useState } from "react";
+
+export default function LiveRunCount() {
+  const [runs, setRuns] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const next = await window.arg.fs.readJSON("./data/runs.json", { fresh: true });
+      if (active) setRuns(next);
+    };
+    void refresh();
+    const stop = window.arg.fs.watch("./data/runs.json", refresh);
+    return () => {
+      active = false;
+      stop();
+    };
+  }, []);
+
+  return <p>{runs.length} runs</p>;
+}
+```
+
+The watcher is format-agnostic. Re-read JSON with `readJSON`, CSV/YAML/XML/text with `read`, Excel and other binary data with `readBytes`, or rerun `arg.db.query` for SQLite. Always request `{ fresh: true }` in the callback and return the watcher's stop function from the effect. This updates only React state; it does not reload the document or reset unrelated component state.
 
 React previews use the typed `@arg/actions` module for Action discovery, schema reflection, execution, and run history. It delegates to the same isolated `window.arg.actions` bridge used by HTML; it does not fetch directly or expose a token. The viewer must explicitly click **Allow Actions** for the current file session before a call succeeds. The grant is separate from filesystem access because Actions are workspace-wide and may spend credits or use the viewer's connected services.
 
@@ -225,30 +251,33 @@ A classic `<script>` has no top-level `await` — wrap calls in an async IIFE an
 </script>
 ```
 
-### Files API — `arg.fs.*` (all return Promises)
+### Files API — `arg.fs.*`
 
-| Method                                     | Returns                                           | Notes                                                                                                                |
-| ------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `read(path, opts?)`                        | `string \| Uint8Array \| ArrayBuffer \| FileData` | Text by default. For binary files, pass `{ encoding: "base64" \| "dataUrl" \| "bytes" \| "arrayBuffer" \| "file" }`. |
-| `readJSON(path)`                           | parsed value                                      | `JSON.parse(await read(path))`.                                                                                      |
-| `readById(id, opts?)` / `readJSONById(id)` | same as path variants                             | Start from a stable file id (`argfile_<uuid>`), then apply access scope.                                             |
-| `readBytes(path)` / `readBytesById(id)`    | `Uint8Array`                                      | Convenience for `{ encoding: "bytes" }`.                                                                             |
-| `readFile(path)` / `readFileById(id)`      | `FileData`                                        | Full file payload. Binary content is base64 plus a ready `dataUrl`.                                                  |
-| `dataUrl(path)` / `dataUrlById(id)`        | `string`                                          | Good for small inline assets.                                                                                        |
-| `assetUrl(path)` / `assetUrlById(id)`      | `AssetUrl`                                        | Short-lived signed URL for normal `<img>`, `<video>`, `<audio>`, `<embed>` sources; prefer for large media.          |
-| `open(path)` / `openById(id)`              | `OpenResult`                                      | Ask the Arg host to open the file in an editor tab. May reject with `unavailable`.                                   |
-| `resolveId(id)`                            | `string \| null`                                  | Resolve a file id (`argfile_<uuid>`) to its current workspace path; `null` if deleted.                               |
-| `getId(path)`                              | `string`                                          | Get or create the stable file id (`argfile_<uuid>`) for a scoped path.                                               |
-| `write(path, text)`                        | `{ path, revision }`                              | Creates the file + any missing parent folders.                                                                       |
-| `writeJSON(path, value)`                   | `{ path, revision }`                              | Pretty-prints with 2 spaces.                                                                                         |
-| `list(dir?)`                               | `Entry[]`                                         | Lists one directory (defaults to the scope root).                                                                    |
-| `glob(pattern, { cwd }?)`                  | `string[]`                                        | `*` within a segment, `**` spans `/`, `?` one char.                                                                  |
-| `search(query, { path, include }?)`        | `Match[]`                                         | Full-text search.                                                                                                    |
-| `info(path)` / `infoById(id)`              | `Entry \| null`                                   | Storage metadata plus best-effort id/audit attribution; `null` if missing/deleted.                                   |
-| `exists(path)`                             | `boolean`                                         | Convenience over `info()`.                                                                                           |
-| `remove(path)`                             | `{ deleted }`                                     | Alias `arg.fs.delete(path)`.                                                                                         |
-| `mkdir(path)`                              | `{ path }`                                        | Create a folder.                                                                                                     |
-| `move(from, to)` / `copy(from, to)`        | `{ from, to, path }`                              | Move/rename or copy.                                                                                                 |
+File operations return Promises. `watch*()` returns its stop function synchronously.
+
+| Method                                                            | Returns                                           | Notes                                                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `read(path, opts?)`                                               | `string \| Uint8Array \| ArrayBuffer \| FileData` | Text by default. For binary files, pass `{ encoding: "base64" \| "dataUrl" \| "bytes" \| "arrayBuffer" \| "file" }`. |
+| `readJSON(path, opts?)`                                           | parsed value                                      | `JSON.parse(await read(path, opts))`.                                                                                |
+| `readById(id, opts?)` / `readJSONById(id, opts?)`                 | same as path variants                             | Start from a stable file id (`argfile_<uuid>`), then apply access scope.                                             |
+| `readBytes(path, opts?)` / `readBytesById(id, opts?)`             | `Uint8Array`                                      | Convenience for `{ ...opts, encoding: "bytes" }`.                                                                    |
+| `readFile(path)` / `readFileById(id)`                             | `FileData`                                        | Full file payload. Binary content is base64 plus a ready `dataUrl`.                                                  |
+| `dataUrl(path)` / `dataUrlById(id)`                               | `string`                                          | Good for small inline assets.                                                                                        |
+| `assetUrl(path)` / `assetUrlById(id)`                             | `AssetUrl`                                        | Short-lived signed URL for normal `<img>`, `<video>`, `<audio>`, `<embed>` sources; prefer for large media.          |
+| `open(path)` / `openById(id)`                                     | `OpenResult`                                      | Ask the Arg host to open the file in an editor tab. May reject with `unavailable`.                                   |
+| `resolveId(id)`                                                   | `string \| null`                                  | Resolve a file id (`argfile_<uuid>`) to its current workspace path; `null` if deleted.                               |
+| `getId(path)`                                                     | `string`                                          | Get or create the stable file id (`argfile_<uuid>`) for a scoped path.                                               |
+| `write(path, text)`                                               | `{ path, revision }`                              | Creates the file + any missing parent folders.                                                                       |
+| `writeJSON(path, value)`                                          | `{ path, revision }`                              | Pretty-prints with 2 spaces.                                                                                         |
+| `list(dir?)`                                                      | `Entry[]`                                         | Lists one directory (defaults to the scope root).                                                                    |
+| `glob(pattern, { cwd }?)`                                         | `string[]`                                        | `*` within a segment, `**` spans `/`, `?` one char.                                                                  |
+| `search(query, { path, include }?)`                               | `Match[]`                                         | Full-text search.                                                                                                    |
+| `info(path)` / `infoById(id)`                                     | `Entry \| null`                                   | Storage metadata plus best-effort id/audit attribution; `null` if missing/deleted.                                   |
+| `watch(path, callback, opts?)` / `watchById(id, callback, opts?)` | stop function                                     | Format-agnostic create/modify/delete watching without restarting the app.                                            |
+| `exists(path)`                                                    | `boolean`                                         | Convenience over `info()`.                                                                                           |
+| `remove(path)`                                                    | `{ deleted }`                                     | Alias `arg.fs.delete(path)`.                                                                                         |
+| `mkdir(path)`                                                     | `{ path }`                                        | Create a folder.                                                                                                     |
+| `move(from, to)` / `copy(from, to)`                               | `{ from, to, path }`                              | Move/rename or copy.                                                                                                 |
 
 Core shapes:
 

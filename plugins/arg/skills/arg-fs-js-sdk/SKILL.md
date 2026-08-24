@@ -1,14 +1,14 @@
 ---
 name: arg-fs-js-sdk
-version: "1.2.3"
-description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html files. Load when building or modifying a single-file HTML app that reads or writes workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
+version: "1.3.0"
+description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html, .tsx, and .jsx apps. Load when building or modifying an app that reads, writes, or watches workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
 ---
 
 # Arg FS SDK (`window.arg`)
 
 An optional **runtime** SDK that lets a single self-contained `.html` file read and write real workspace files and read the signed-in user's identity — so one page can act as its own backend (blogs, CRMs, dashboards, note apps), with data persisted as ordinary workspace files.
 
-> **Runtime global:** `window.arg` · **Availability:** previewed `.html` (web, desktop, iOS, and Android) · **Import:** none (injected)
+> **Runtime global:** `window.arg` · **Availability:** previewed `.html`, `.tsx`, and `.jsx` apps · **Import:** none (injected)
 
 ## What it is, in one paragraph
 
@@ -44,18 +44,18 @@ A classic `<script>` has no top-level `await`, so wrap calls in an async IIFE an
 
 ## Files API — `arg.fs.*`
 
-All methods return Promises. Paths are strings (see **Paths & scope** below).
+File operations return Promises. `watch*()` returns its stop function synchronously. Paths are strings (see **Paths & scope** below).
 
 | Method                              | Returns                                           | Notes                                                                                                                |
 | ----------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `read(path, opts?)`                 | `string \| Uint8Array \| ArrayBuffer \| FileData` | Text by default. For binary files, pass `{ encoding: "base64" \| "dataUrl" \| "bytes" \| "arrayBuffer" \| "file" }`. |
-| `readJSON(path)`                    | parsed value                                      | `JSON.parse(read(path))`. Throws if the file isn't valid JSON.                                                       |
+| `readJSON(path, opts?)`             | parsed value                                      | `JSON.parse(read(path, opts))`. Throws if the file isn't valid JSON.                                                 |
 | `readById(id, opts?)`               | `string \| Uint8Array \| ArrayBuffer \| FileData` | Same as `read()`, but starts from a stable file UUID.                                                                |
-| `readJSONById(id)`                  | parsed value                                      | `JSON.parse(readById(id))`.                                                                                          |
-| `readBytes(path)`                   | `Uint8Array`                                      | Convenience for `read(path, { encoding: "bytes" })`.                                                                 |
-| `readBytesById(id)`                 | `Uint8Array`                                      | Convenience for `readById(id, { encoding: "bytes" })`.                                                               |
-| `readFile(path)`                    | `FileData`                                        | Text or binary content. Binary files return base64 plus a `dataUrl`.                                                 |
-| `readFileById(id)`                  | `FileData`                                        | Same as `readFile()`, but starts from a stable file UUID.                                                            |
+| `readJSONById(id, opts?)`           | parsed value                                      | `JSON.parse(readById(id, opts))`.                                                                                    |
+| `readBytes(path, opts?)`            | `Uint8Array`                                      | Convenience for `read(path, { ...opts, encoding: "bytes" })`.                                                        |
+| `readBytesById(id, opts?)`          | `Uint8Array`                                      | Convenience for `readById(id, { ...opts, encoding: "bytes" })`.                                                      |
+| `readFile(path, opts?)`             | `FileData`                                        | Text or binary content. Binary files return base64 plus a `dataUrl`.                                                 |
+| `readFileById(id, opts?)`           | `FileData`                                        | Same as `readFile()`, but starts from a stable file UUID.                                                            |
 | `dataUrl(path)`                     | `string`                                          | Convenience over `readFile(path).dataUrl`. Useful for small images.                                                  |
 | `dataUrlById(id)`                   | `string`                                          | Convenience for rendering a UUID-backed image embed.                                                                 |
 | `assetUrl(path)`                    | `AssetUrl`                                        | Short-lived signed URL for `<img>`, `<video>`, `<audio>`, `<embed>`. Prefer for large media.                         |
@@ -69,9 +69,11 @@ All methods return Promises. Paths are strings (see **Paths & scope** below).
 | `list(dir?)`                        | `Entry[]`                                         | Lists one directory. Defaults to the scope root when `dir` is omitted.                                               |
 | `glob(pattern, { cwd }?)`           | `string[]`                                        | Absolute paths matching the glob. `cwd` scopes the search dir, e.g. `glob("**/*.md", { cwd: "posts" })`.             |
 | `search(query, { path, include }?)` | `Match[]`                                         | Full-text search. `path` narrows the dir; `include` filters filenames.                                               |
-| `info(path)`                        | `Entry \| null`                                   | Metadata, including best-effort created/updated/owner fields. `null` if the path doesn't exist.                      |
-| `infoById(id)`                      | `Entry \| null`                                   | Metadata by stable file UUID. `null` if deleted.                                                                     |
-| `exists(path)`                      | `boolean`                                         | Convenience over `info()`.                                                                                           |
+| `info(path, opts?)`                 | `Entry \| null`                                   | Metadata, including best-effort created/updated/owner fields. `null` if the path doesn't exist.                      |
+| `infoById(id, opts?)`               | `Entry \| null`                                   | Metadata by stable file UUID. `null` if deleted.                                                                     |
+| `watch(path, onChange, opts?)`      | stop function                                     | Watch any file format for create, modify, or delete without restarting the app runtime.                              |
+| `watchById(id, onChange, opts?)`    | stop function                                     | Same watcher using a stable file UUID, so it also follows path changes.                                              |
+| `exists(path, opts?)`               | `boolean`                                         | Convenience over `info()`.                                                                                           |
 | `remove(path)`                      | `{ deleted }`                                     | Also available as `arg.fs.delete(path)`.                                                                             |
 | `mkdir(path)`                       | `{ path }`                                        | Create a folder.                                                                                                     |
 | `move(from, to)`                    | `{ from, to, path }`                              | Move/rename.                                                                                                         |
@@ -134,6 +136,13 @@ OpenResult = {
 }
 
 Match = { path: string; line: number; text: string }   // one per matching line
+
+FileWatchEvent = {
+  type: "initial" | "created" | "modified" | "deleted";
+  path: string;
+  previous: Entry | null;
+  current: Entry | null;
+}
 ```
 
 **Binary reads:** `read(path)` and `readById(id)` stay text-first for existing pages. If the target is an image, PDF, audio file, or other binary asset, choose an explicit representation:
@@ -148,7 +157,70 @@ img.src = dataUrl;
 document.body.append(img);
 ```
 
-`arg.fs.readBytes(path)` and `arg.fs.readBytesById(id)` are aliases for the `bytes` mode.
+`arg.fs.readBytes(path)` and `arg.fs.readBytesById(id)` are aliases for the `bytes` mode. Pass `{ fresh: true }` when re-reading after a watch event.
+
+## Live data without restarting the app
+
+`arg.fs.watch()` observes file metadata, then calls your code when the file is created, modified, or deleted. It does not reload the iframe, remount React, or parse the file, so component state, scroll position, open menus, canvas state, and other app runtime state stay intact. Re-read only the changed data in the callback and update the affected UI.
+
+```html
+<script>
+  (async () => {
+    if (!window.arg) return;
+    await arg.ready;
+
+    const FILE = "data/dashboard.json";
+    async function refresh() {
+      const data = await arg.fs.readJSON(FILE, { fresh: true });
+      document.querySelector("#total").textContent = data.total;
+    }
+
+    await refresh();
+    const stop = arg.fs.watch(FILE, refresh);
+    window.addEventListener("beforeunload", stop, { once: true });
+  })();
+</script>
+```
+
+In React, create the watcher in an effect and return its stop function from the effect. Do not call `location.reload()` and do not add changing data as a static workspace import.
+
+```tsx
+import { useEffect, useState } from "react";
+
+export default function Dashboard() {
+  const [rows, setRows] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const next = await window.arg.fs.readJSON("data/rows.json", { fresh: true });
+      if (active) setRows(next);
+    };
+    void refresh();
+    const stop = window.arg.fs.watch("data/rows.json", refresh);
+    return () => {
+      active = false;
+      stop();
+    };
+  }, []);
+
+  return <p>{rows.length} rows</p>;
+}
+```
+
+The watcher is format-agnostic. Choose the existing reader that matches the data:
+
+| Data format                                       | Re-read inside the callback                                                                |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| JSON                                              | `readJSON(path, { fresh: true })`                                                          |
+| CSV, TSV, YAML, XML, RSS, JSONL, NDJSON, text     | `read(path, { fresh: true })`, then use the app's parser                                   |
+| Excel (`.xlsx`, `.xlsm`) and other binary files   | `readBytes(path, { fresh: true })`, then use the app's parser                              |
+| SQLite (`.sqlite`, `.sqlite3`, `.db`)             | Run the relevant `arg.db.query()` again in the watch callback                              |
+| Images, PDF, audio, video, and other large assets | Re-read metadata or mint a new `assetUrl()` only if that part of the interface must update |
+
+`watch(path, callback, options?)` and `watchById(id, callback, options?)` return a synchronous stop function. Options are `{ intervalMs?: number, emitInitial?: boolean }`; the default interval is 2500 ms and the minimum is 1000 ms. The first metadata read establishes a baseline unless `emitInitial: true`, which emits an `initial` event. Polling pauses while the document is hidden and checks immediately when it becomes visible again. Callback promises are serialized with polling, so updates cannot overlap. Transient metadata errors are retried on the next interval.
+
+Use `watchById` when the file may be renamed or moved. Its `modified` event includes the old path in `previous.path` and the new path in `current.path`. Always stop watchers during teardown. A watcher reports invalidation, not content: use `{ fresh: true }` on the subsequent `read`, `readJSON`, `readBytes`, `readFile`, `info`, or `exists` call so the callback cannot receive a warm cached value.
 
 **Glob semantics:** `*` matches within a path segment, `**` spans separators, `?` matches a single non-`/` character. A leading `/` in the pattern is workspace-root-relative; otherwise it resolves against `cwd` (default: the scope root).
 
@@ -354,11 +426,14 @@ Wrap calls in `try/catch` and show a friendly message; treat `not_found` / a `nu
         }
 
         const FILE = "notes.json";
-        const load = async () => ((await arg.fs.exists(FILE)) ? await arg.fs.readJSON(FILE) : []);
+        const load = async (fresh = false) => {
+          const options = fresh ? { fresh: true } : undefined;
+          return (await arg.fs.exists(FILE, options)) ? await arg.fs.readJSON(FILE, options) : [];
+        };
         const save = (notes) => arg.fs.writeJSON(FILE, notes);
 
-        async function render() {
-          const notes = await load();
+        async function render(fresh = false) {
+          const notes = await load(fresh);
           app.innerHTML = `
             <h1>Notes (${notes.length})</h1>
             <button id="add">Add note</button>
@@ -366,10 +441,12 @@ Wrap calls in `try/catch` and show a friendly message; treat `not_found` / a `nu
           document.getElementById("add").onclick = async () => {
             notes.push({ text: "New note", by: arg.me.name, at: Date.now() });
             await save(notes);
-            render(); // re-render from state, never navigate to another .html
+            await render(true); // update this view, never navigate to another .html
           };
         }
-        render();
+        await render();
+        const stop = arg.fs.watch(FILE, () => render(true));
+        window.addEventListener("beforeunload", stop, { once: true });
       })();
     </script>
   </body>
