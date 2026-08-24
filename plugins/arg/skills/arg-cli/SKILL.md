@@ -1,6 +1,6 @@
 ---
 name: arg-cli
-version: "1.14.0"
+version: "1.15.0"
 description: Access method for Arg via the `arg` command-line tool - a workspace-aware terminal agent (`arg agent`), launching the user's own Claude Code, Codex, Pi, Hermes Agent, or OpenClaw with temporary Arg integration, direct file commands, sandbox `exec`, a local `mcp` stdio server, `arg mount`, local coding-agent import, site hosting, and native renderers. Works headlessly with an API key (ARG_API_KEY) for CI/agents. Load this when the arg CLI is installed and no MCP connection is active. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the access layer.
 ---
 
@@ -76,7 +76,7 @@ arg hermes --arg-no-sync                   # launch without temporary integratio
 arg claw --arg-sync-only                   # validate setup and exit
 ```
 
-Only the `--arg-*` options are Arg's, and they must come first: parsing stops at the first argument Arg does not recognise, and a bare `--` ends it too. Everything else, `-h`/`--help` included, is passed to the harness untouched, and the harness's exit code is returned. Arg's global flags (`--json`, `--quiet`, …) are not available here. `--arg-org` and `--arg-workspace` are mutually exclusive, and `--arg-org` needs the equals form to take a value. `--arg-system-prompt` opts the child into a short arg.ai description and guidance to use Arg for artifacts and internal apps; it is session-only and cannot be combined with `--arg-no-sync`.
+The `--arg-*` session options must come first: parsing stops at the first argument Arg does not recognise, and a bare `--` ends it too. `-h` / `--help` show the Arg wrapper help with those options; use `arg <harness> -- --help` for the harness's native help. Everything else is passed to the harness untouched, and the harness's exit code is returned. Arg's global flags (`--json`, `--quiet`, …) are not available here. `--arg-org` and `--arg-workspace` are mutually exclusive, and `--arg-org` needs the equals form to take a value. `--arg-system-prompt` opts the child into a short arg.ai description and guidance to use Arg for artifacts and internal apps; it is session-only and cannot be combined with `--arg-no-sync`.
 
 Arg stages the integration under a private temporary directory, passes it through invocation-only flags or environment overrides, and removes it after the harness exits. It never installs skills or edits project and user harness configuration, so there is no install-location picker on these commands. A failed preparation is a warning and the harness still starts - except under `--arg-sync-only`, where it is an error. With no workspace selected the MCP server uses the active org; with neither, Arg loads the temporary skills, warns, and launches without MCP.
 
