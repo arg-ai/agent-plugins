@@ -1,6 +1,6 @@
 ---
 name: arg-overview
-version: "1.3.1"
+version: "1.3.2"
 description: The map of the Arg (arg.ai) product — what Arg is, every offering (workspace, agent, editors, skills, automations, actions, apps, developer/agent APIs, platform surfaces, plans), who it's for, and which skill or URL to go deeper with. Load this to answer any question about Arg itself ("what is Arg", "can Arg do X", "what does it cost"), to build a get-started or onboarding guide for someone who just signed up, or to orient another agent before it loads a specialist arg-* skill.
 ---
 
@@ -65,7 +65,7 @@ Three framings of the same platform:
 
 ## For developers & external agents
 
-- **Connect over MCP (fastest):** `claude mcp add -t http arg https://api.arg.ai/mcp` — OAuth sign-in, pick a workspace. For headless/CI, create an API key at https://arg.ai/platform/api-keys and use `https://api.arg.ai/mcp/<workspace-id>` with an `x-api-key` header.
+- **Connect an agent (fastest):** paste `Fetch https://arg.ai/install.md` into it. The canonical guide detects the harness, installs the Arg plugin, authenticates over OAuth, and verifies read access. For headless/CI, create an API key at https://arg.ai/platform/api-keys and use `https://api.arg.ai/mcp/<workspace-id>` with an `x-api-key` header.
 - **CLI:** `curl -fsSL https://arg.ai/cli | sh`, then `arg login` → `arg workspace switch` → `arg agent` for terminal chat, or `ls`/`cat`/`grep`/`upload`/`download`/`mount` for direct workflows.
 - **Agent-facing APIs:** storage (walk the tree, land outputs as files), search (semantic/keyword, permission-aware, cited), sandbox (isolated Python/Bash with the workspace mounted, streamed output), artifacts (upload + share with expiring/gated links), comments, and notifications. Index: https://arg.ai/llms.txt. Building code against the REST API → `arg-api`.
 - **API keys** belong to a user or a service account and inherit that principal's access — no separate scope system to reason about.
