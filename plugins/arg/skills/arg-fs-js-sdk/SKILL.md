@@ -301,6 +301,7 @@ const cols = await arg.db.schema("/data/app.db", "users");
 ```
 
 - Works on `.sqlite` / `.db` files. Reads and writes go through the same authenticated file routes as `arg.fs`, so the backend still enforces the signed-in user's own FGA permissions on every call — `exec` requires write access to the file.
+- Web and desktop coalesce an active burst of calls for the same database onto one file read. Successful `exec` calls update those warm bytes, while `arg.fs` writes/moves/removals and fresh reads/stats invalidate them; after a brief idle gap the next call also reads the file again. This keeps watch callbacks current even when an app otherwise queries continuously.
 - Errors reject with the same `.code` values as the Files API (e.g. `not_found`, `access_denied`); SQL errors surface as `request_failed`.
 - **Availability:** `arg.db` executes in web and desktop previews, including desktop local-only workspaces. The native iOS and Android file bridges reject database operations. Feature-detect and degrade gracefully.
 
