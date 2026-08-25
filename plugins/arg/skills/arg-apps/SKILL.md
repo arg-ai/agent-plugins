@@ -387,6 +387,7 @@ Use `dataUrlById(id)` only for small inline images. Id helpers resolve id-to-pat
 
 - `arg.me` → `{ id, name, email, avatarUrl }` (`null` until the capability is on; use for the current user's email).
 - `arg.team.members()` (alias `arg.team.list()`) → members `{ id, name, avatarUrl, role, kind, isMe }` — **names + avatars only, no emails**.
+- Identity `avatarUrl` values are absolute and can be passed directly to `<img src>` from the isolated preview.
 - `arg.dir` (this file's folder), `arg.path`, `arg.name`, `arg.workspaceId`, `arg.scope` (`"folder"` | `"workspace"`), `arg.enabled`, `arg.readOnly`, `arg.ready`, `arg.version`.
 
 ### Paths, scope & errors

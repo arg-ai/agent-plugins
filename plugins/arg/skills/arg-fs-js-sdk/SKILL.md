@@ -322,6 +322,8 @@ const cols = await arg.db.schema("/data/app.db", "users");
 
   Members carry **names + avatars only — no emails** (cross-org enumeration guard). For the current user's email, use `arg.me.email`. Members are workspace-level and are returned regardless of the file-path access scope.
 
+  Identity `avatarUrl` values are absolute and can be passed directly to `<img src>` from the isolated preview.
+
   A desktop local-only workspace has no cloud membership roster, so `arg.team.members()` returns an empty array there.
 
 ## Context — what this file knows about itself
