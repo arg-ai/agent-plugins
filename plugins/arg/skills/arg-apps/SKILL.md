@@ -177,6 +177,36 @@ export default function ContextMenuExample() {
 }
 ```
 
+### File-type icons
+
+`@arg/ui` also ships the file icons Arg itself draws, so a preview that lists workspace files looks like the product rather than approximating it. Import them from the `@arg/ui/file-type-icons` and `@arg/ui/file-types` subpaths, or from `@arg/ui` directly.
+
+- `FileTypeIcon` - the framed document silhouette used in the file tree, list and grid. Takes `filename`, optional `size` (default 32) and `className`.
+- `FileTypeLogo` - the frame-less brand mark for the same type, same props.
+- `FolderGlyph` - the folder icon, tinted for the `.skills` / `.agents` / `.arg` capability folders. Takes `name`, `size` and optional `className`.
+- `getFileIconType(filename)` and `FILE_ICON_TYPE_BY_EXTENSION` - the extension to icon-type mapping behind all three, if you need to group or filter by type yourself. `getFileLogoGroup(filename)` reports a logo's footprint as `"square"`, `"horizontal"` or `"vertical"`.
+
+Pass the whole filename, not the extension - the mapping reads the extension itself, and an unknown one falls back to a generic file icon rather than failing.
+
+```tsx
+import { FileTypeIcon, FolderGlyph } from "@arg/ui";
+
+export default function FileRow({ name, isFolder }: { name: string; isFolder: boolean }) {
+  return (
+    <div style={{ alignItems: "center", display: "flex", gap: 8 }}>
+      {isFolder ? (
+        <FolderGlyph name={name} size={20} />
+      ) : (
+        <FileTypeIcon filename={name} size={20} />
+      )}
+      <span>{name}</span>
+    </div>
+  );
+}
+```
+
+The icons carry their own colours and retint with the preview theme, so they need no styling from you.
+
 React previews expose Actions through `@arg/actions` (backed by `window.arg.actions`) and scoped persistent workspace files through `window.arg.fs`, with independent grants. Enabling one never enables the other.
 
 React previews receive `window.arg` only after the user explicitly enables Workspace access in the preview permissions menu. Keep filesystem capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
