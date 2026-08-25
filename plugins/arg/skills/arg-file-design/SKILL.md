@@ -1,10 +1,12 @@
 ---
 name: arg-file-design
-version: "1.5.0"
-description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; for presentation-specific workflow load arg-slides alongside it.
+version: "1.6.0"
+description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; load arg-design alongside it whenever the work is visual rather than only structural, and arg-slides for presentation-specific workflow.
 ---
 
 # Design files (`.design`, `.svg`, `.fig`)
+
+**This skill is the schema. For how to make the result look good - committing to a mood, building a type ramp, spending space, and which design tokens to reach for - load `arg-design` alongside it.**
 
 `.design` is Arg's native vector graphics canvas — shapes, paths, text, and images on one or more artboards, stored as JSON. The same editor opens `.svg` (and re-emits SVG on save) and imports `.fig` (Figma).
 
@@ -32,11 +34,11 @@ await writeFile(path, stringifyDesign(updated));
 
 Use the artboard, object, and shader helpers for relationship-aware edits; `collectDesignFileReferences` and `replaceDesignFillSource` handle linked fills. Use `editDesign` with JSON `set`, `merge`, `delete`, `insert`, or `move` operations for uncommon leaf fields. Every structural helper validates before returning. With MCP or direct CLI access, read and write through that access method instead of `node:fs`; the library itself performs no network or authentication work.
 
-Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDesignObject(doc, id, { parentId?, index? })`, and `patchDesignObject(doc, id, patch)`. For auto layout (below): `createDesignFlexGroup(doc, { id, name?, layout?, frame?, children? }, { parentId?, index? })` wraps existing objects in a laid-out group, `setDesignLayout(doc, groupId, layout | null)` and `patchDesignLayout(doc, groupId, patch)` manage the group's `layout`, and `setDesignLayoutSizing(doc, objectId, sizing | null)` sets a child's per-axis sizing. Raw paths are arrays, for example `editDesign(doc, [{ op: "set", path: ["objects", "title", "name"], value: "New name" }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
+Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDesignObject(doc, id, { parentId?, index? })`, and `patchDesignObject(doc, id, patch)`. For auto layout (below): `createDesignFlexGroup(doc, { id, name?, layout?, frame?, children? }, { parentId?, index? })` wraps existing objects in a laid-out group, `setDesignLayout(doc, groupId, layout | null)` and `patchDesignLayout(doc, groupId, patch)` manage the group's `layout`, `setDesignLayoutSizing(doc, objectId, sizing | null)` sets a child's per-axis sizing, and `setDesignLayoutConstraints(doc, objectId, constraints | null)` its min/max bounds. `setDesignArtboardLayout(doc, artboardId, { layoutRoot, padding?, layoutSizing?, layoutConstraints? } | null)` makes an artboard size itself to its content. For tokens: `upsertDesignToken(doc, id, token)` and `removeDesignToken(doc, id)` - the remove refuses while anything still references the token, so re-point or clear those references first. Raw paths are arrays, for example `editDesign(doc, [{ op: "set", path: ["objects", "title", "name"], value: "New name" }])`. Import `common.mjs` directly when you need the shared `JsonEdit` helpers without a format module.
 
 ## Schema essentials
 
-Top-level: `version` (use `1`), optional `metadata` (`{ "defaultView": "design" | "creative" | "slides", "sections": [...] }`; use `creative` for social/content graphics that should open in the Canva-style UI, and `slides` for decks), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`).
+Top-level: `version` (use `1`), optional `tokens` (design tokens - see below), optional `metadata` (`{ "defaultView": "design" | "creative" | "slides", "sections": [...] }`; use `creative` for social/content graphics that should open in the Canva-style UI, and `slides` for decks), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`).
 
 Creative view presents artboards as a centered vertical page column in `artboards` array order. That layout is a transient editor projection: keep authoring normal document-space coordinates, and use the array itself to control Creative page order. Switching between Creative and Design views never rewrites artboard or object positions.
 
@@ -52,7 +54,7 @@ Coordinates are document pixels. Each object has a `frame` `{ x, y, width, heigh
 
 **Object base fields:** `id` (matches the `objects` key and appears in `order` or a group's `children`), `type`, `name?`, `frame`, `fills` (bottom→top), `strokes`, `effects`, `opacity?` (0–1), `blendMode?`, `visible?`, `locked?`, `flipH?`/`flipV?` (booleans that mirror the object's raster fill content - image/video - across its centerline; the Flip commands set these).
 
-**`type` values & type-specific fields:** `rect` (`cornerRadius`: one non-negative number when all four corners are equal, or `{tl,tr,br,bl}` with non-negative values for independent corners; store a plain number again once all four match), `ellipse`, `polygon` (`sides` ≥3), `star` (`points`, `innerRatio` 0–1), `line` (`x1,y1,x2,y2`; optional `markerStart`/`markerEnd` end caps: `arrow` open V / `triangle` solid head / `circle` / `diamond` / `bar`, drawn at the `x1,y1` / `x2,y2` end in the stroke's color, scaling with stroke width — the way to draw a connector/arrow between things), `path` (`d` SVG path data; `closed`, `fillRule`, `viewBox`), `text` (`text`, `textMode` `point` auto-fits width / `area` wraps inside `frame`, `style` with `fontFamily`, `fontSize`, `fontWeight`, `align` `left`/`center`/`right`/`justify` — plus optional `fontStyle`, `textDecoration`, `letterSpacing`, `lineHeight`, `verticalAlign`; glyphs are painted by `fills` — gradients/images work — and outlined by `strokes`; legacy `color` still parses but is folded into `fills` on load), `group` (`children` ids; `clipChildren?`).
+**`type` values & type-specific fields:** `rect` (`cornerRadius`: one non-negative number when all four corners are equal, or `{tl,tr,br,bl}` with non-negative values for independent corners; store a plain number again once all four match), `ellipse`, `polygon` (`sides` ≥3), `star` (`points`, `innerRatio` 0–1), `line` (`x1,y1,x2,y2`; optional `markerStart`/`markerEnd` end caps: `arrow` open V / `triangle` solid head / `circle` / `diamond` / `bar`, drawn at the `x1,y1` / `x2,y2` end in the stroke's color, scaling with stroke width — the way to draw a connector/arrow between things), `path` (`d` SVG path data; `closed`, `fillRule`, `viewBox`), `text` (`text`, `textMode` `point` auto-fits width / `area` wraps inside `frame`, `style` with `fontFamily`, `fontSize`, `fontWeight`, `align` `left`/`center`/`right`/`justify` — plus optional `fontStyle`, `textDecoration`, `letterSpacing` (document **pixels**), `lineHeight` (a **ratio** of the font size, default 1.3 - `76` here means a 76x line, not 76px), `verticalAlign`; glyphs are painted by `fills` — gradients/images work — and outlined by `strokes`; legacy `color` still parses but is folded into `fills` on load), `group` (`children` ids; `clipChildren?`).
 
 **Fills:** Non-file paints are `solid` (`color`), `linear-gradient` (`angle`, `stops`, optional paired `start`/`end` points and `space` `local`/`world`), `radial-gradient`/`angular-gradient`/`diamond-gradient` (`cx`,`cy`,`stops`), internal `shader` (`shaderId` plus optional `values`/`speed` - see below), `webcam` (source-less live camera), and `none`. Every paint backed by a file uses one shape: `{ "type": "file", "fileType": "image"|"model3d"|"video"|"design"|"kml"|"cad"|"shader", "src": "...", "fileId"?: "..." }`; subtype settings stay alongside those common fields (`fit` for image/video/design, `model3d` pose, `kml` settings, `cad` settings, or `speed` for a shader file). Never author the old top-level `image`/`model3d`/`video`/`design`/`kml`/`cad` fill types or `shaderSrc`; the parser accepts and migrates them only for existing documents. Author a workspace path and preserve a valid existing `fileId`, but never invent one. A webcam stores only portable visual fields (`fit`, `mirrored`, `color`, `opacity`, `visible`) and never a device id, label, or stream identifier.
 **Image fill `src`:** any workspace path the renderer can display — raster images (`.png`, `.jpg`, `.webp`, `.gif`, `.avif`), `.svg` (rendered natively), `.psd` (live reference: the renderer composites the Photoshop document to a flattened raster at display/export time; edits to the source PSD reflow on reload). On export, `.psd` fills bake to an inline PNG so the output is self-contained. Reference a real workspace path or a data URL; don't invent a path.
@@ -81,7 +83,17 @@ Inside a laid-out group the child's geometry is **derived** - `frame.x`/`frame.y
 
 Each card is then just `{ "id": "card1", "type": "rect", "cornerRadius": 16, "layoutSizing": { "width": "fill" }, "fills": [...] }` - three equal columns, no coordinates anywhere.
 
-**Grid** - `{ "type": "grid", "columns", "rows", "gap", "rowGap", "columnGap", "padding", "justify", "align", "autoFlow" }`. `columns`/`rows` are either a count (that many equal `1fr` tracks) or explicit tracks `[{ "size": 1, "unit": "fr" }, { "size": 240, "unit": "px" }]` with `unit` `px`/`fr`/`auto`. `rows` may be omitted to generate rows on demand. `justify`/`align` place a child inside its cell (`start`/`center`/`end`/`stretch`), and `autoFlow` (`row`/`column`) picks the axis auto-placement advances along.
+**Flex `alignContent`** - with `"wrap": true`, how the wrapped **lines** distribute along the cross axis (CSS `align-content`): `start` (default) / `center` / `end` / `stretch` / `space-between` / `space-around` / `space-evenly`. This is a different question from `align`, which places one child inside the line it landed in.
+
+**Grid** - `{ "type": "grid", "columns", "rows", "gap", "rowGap", "columnGap", "padding", "justify", "align", "justifyContent", "alignContent", "autoRows", "autoColumns", "autoFlow", "dense" }`. `columns`/`rows` are either a count (that many equal `1fr` tracks) or explicit tracks `[{ "size": 1, "unit": "fr" }, { "size": 240, "unit": "px" }]` with `unit` `px`/`fr`/`auto`. `rows` may be omitted to generate rows on demand. `justify`/`align` place a child inside its cell (`start`/`center`/`end`/`stretch`), and `autoFlow` (`row`/`column`) picks the axis auto-placement advances along.
+
+Track sizing matches CSS:
+
+- **`minmax()`** - a track may carry `min` and/or `max` bounds of the same `{ "size", "unit" }` shape. `{ "size": 1, "unit": "fr", "min": { "size": 240, "unit": "px" } }` is `minmax(240px, 1fr)`: the track divides the leftover space but never drops below 240.
+- **`repeat()`** - `"repeat"` on a track expands it into several: a count, or `"auto-fill"` / `"auto-fit"` to derive the count from the space available and the track's own minimum. `[{ "repeat": "auto-fill", "size": 1, "unit": "fr", "min": { "size": 240, "unit": "px" } }]` is a responsive gallery in one line. An auto repeat needs a definite `px` size or `px` minimum to count against, and resolves to a single track on a hugged axis.
+- **`autoRows` / `autoColumns`** - one track spec sizing the rows (or columns) generated past the explicit template. Default `auto`, i.e. each implicit row sized to its tallest child.
+- **`justifyContent` / `alignContent`** - how the **tracks** distribute when they do not fill the container (`start` default, plus `center`/`end`/`stretch`/`space-*`). Distinct from `justify`/`align`, which place a child inside its cell; irrelevant once an `fr` track has eaten the leftover space.
+- **`dense`** - default `false`, which is CSS's sparse cursor: placement never moves backwards, so a hole left by a span stays empty and document order survives on screen. Set `true` to backfill holes with later children.
 
 ```json
 {
@@ -95,7 +107,42 @@ Each card is then just `{ "id": "card1", "type": "rect", "cornerRadius": 16, "la
 
 `hero` spans the whole first row with `"gridArea": { "column": 1, "columnSpan": 3 }`; the rest auto-place into the cells after it.
 
-**Per-child fields** (on the child object, not the group): `layoutSizing` `{ "width", "height" }` each `fixed` (default - keeps the frame's own number) / `fill` / `hug`; `layoutGrow` (weight when several `fill` siblings split the free space, default 1); `layoutAlign` (this child's override of the container's `align`); `gridArea` `{ "column", "row", "columnSpan", "rowSpan" }`, 1-based, to pin a child instead of auto-placing it.
+**A laid-out group paints a background.** When a group carries a `layout` it is a _frame_: its `fills`, `strokes`, `cornerRadius` and `effects` paint behind its children, so a card is ONE object rather than a rectangle plus a group whose frames you keep in step by hand. A plain group (no `layout`) has no surface and its fills stay inert - Figma's Frame-versus-Group rule.
+
+```json
+{
+  "id": "card",
+  "type": "group",
+  "layout": {
+    "type": "flex",
+    "direction": "column",
+    "paddingToken": "space.4",
+    "gapToken": "space.2"
+  },
+  "layoutSizing": { "width": "fill", "height": "hug" },
+  "cornerRadiusToken": "radius.lg",
+  "fills": [{ "type": "solid", "colorToken": "color.accent" }],
+  "effects": [{ "type": "token", "token": "shadow.card" }],
+  "children": ["cardBody", "cardTitle"]
+}
+```
+
+**Per-child fields** (on the child object, not the group): `layoutSizing` `{ "width", "height" }` each `fixed` (default - keeps the frame's own number) / `fill` / `hug`; `layoutGrow` (weight when several `fill` siblings split the free space, default 1); `layoutShrink` (weight for giving space back when the line overflows, default **0** - a child keeps its size and overflows unless it opts in; set 1 for the CSS default); `layoutAlign` (this child's override of the container's `align`); `layoutJustify` (grid only - the horizontal in-cell override, since a grid's `layoutAlign` is read as the vertical one); `gridArea` `{ "column", "row", "columnSpan", "rowSpan" }`, 1-based, to pin a child instead of auto-placing it; `layoutPositioning` `auto` (default) / `absolute`; `layoutConstraints`.
+
+**`layoutConstraints`** `{ "minWidth", "maxWidth", "minHeight", "maxHeight", "aspectRatio" }` - CSS `min-width`/`max-width`/`min-height`/`max-height`/`aspect-ratio`, in document pixels. They clamp **every** size the engine resolves, so they work on a `fill` child, on a stretched grid cell, on a container's own `hug` axes, and on a hugged paragraph. Reach for them the moment a generated layout would otherwise need hand-written coordinates: `maxWidth` on a `hug` text box is how you cap a measure (the box wraps at the cap and the height follows), `minWidth` is how a `fill` column refuses to collapse, and a bound on one `fill` sibling hands the space it gave up to the others rather than leaking it out of the container. `aspectRatio` is width divided by height and resolves the axis the container did **not** decide - a `fill` width with `"aspectRatio": 1.7778` derives a 16:9 height. Bounds always win over the ratio.
+
+```json
+{
+  "id": "cover",
+  "type": "rect",
+  "layoutSizing": { "width": "fill" },
+  "layoutConstraints": { "aspectRatio": 1.7778, "maxWidth": 720 }
+}
+```
+
+**`"layoutPositioning": "absolute"`** lifts a child out of its container's flow: the container neither positions nor sizes it and it contributes nothing to a `hug` measurement, but it still travels with the container when the container moves. That is the way to pin a badge over a card without leaving the card's layout. Its `frame` is authored, so keep it.
+
+**Spacing tokens on a layout:** `gapToken`, `rowGapToken`, `columnGapToken` and `paddingToken` name `number` tokens; the `gap`/`padding` beside them are derived (see Design tokens).
 
 **Omit anything that equals its default.** Every one of `opacity` (1), `visible` (true), `locked` (false), `flipH`/`flipV` (false), `frame.rotation` (0), `fills`, `strokes` and `effects` is optional, and an absent value reads as the default everywhere - so `"opacity": 1` and `"effects": []` are pure token cost. Author the difference from the default, not the whole shape.
 
@@ -165,6 +212,88 @@ Minimal document - an artboard (background in its `fills`) and a laid-out column
   "order": ["stack"]
 }
 ```
+
+## Artboards that grow with their content
+
+An artboard is normally a fixed rectangle. Give it a `layoutRoot` - the id of a **top-level** object (one listed in `order`) - and the artboard becomes that object's layout parent: it positions the root inside the artboard's `padding` and sizes it against the artboard's box. Add `"layoutSizing": { "height": "hug" }` and the direction reverses on that axis: the **artboard** takes its size from the root plus padding, so a page grows as you add to it and shrinks when you take content away. `layoutConstraints` bounds it (a page that grows but stops at A4's height, a column that never gets narrower than its measure).
+
+```json
+{
+  "id": "page",
+  "name": "Memo",
+  "x": 0,
+  "y": 0,
+  "width": 816,
+  "height": 400,
+  "layoutRoot": "body",
+  "padding": 72,
+  "layoutSizing": { "height": "hug" },
+  "fills": [{ "type": "solid", "color": "#ffffff" }]
+}
+```
+
+with `body` a `{ "type": "flex", "direction": "column", "gap": 24 }` group whose `layoutSizing` is `{ "width": "fill", "height": "hug" }`. Every paragraph appended to `body` lengthens the page; nothing has a coordinate.
+
+The root's `frame` is derived (position always, plus any axis the artboard decides), so omit it. Naming one root rather than adopting whatever happens to sit inside the rectangle is deliberate: membership by containment would depend on the size the hug is computing. Wrap the page's contents in a single laid-out group and point `layoutRoot` at it. The artboard's own `width`/`height` are recomputed on load, and `canvas` follows them.
+
+## Design tokens
+
+`tokens` is a top-level map of reusable values - colours, scalars, font stacks, whole paints and typography sets - keyed by id. Anywhere in the document, a `*Token` field names one of those keys, and **the value beside it is derived**: the editor rewrites it from the token on load and omits it on save, exactly like a laid-out child's geometry. Editing one token restyles every object that names it.
+
+**Token entry:** `{ "type", "value", "name"?, "description"?, "group"?, "unit"? }`. Types:
+
+| `type`       | `value`               | Referenced by                                                     |
+| ------------ | --------------------- | ----------------------------------------------------------------- |
+| `color`      | CSS colour string     | `colorToken` on a fill, a gradient stop, a stroke, an effect      |
+| `number`     | number (document px)  | `fontSizeToken`, `widthToken`, `gapToken`, `cornerRadiusToken`, … |
+| `fontFamily` | font stack string     | `TextStyle.fontFamilyToken`                                       |
+| `paint`      | a whole `Fill` object | a fill layer's `token`                                            |
+| `textStyle`  | a `TextStyle` object  | `TextObject.styleToken`                                           |
+| `shadow`     | an `Effect` object    | an effect entry's `token`                                         |
+
+`role` is `number` tokens only and affects the stylesheet export alone: `spacing` (default), `radius`, `text`, `fontWeight`, `tracking`, `leading`, `breakpoint`, `container`. It picks the Tailwind v4 namespace, and in v4 the namespace is what turns a variable into utilities - a radius exported under `--spacing-*` generates no `rounded-*`. Inside the document every scalar is document pixels, except `leading`, which is a ratio of the font size (see Typography above).
+
+`textStyle` tokens are the composite half of the type ramp - `type.display`, `type.title`, `type.body`, `type.label` - bound with `styleToken` so one reference carries family, size, weight, tracking and leading together. The loose scalars (`text.display`, `weight.display`, …) are for overriding one field of a bound style.
+
+**New documents ship with a full token set**, and there are eight built-in themes - `editorial` (the default), `bookish`, `mineral`, `maritime`, `nocturnal`, `signage`, `botanical`, `terminal`. Every theme declares the same ids, so switching one is a value swap that retargets the whole document. Author against those ids (`color.bg`, `color.ink`, `color.accent`, `color.accent-ink`, `text.display`, `space.4`, `radius.lg`, `shadow.card`, …) rather than inventing a parallel vocabulary; `arg-design` lists them and says which to reach for.
+
+**Aliases.** A `value` written as `"{other-token}"` is a reference to another token **of the same type**, so a semantic layer can point at a palette layer and a retheme is one edit. Chains are followed on load; a cycle, a missing target or a type mismatch resolves to nothing and every reference falls back to the literal beside it. A literal can therefore never itself be `{…}`.
+
+**Reference fields.** `colorToken` (on `solid` fills, gradient `stops`, `strokes`, `shadow`/`glow` effects), `widthToken` (stroke), `cornerRadiusToken` (rect, artboard), `paddingToken` (artboard), the layout spacing tokens above, `styleToken` plus `fontFamilyToken` / `fontSizeToken` / `fontWeightToken` / `letterSpacingToken` / `lineHeightToken` inside a `style`. A whole paint is `{ "type": "token", "token": "brand.gradient" }` as a fill layer (its own `opacity`/`visible` still apply); a whole effect is `{ "type": "token", "token": "elevation.card" }`. A `color` token also works as a paint token and reads as a solid fill.
+
+A `styleToken` supplies every typography field the token declares, and the object's own `style` entries override it - so a heading shares a token's family and tracking while overriding only its size.
+
+```json
+{
+  "tokens": {
+    "palette.violet-600": { "type": "color", "value": "#7c3aed" },
+    "brand.primary": { "type": "color", "value": "{palette.violet-600}" },
+    "space.4": { "type": "number", "value": 24 },
+    "type.heading": {
+      "type": "textStyle",
+      "value": { "fontFamily": "Inter, system-ui, sans-serif", "fontSize": 48, "fontWeight": 700 }
+    }
+  },
+  "objects": {
+    "card": {
+      "id": "card",
+      "type": "rect",
+      "cornerRadiusToken": "space.4",
+      "fills": [{ "type": "solid", "colorToken": "brand.primary" }]
+    },
+    "title": {
+      "id": "title",
+      "type": "text",
+      "text": "Hello",
+      "textMode": "area",
+      "styleToken": "type.heading",
+      "style": { "fontSize": 32 }
+    }
+  }
+}
+```
+
+Note `"fills": [{ "type": "solid", "colorToken": "brand.primary" }]` carries no `color` - that is the derived value, and writing one is only useful as the fallback for a token that does not exist. **Author tokens for anything used more than twice** (the brand colours, the spacing scale, the type ramp): it is fewer tokens on the wire than repeating hex strings, and it makes a restyle a single edit. The editor's Export menu writes them out as CSS custom properties or a Tailwind v4 `@theme` block, alias chains preserved as `var()`.
 
 ## Shader fills
 

@@ -27,6 +27,32 @@ export const DESIGN_LAYOUT_JUSTIFIES = [
 ];
 export const DESIGN_LAYOUT_AXES = ["row", "column"];
 export const DESIGN_GRID_TRACK_UNITS = ["px", "fr", "auto"];
+export const DESIGN_LAYOUT_DISTRIBUTES = [
+  "start",
+  "center",
+  "end",
+  "stretch",
+  "space-between",
+  "space-around",
+  "space-evenly",
+];
+export const DESIGN_LAYOUT_POSITIONINGS = ["auto", "absolute"];
+export const DESIGN_GRID_AUTO_REPEATS = ["auto-fill", "auto-fit"];
+/** What a scalar token means. Inside the document every scalar is document
+ *  pixels (except `leading`, a ratio of the font size); the role picks the CSS
+ *  unit and the Tailwind v4 namespace, and in v4 the namespace is what turns a
+ *  variable into utilities. */
+export const DESIGN_NUMBER_TOKEN_ROLES = [
+  "spacing",
+  "radius",
+  "text",
+  "fontWeight",
+  "tracking",
+  "leading",
+  "breakpoint",
+  "container",
+];
+export const DESIGN_TOKEN_TYPES = ["color", "number", "fontFamily", "paint", "textStyle", "shadow"];
 const DESIGN_FILE_FILL_TYPES = new Set([
   "image",
   "model3d",
@@ -144,7 +170,7 @@ function materializeReleasedFrames(released, next) {
   if (released.size === 0) return;
   const objects = objectRecord(next);
   if (!objects) return;
-  const stillLaidOut = laidOutChildIds(objects);
+  const stillLaidOut = laidOutChildIds(next);
   for (const id of released) {
     if (stillLaidOut.has(id)) continue;
     const object = Object.hasOwn(objects, id) ? objects[id] : undefined;
@@ -155,7 +181,7 @@ function mutate(document, change) {
   const next = cloneJson(document);
   normalizeDesignFileFillsInPlace(next);
   assertValid(next);
-  const laidOutBefore = laidOutChildIds(objectRecord(next) ?? {});
+  const laidOutBefore = laidOutChildIds(next);
   change(next);
   materializeReleasedFrames(laidOutBefore, next);
   normalizeDesignFileFillsInPlace(next);
@@ -252,16 +278,56 @@ function validateGridTracks(value, label, errors) {
     return;
   }
   value.forEach((track, index) => {
-    const owner = `${label}[${index}]`;
-    if (!isJsonObject(track)) {
-      errors.push(`${owner} must be an object`);
-      return;
-    }
-    validateNonNegative(track.size, `${owner}.size`, errors);
-    if (track.size === undefined) errors.push(`${owner}.size must be a non-negative number`);
-    if (track.unit === undefined) errors.push(`${owner}.unit must be one of px, fr, auto`);
-    else validateEnum(track.unit, DESIGN_GRID_TRACK_UNITS, `${owner}.unit`, errors);
+    validateGridTrack(track, `${label}[${index}]`, errors, true);
   });
+}
+function validateGridTrack(track, owner, errors, allowRepeat) {
+  if (track === undefined) return;
+  if (!isJsonObject(track)) {
+    errors.push(`${owner} must be an object`);
+    return;
+  }
+  validateNonNegative(track.size, `${owner}.size`, errors);
+  if (track.size === undefined) errors.push(`${owner}.size must be a non-negative number`);
+  if (track.unit === undefined) errors.push(`${owner}.unit must be one of px, fr, auto`);
+  else validateEnum(track.unit, DESIGN_GRID_TRACK_UNITS, `${owner}.unit`, errors);
+  // `min`/`max` are bounds, not tracks: nesting a repeat inside one has no CSS
+  // reading, so it is rejected here rather than silently ignored on load.
+  validateGridTrack(track.min, `${owner}.min`, errors, false);
+  validateGridTrack(track.max, `${owner}.max`, errors, false);
+  if (track.repeat === undefined) return;
+  if (!allowRepeat) {
+    errors.push(`${owner}.repeat is only allowed on a track, not on a min/max bound`);
+    return;
+  }
+  if (typeof track.repeat === "number") {
+    if (!Number.isInteger(track.repeat) || track.repeat < 1) {
+      errors.push(`${owner}.repeat must be an integer of at least 1, auto-fill, or auto-fit`);
+    }
+    return;
+  }
+  validateEnum(track.repeat, DESIGN_GRID_AUTO_REPEATS, `${owner}.repeat`, errors);
+}
+function validateLayoutConstraints(value, label, errors) {
+  if (value === undefined) return;
+  if (!isJsonObject(value)) {
+    errors.push(`${label} must be an object`);
+    return;
+  }
+  for (const field of ["minWidth", "maxWidth", "minHeight", "maxHeight"]) {
+    validateNonNegative(value[field], `${label}.${field}`, errors);
+  }
+  const ratio = value.aspectRatio;
+  if (ratio === undefined) return;
+  if (typeof ratio !== "number" || !Number.isFinite(ratio) || ratio <= 0) {
+    errors.push(`${label}.aspectRatio must be a positive number (width divided by height)`);
+  }
+}
+function validateTokenRef(value, label, errors) {
+  if (value === undefined) return;
+  if (typeof value !== "string" || value.length === 0) {
+    errors.push(`${label} must be a token id`);
+  }
 }
 function validateLayout(value, label, errors) {
   if (value === undefined) return;
@@ -277,6 +343,10 @@ function validateLayout(value, label, errors) {
   validateNonNegative(value.rowGap, `${label}.rowGap`, errors);
   validateLayoutPadding(value.padding, `${label}.padding`, errors);
   validateEnum(value.align, DESIGN_LAYOUT_ALIGNS, `${label}.align`, errors);
+  validateEnum(value.alignContent, DESIGN_LAYOUT_DISTRIBUTES, `${label}.alignContent`, errors);
+  validateTokenRef(value.gapToken, `${label}.gapToken`, errors);
+  validateTokenRef(value.rowGapToken, `${label}.rowGapToken`, errors);
+  validateTokenRef(value.paddingToken, `${label}.paddingToken`, errors);
   if (value.type === "flex") {
     validateEnum(value.direction, DESIGN_LAYOUT_AXES, `${label}.direction`, errors);
     validateEnum(value.justify, DESIGN_LAYOUT_JUSTIFIES, `${label}.justify`, errors);
@@ -286,8 +356,15 @@ function validateLayout(value, label, errors) {
     return;
   }
   validateNonNegative(value.columnGap, `${label}.columnGap`, errors);
+  validateTokenRef(value.columnGapToken, `${label}.columnGapToken`, errors);
   validateEnum(value.justify, DESIGN_LAYOUT_ALIGNS, `${label}.justify`, errors);
+  validateEnum(value.justifyContent, DESIGN_LAYOUT_DISTRIBUTES, `${label}.justifyContent`, errors);
   validateEnum(value.autoFlow, DESIGN_LAYOUT_AXES, `${label}.autoFlow`, errors);
+  validateGridTrack(value.autoRows, `${label}.autoRows`, errors, false);
+  validateGridTrack(value.autoColumns, `${label}.autoColumns`, errors, false);
+  if (value.dense !== undefined && typeof value.dense !== "boolean") {
+    errors.push(`${label}.dense must be a boolean`);
+  }
   if (value.columns === undefined) {
     errors.push(`${label}.columns must be a positive integer or an array of tracks`);
   } else validateGridTracks(value.columns, `${label}.columns`, errors);
@@ -303,7 +380,16 @@ function validateObjectLayoutFields(entry, label, errors) {
     }
   }
   validateNonNegative(entry.layoutGrow, `${label}.layoutGrow`, errors);
+  validateNonNegative(entry.layoutShrink, `${label}.layoutShrink`, errors);
   validateEnum(entry.layoutAlign, DESIGN_LAYOUT_ALIGNS, `${label}.layoutAlign`, errors);
+  validateEnum(entry.layoutJustify, DESIGN_LAYOUT_ALIGNS, `${label}.layoutJustify`, errors);
+  validateEnum(
+    entry.layoutPositioning,
+    DESIGN_LAYOUT_POSITIONINGS,
+    `${label}.layoutPositioning`,
+    errors,
+  );
+  validateLayoutConstraints(entry.layoutConstraints, `${label}.layoutConstraints`, errors);
   const area = entry.gridArea;
   if (area === undefined) return;
   if (!isJsonObject(area)) {
@@ -318,13 +404,27 @@ function validateObjectLayoutFields(entry, label, errors) {
     }
   }
 }
-/** Ids whose frame geometry a parent's layout owns and recomputes on load. */
-function laidOutChildIds(objects) {
+/** Ids whose frame geometry a layout owns and recomputes on load — a laid-out
+ *  group's children, and an artboard's `layoutRoot`. An absolutely-positioned
+ *  child is inside its container but outside its flow, so its frame is authored
+ *  and stays. */
+function laidOutChildIds(document) {
   const ids = new Set();
+  const objects = objectRecord(document) ?? {};
   for (const entry of Object.values(objects)) {
     if (!isJsonObject(entry) || entry.layout === undefined || !Array.isArray(entry.children))
       continue;
-    for (const child of entry.children) if (typeof child === "string") ids.add(child);
+    for (const child of entry.children) {
+      if (typeof child !== "string") continue;
+      const target = objects[child];
+      if (isJsonObject(target) && target.layoutPositioning === "absolute") continue;
+      ids.add(child);
+    }
+  }
+  if (!Array.isArray(document.artboards)) return ids;
+  for (const artboard of document.artboards) {
+    if (!isJsonObject(artboard) || typeof artboard.layoutRoot !== "string") continue;
+    if (Object.hasOwn(objects, artboard.layoutRoot)) ids.add(artboard.layoutRoot);
   }
   return ids;
 }
@@ -427,6 +527,59 @@ function validateDesignMetadata(value, artboardIds, errors) {
     });
   });
 }
+const TOKEN_ALIAS_RE = /^\{[^{}]+\}$/;
+/** A token's value has to match the shape its `type` promises, or every
+ *  reference to it would read back something the reference site cannot use. An
+ *  alias (`"{other}"`) stands in for any of them and is resolved by the editor,
+ *  which is also where a broken chain is caught — the SDK only has to reject a
+ *  value that could never be one. */
+function validateDesignTokens(value, errors) {
+  const tokens = value.tokens;
+  if (tokens === undefined) return;
+  if (!isJsonObject(tokens)) {
+    errors.push("tokens must be an object keyed by token id");
+    return;
+  }
+  for (const [id, token] of Object.entries(tokens)) {
+    const owner = `tokens.${id}`;
+    if (!isJsonObject(token)) {
+      errors.push(`${owner} must be an object`);
+      continue;
+    }
+    validateEnum(token.type, DESIGN_TOKEN_TYPES, `${owner}.type`, errors);
+    validateEnum(token.role, DESIGN_NUMBER_TOKEN_ROLES, `${owner}.role`, errors);
+    const tokenValue = token.value;
+    if (tokenValue === undefined) {
+      errors.push(`${owner}.value must be set`);
+      continue;
+    }
+    if (typeof tokenValue === "string" && TOKEN_ALIAS_RE.test(tokenValue.trim())) continue;
+    switch (token.type) {
+      case "color":
+      case "fontFamily":
+        if (typeof tokenValue !== "string" || !tokenValue) {
+          errors.push(`${owner}.value must be a non-empty string`);
+        }
+        break;
+      case "number":
+        if (typeof tokenValue !== "number" || !Number.isFinite(tokenValue)) {
+          errors.push(`${owner}.value must be a finite number`);
+        }
+        break;
+      case "paint":
+      case "shadow":
+        if (!isJsonObject(tokenValue) || typeof tokenValue.type !== "string") {
+          errors.push(`${owner}.value must be an object with a type`);
+        }
+        break;
+      case "textStyle":
+        if (!isJsonObject(tokenValue)) errors.push(`${owner}.value must be an object`);
+        break;
+      default:
+        break;
+    }
+  }
+}
 export function validateDesign(value) {
   if (!isJsonObject(value)) return ["Design document must be an object"];
   const errors = [];
@@ -458,10 +611,38 @@ export function validateDesign(value) {
         if (entry.skipped !== undefined && typeof entry.skipped !== "boolean") {
           errors.push(`artboards[${index}].skipped must be a boolean`);
         }
+        validateLayoutPadding(entry.padding, `artboards[${index}].padding`, errors);
+        validateTokenRef(entry.paddingToken, `artboards[${index}].paddingToken`, errors);
+        validateLayoutConstraints(
+          entry.layoutConstraints,
+          `artboards[${index}].layoutConstraints`,
+          errors,
+        );
+        const sizing = entry.layoutSizing;
+        if (sizing !== undefined && !isJsonObject(sizing)) {
+          errors.push(`artboards[${index}].layoutSizing must be an object`);
+        } else if (isJsonObject(sizing)) {
+          validateEnum(
+            sizing.width,
+            DESIGN_LAYOUT_SIZINGS,
+            `artboards[${index}].layoutSizing.width`,
+            errors,
+          );
+          validateEnum(
+            sizing.height,
+            DESIGN_LAYOUT_SIZINGS,
+            `artboards[${index}].layoutSizing.height`,
+            errors,
+          );
+        }
+        if (entry.layoutRoot !== undefined && typeof entry.layoutRoot !== "string") {
+          errors.push(`artboards[${index}].layoutRoot must be an object id`);
+        }
       }
     });
   }
   validateDesignMetadata(value, artboardIds, errors);
+  validateDesignTokens(value, errors);
   const objects = objectRecord(value);
   if (!objects) errors.push("objects must be an object");
   const order = value.order;
@@ -479,7 +660,25 @@ export function validateDesign(value) {
     if (typeof id === "string") rootIds.add(id);
     countPlacement(id, "order");
   }
-  const derivedFrames = laidOutChildIds(objects);
+  if (Array.isArray(artboards)) {
+    artboards.forEach((entry, index) => {
+      if (!isJsonObject(entry) || typeof entry.layoutRoot !== "string") return;
+      if (!Object.hasOwn(objects, entry.layoutRoot)) {
+        errors.push(
+          `artboards[${index}].layoutRoot references a missing object: ${entry.layoutRoot}`,
+        );
+        return;
+      }
+      // The artboard positions it in document space, which only makes sense for
+      // an object nothing else already positions.
+      if (!rootIds.has(entry.layoutRoot)) {
+        errors.push(
+          `artboards[${index}].layoutRoot must be a top-level object in order: ${entry.layoutRoot}`,
+        );
+      }
+    });
+  }
+  const derivedFrames = laidOutChildIds(value);
   const groups = new Map();
   for (const [id, entry] of Object.entries(objects)) {
     if (!isJsonObject(entry)) {
@@ -748,6 +947,108 @@ export function createDesignFlexGroup(document, options, placement = {}) {
     setJsonProperty(next.objects, options.id, group);
     const order = targetOrder(next, placement.parentId);
     order.splice(0, order.length, ...insertAt(order, options.id, placement.index));
+  });
+}
+/** Sets or clears an object's min/max bounds and aspect ratio. */
+export function setDesignLayoutConstraints(document, objectId, constraints) {
+  return mutate(document, (next) => {
+    const object = requireObject(next, objectId);
+    if (constraints === null) delete object.layoutConstraints;
+    else object.layoutConstraints = cloneJson(constraints);
+  });
+}
+/**
+ * Give an artboard a content root, or take it away.
+ *
+ * With `layoutSizing: { height: "hug" }` this is how a page GROWS with what it
+ * holds instead of being a fixed rectangle its content overflows. Clearing it
+ * hands the root's geometry back to its own frame, which `mutate` materializes
+ * if the root never had one.
+ */
+export function setDesignArtboardLayout(document, artboardId, layout) {
+  return mutate(document, (next) => {
+    const artboard = next.artboards.find((entry) => entry.id === artboardId);
+    if (!artboard) error("not_found", `Artboard not found: ${artboardId}`);
+    if (layout === null) {
+      delete artboard.layoutRoot;
+      delete artboard.padding;
+      delete artboard.layoutSizing;
+      delete artboard.layoutConstraints;
+      return;
+    }
+    if (!Object.hasOwn(next.objects, layout.layoutRoot)) {
+      error("not_found", `Object not found: ${layout.layoutRoot}`);
+    }
+    artboard.layoutRoot = layout.layoutRoot;
+    if (layout.padding === undefined) delete artboard.padding;
+    else artboard.padding = cloneJson(layout.padding);
+    if (layout.layoutSizing === undefined) delete artboard.layoutSizing;
+    else artboard.layoutSizing = cloneJson(layout.layoutSizing);
+    if (layout.layoutConstraints === undefined) delete artboard.layoutConstraints;
+    else artboard.layoutConstraints = cloneJson(layout.layoutConstraints);
+  });
+}
+/** Adds a design token, or replaces the one already under `id`. */
+export function upsertDesignToken(document, id, token) {
+  if (!id) error("invalid_token", "Token id must be a non-empty string");
+  return mutate(document, (next) => {
+    next.tokens = { ...(next.tokens ?? {}), [id]: cloneJson(token) };
+  });
+}
+/**
+ * Whether anything still names `id` — a `token` or `<prop>Token` field
+ * anywhere in the document, or another token's `{id}` alias. Walked structurally rather than
+ * field by field: the format carries token refs on fills, gradient stops,
+ * strokes, effects, text styles, layout gaps, padding and corner radius, and a
+ * hand-maintained list of those would drift behind the next one added.
+ */
+function isDesignTokenReferenced(document, id) {
+  const alias = `{${id}}`;
+  const seen = new Set();
+  const walk = (value) => {
+    if (Array.isArray(value)) return value.some(walk);
+    if (!isJsonObject(value)) return false;
+    if (seen.has(value)) return false;
+    seen.add(value);
+    for (const [key, child] of Object.entries(value)) {
+      // `token` is the whole-paint shorthand a fill layer collapses to on
+      // save; `<prop>Token` is every other reference site.
+      if ((key === "token" || key.endsWith("Token")) && child === id) return true;
+      if (child !== undefined && walk(child)) return true;
+    }
+    return false;
+  };
+  for (const [tokenId, token] of Object.entries(
+    isJsonObject(document.tokens) ? document.tokens : {},
+  )) {
+    if (tokenId === id || !isJsonObject(token)) continue;
+    if (typeof token.value === "string" && token.value.trim() === alias) return true;
+  }
+  return (
+    walk(isJsonObject(document.objects) ? document.objects : {}) ||
+    walk(Array.isArray(document.artboards) ? document.artboards : [])
+  );
+}
+/**
+ * Removes a token, refusing while anything still references it — the same
+ * guard `removeDesignShader` applies, and for the same reason: the value beside
+ * a `<prop>Token` is DERIVED, so the writer has already stripped it. A fill
+ * that is entirely a paint token is on disk as the bare `{ "type": "token" }`
+ * shorthand with no colour left to fall back to, and dropping the entry under
+ * it renders the object with no fill at all.
+ */
+export function removeDesignToken(document, id) {
+  return mutate(document, (next) => {
+    if (!next.tokens || !Object.hasOwn(next.tokens, id)) {
+      error("not_found", `Token not found: ${id}`);
+    }
+    if (isDesignTokenReferenced(next, id)) {
+      error("token_in_use", `Token is still referenced: ${id}`);
+    }
+    const tokens = { ...next.tokens };
+    delete tokens[id];
+    if (Object.keys(tokens).length === 0) delete next.tokens;
+    else next.tokens = tokens;
   });
 }
 export function upsertDesignShader(document, shader) {
