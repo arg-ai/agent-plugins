@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.11.0"
+version: "2.11.1"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -56,12 +56,18 @@ export default function LiveRunCount() {
 
   useEffect(() => {
     let active = true;
+    let stop = () => {};
     const refresh = async () => {
       const next = await window.arg.fs.readJSON("./data/runs.json", { fresh: true });
       if (active) setRuns(next);
     };
-    void refresh();
-    const stop = window.arg.fs.watch("./data/runs.json", refresh);
+    void (async () => {
+      if (!window.arg?.fs) return;
+      await window.arg.ready;
+      if (!active) return;
+      await refresh();
+      if (active) stop = window.arg.fs.watch("./data/runs.json", refresh);
+    })();
     return () => {
       active = false;
       stop();
@@ -73,6 +79,10 @@ export default function LiveRunCount() {
 ```
 
 The watcher is format-agnostic. Re-read JSON with `readJSON`, CSV/YAML/XML/text with `read`, Excel and other binary data with `readBytes`, or rerun `arg.db.query` for SQLite. Always request `{ fresh: true }` in the callback and return the watcher's stop function from the effect. This updates only React state; it does not reload the document or reset unrelated component state.
+
+On web and desktop, after a workspace `.tsx`/`.jsx` or `.html`/`.htm` app has been shown, switching to another tab or the Files browser keeps that app runtime mounted and backgrounded; returning reveals the same component/DOM state and watcher session. Closing the tab still tears it down, so persist durable state in workspace files rather than relying on the retained runtime.
+
+While an app is backgrounded, Arg revokes its Actions bridge without replacing the document. Filesystem watches and in-memory UI state stay live, but hidden code cannot start billable Actions; returning restores the unchanged runtime and its eligible session grant.
 
 React previews use the typed `@arg/actions` module for Action discovery, schema reflection, execution, and run history. It delegates to the same isolated `window.arg.actions` bridge used by HTML; it does not fetch directly or expose a token. The viewer must explicitly click **Allow Actions** for the current file session before a call succeeds. The grant is separate from filesystem access because Actions are workspace-wide and may spend credits or use the viewer's connected services.
 

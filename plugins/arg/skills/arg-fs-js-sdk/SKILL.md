@@ -1,6 +1,6 @@
 ---
 name: arg-fs-js-sdk
-version: "1.3.0"
+version: "1.3.1"
 description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html, .tsx, and .jsx apps. Load when building or modifying an app that reads, writes, or watches workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
 ---
 
@@ -192,12 +192,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     let active = true;
+    let stop = () => {};
     const refresh = async () => {
       const next = await window.arg.fs.readJSON("data/rows.json", { fresh: true });
       if (active) setRows(next);
     };
-    void refresh();
-    const stop = window.arg.fs.watch("data/rows.json", refresh);
+    void (async () => {
+      if (!window.arg?.fs) return;
+      await window.arg.ready;
+      if (!active) return;
+      await refresh();
+      if (active) stop = window.arg.fs.watch("data/rows.json", refresh);
+    })();
     return () => {
       active = false;
       stop();
@@ -207,6 +213,8 @@ export default function Dashboard() {
   return <p>{rows.length} rows</p>;
 }
 ```
+
+Web and desktop keep an already-shown workspace HTML or React app mounted and backgrounded while another tab or the Files browser is active, so its watcher and in-memory UI state resume on return. Closing the app tab still runs this cleanup and destroys the runtime.
 
 The watcher is format-agnostic. Choose the existing reader that matches the data:
 
