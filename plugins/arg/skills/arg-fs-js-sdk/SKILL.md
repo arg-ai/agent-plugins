@@ -12,7 +12,7 @@ An optional **runtime** SDK that lets a single self-contained `.html` file read 
 
 ## What it is, in one paragraph
 
-When a `.html` file is previewed inside arg it renders in a **sandboxed, null-origin iframe** with no session cookie — by design, so a page can't silently touch your data. The side effect is the page can't reach the backend at all. The arg-fs SDK fixes that for opted-in pages: when the user turns on the **"Workspace access"** capability (plus **"Scripts"**) in the preview's permissions menu, the editor **injects `window.arg` inline** into the page. Each call is relayed over `postMessage` to the editor, which performs the backend operation with the signed-in user's session and posts the result back. The page never sees a token; the backend still enforces that user's own permissions on every call.
+When a `.html` file is previewed inside arg it renders in a **sandboxed, null-origin iframe** with no session cookie. Ordinary workspace previews start with **Scripts** and folder-scoped, read-only **Workspace access** on, so the editor **injects `window.arg` inline** into the page. The user can turn it off or explicitly grant **Read and write**. Each call is relayed over `postMessage` to the editor, which performs the backend operation with the signed-in user's session and posts the result back. The page never sees a token; the backend still enforces that user's own permissions on every call.
 
 ## Runtime theme
 
@@ -345,8 +345,24 @@ const cols = await arg.db.schema("/data/app.db", "users");
 | `arg.workspaceId` | The workspace id.                                                                                |
 | `arg.scope`       | The active file-path access scope: `"folder"` or `"workspace"`.                                  |
 | `arg.enabled`     | Whether the capability is currently on.                                                          |
+| `arg.canWrite`    | Whether this page may **change** the workspace, not just read it. See below.                     |
 | `arg.ready`       | Promise resolving to the `arg` object once the handshake completes.                              |
 | `arg.version`     | SDK version (currently `1`).                                                                     |
+
+## Read vs read and write
+
+Workspace access can be **Read** or **Read and write**, and an unconfigured preview starts with **Read** enabled. Reads, `arg.me` and `arg.team.members()` work under both. Under Read, the mutating ops - `write`, `remove`, `mkdir`, `move`, `copy` and `db.exec` - reject with `code: "read_only"`, as do `POST`/`PUT`/`PATCH`/`DELETE` through the relative-fetch shim.
+
+So a page that writes must not assume it can. Check `arg.canWrite` after `arg.ready` and degrade honestly - hide or disable the controls that would fail, and tell the user to pick "Read and write" in the preview's permissions menu:
+
+```js
+if (!arg.canWrite) {
+  saveButton.disabled = true;
+  saveButton.title = 'Switch Workspace access to "Read and write" to save changes.';
+}
+```
+
+`arg.canWrite` is false whenever a write would be refused, so it already accounts for the surrounding view being read-only (a public share, a view-locked embed) as well as the user's own choice. Prefer it over `arg.readOnly`, which reports only the first of those.
 
 ## Paths & scope
 

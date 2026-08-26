@@ -100,7 +100,7 @@ A deck can read real numbers instead of hard-coding them:
 </script>
 ```
 
-There is no import for the SDK - the editor injects it when the viewer enables **Scripts** and **Workspace access**. Feature-detect with `if (window.arg)` and render a sensible static fallback when it is absent, because the deck is often opened without those grants. Load `arg-fs-js-sdk` for the full reference.
+There is no import for the SDK - ordinary workspace previews start with **Scripts** and folder-scoped, read-only **Workspace access** enabled, so the editor injects it automatically. Feature-detect with `if (window.arg)` and render a sensible static fallback when it is absent, because public, read-only, or explicitly disabled previews do not receive it. Load `arg-fs-js-sdk` for the full reference.
 
 ### Build and verify
 

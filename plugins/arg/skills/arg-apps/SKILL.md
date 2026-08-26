@@ -219,11 +219,11 @@ The icons carry their own colours and retint with the preview theme, so they nee
 
 React previews expose Actions through `@arg/actions` (backed by `window.arg.actions`) and scoped persistent workspace files through `window.arg.fs`, with independent grants. Enabling one never enables the other.
 
-React previews receive `window.arg` only after the user explicitly enables Workspace access in the preview permissions menu. Keep filesystem capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
+React previews start with folder-scoped, read-only Workspace access and receive `window.arg` automatically. The user can turn it off or grant Read and write in the preview permissions menu. Keep filesystem capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
 
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
-Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup. Filesystem access activates when the user turns it on; Actions use a separate session-only **Actions access** grant on the isolated web preview.
+Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup. Filesystem access starts on in folder-scoped Read mode; Actions use a separate session-only **Actions access** grant on the isolated web preview.
 
 ## CRUD
 
@@ -239,8 +239,8 @@ A `.html` page can read/write workspace files and read the signed-in user's iden
 
 ### The three rules (follow these)
 
-1. **There is NO import.** Never add `<script src>`, npm, ESM, or a CDN tag for it. The editor injects `window.arg` inline when the user turns on **"Scripts" + "Workspace access"** in the preview's permissions menu.
-2. **Feature-detect with `if (window.arg)` and degrade gracefully.** It's absent when the page is opened outside Arg or Workspace access is unavailable. The user — not you — enables the capability, so the page must still work (read-only or with a hint) when it's off. After `arg.ready`, check `arg.readOnly` before showing mutation controls; reads remain available, while `write`, `remove`, `mkdir`, `move`, `copy`, and `db.exec` reject with `read_only` in a read-only host.
+1. **There is NO import.** Never add `<script src>`, npm, ESM, or a CDN tag for it. The editor injects `window.arg` inline when **Scripts** and **Workspace access** are on; both start on for an ordinary workspace HTML preview.
+2. **Feature-detect with `if (window.arg)` and degrade gracefully.** It's absent when the page is opened outside Arg or Workspace access is unavailable or turned off. After `arg.ready`, check `arg.canWrite` before showing mutation controls; reads remain available, while `write`, `remove`, `mkdir`, `move`, `copy`, and `db.exec` reject with `read_only`. Workspace access starts enabled as **Read**, so a page that writes must degrade gracefully until it receives **Read and write**. `arg.canWrite` covers both that choice and a read-only host; `arg.readOnly` reports only the host.
 3. **Build a single-document app.** Never `<a href="page.html">` to another HTML file — that reloads the sandboxed preview and **drops `window.arg`**. Change views with in-page state (buttons / click handlers / `location.hash` + a `hashchange` listener) and render from `arg.fs` reads. Treat workspace files as the data store, not as pages.
 
 ## Calling the Action registry from HTML
