@@ -1,0 +1,356 @@
+# Arg automation triggers — integration events
+
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 23 triggers across 17 providers.
+
+This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
+
+## Using one
+
+In a `.automation` file, one trigger node:
+
+```json
+{ "id": "trigger", "data": { "category": "trigger", "kind": "integration-trigger", "label": "New email",
+  "config": { "providerId": "google", "triggerName": "gmail_message", "connectionId": "<existing connection id>", "query": "in:inbox is:unread" },
+  "enabled": true } }
+```
+
+In a `.arg/workflows/*.yml` workflow, the same three binding fields without the suffixes:
+
+```yaml
+on:
+  integration:
+    provider: google
+    trigger: gmail_message
+    connection: "<existing connection id>"
+    query: "in:inbox is:unread"
+```
+
+Three rules that are not negotiable:
+
+- `connectionId` / `connection` must be an id of a connection that **already exists**. Never invent one - the user connects the provider in Integrations settings first, and the connected accounts (with their ids) are listed in the agent's system prompt.
+- An integration trigger dispatches through that connection, not a service account, so a workflow triggered only this way needs **no** top-level `service_account_id` / `service-account:`.
+- Event data lands at `{{ trigger.output.data.… }}` - e.g. `{{ trigger.output.data.subject }}` for `gmail_message`. A YAML workflow allows **one** `integration:` entry; fanning several provider events into one workflow needs a `.automation` file.
+
+## Triggers by provider
+
+### Airtable (`airtable`)
+
+#### `airtable_record` — Record
+
+Fires when an Airtable record is created, and when a configured Last modified time field changes. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `base_id` | string | yes | Airtable base id (starts with app). |
+| `table_id_or_name` | string | yes | Table id (starts with tbl) or human table name. |
+| `updated_time_field` | string | no | Name of a Last modified time field used to detect updates. Empty = created records only. |
+| `view` | string | no | Optional view name or id to restrict watched records. |
+| `events` | array | no | Only fire for these record events (empty = all). |
+
+Connection must hold: `data.records:read`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Confluence (`confluence`)
+
+#### `confluence_page` — Page
+
+Fires when a Confluence page is created or updated, optionally scoped to one space. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `space_key` | string | no | Only watch this space (e.g. ENG). Empty = all spaces. |
+| `events` | array | no | Only fire for these page events (empty = all). |
+
+Connection must hold: `read:page:confluence`, `read:space:confluence`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Discord (`discord`)
+
+#### `discord_message` — New message
+
+Fires when a new message is posted in a Discord channel the bot can read. Requires the bot's "Message Content Intent" to be enabled in the Developer Portal for `content` to be populated. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `channel_id` | string | yes | Discord channel id (snowflake) to watch for new messages. |
+| `ignore_self_events` | boolean | no | Ignore messages posted by this bot itself - prevents infinite loops when this flow posts back to the channel. On by default. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### GitHub (`github`)
+
+#### `github_issue_comment` — Issue or PR comment
+
+Fires when a comment on an issue or pull request is created, edited, or deleted.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `actions` | array | no | Only fire for these actions (empty = all). |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `github_issues` — Issue
+
+Fires when an issue in the repository is opened, closed, or otherwise updated.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `actions` | array | no | Only fire for these actions (empty = all). |
+| `labels` | array | no | Only fire "labeled"/"unlabeled" events for these label names (empty = all). Other actions are unaffected by this filter. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `github_pull_request` — Pull request
+
+Fires when a pull request in the repository is opened, merged, closed, labeled, or otherwise updated.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `actions` | array | no | Only fire for these actions (empty = all). "merged" matches merged PRs; "closed" matches PRs closed without merging. |
+| `labels` | array | no | Only fire "labeled"/"unlabeled" events for these label names (empty = all). Other actions are unaffected by this filter. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `github_push` — Push
+
+Fires when commits are pushed to the repository.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `branch` | string | no | Only fire for pushes to this branch (e.g. "main"). Empty = all branches. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `github_workflow_run` — Workflow run (CI)
+
+Fires when a GitHub Actions workflow run in the repository is requested, starts, or completes — the way to react to CI results (e.g. auto-remediate a failed run) without polling.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `actions` | array | no | Only fire for these run states (empty = all — most loops only care about "completed"). |
+| `conclusions` | array | no | Only fire "completed" runs with these conclusions (empty = all). Ignored for "requested"/"in_progress" deliveries, which have no conclusion yet. |
+| `workflow_name` | string | no | Only fire for runs of the workflow with this name (e.g. "CI"), as shown in the Actions tab. Empty = all workflows. |
+| `branch` | string | no | Only fire for runs on this branch (e.g. "main"). Empty = all branches. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+### Google (`google`)
+
+#### `gmail_message` — New email
+
+Fires when a new message arrives in the connected Gmail account, optionally narrowed by a Gmail search query (e.g. 'in:inbox is:unread', 'from:alerts@example.com'). Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `query` | string | no | Gmail search query to narrow matched mail (e.g. 'in:inbox is:unread', 'label:support'). Empty = every new message in the mailbox. |
+
+Connection must hold: `https://www.googleapis.com/auth/gmail.readonly`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Google Calendar (`google_calendar`)
+
+#### `google_calendar_event` — New or updated calendar event
+
+Fires when an event is created or updated on the connected Google Calendar. Polled - events arrive within ~15 minutes. Cancelled/deleted events are not reported. Has no actor identity distinct from the calendar owner, so an automation that also writes events via google_create_event can re-fire itself on its own write - filter on a marker in the event description if building a write-back loop.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `calendar_id` | string | no | Calendar id to watch (default: the connected account's primary calendar). |
+| `only_created` | boolean | no | Only fire when an event is first created, not on every later update/reschedule. Off by default. |
+
+Connection must hold: `https://www.googleapis.com/auth/calendar.events`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### HubSpot (`hubspot`)
+
+#### `hubspot_contact` — Contact
+
+Fires when a HubSpot contact is created or updated. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `events` | array | no | Only fire for these contact events (empty = all). |
+
+Connection must hold: `crm.objects.contacts.read`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Jira (`jira`)
+
+#### `jira_comment` — Comment
+
+Fires when an issue comment in the project is created, updated, or deleted.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `project_key` | string | yes | Project key to watch (e.g. ENG) |
+| `events` | array | no | Only fire for these comment events (empty = all). |
+
+Connection must hold: `manage:jira-webhook`, `read:jira-work`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `jira_issue` — Issue
+
+Fires when an issue in the project is created, updated, or deleted.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `project_key` | string | yes | Project key to watch (e.g. ENG) |
+| `events` | array | no | Only fire for these issue events (empty = all). |
+
+Connection must hold: `manage:jira-webhook`, `read:jira-work`.
+
+Delivery: provider webhook, so events arrive within seconds.
+### Linear (`linear`)
+
+#### `linear_comment` — Comment
+
+Fires when a Linear comment is created or updated, optionally scoped by issue team. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `team_key` | string | no | Only watch issues in this Linear team key (e.g. ENG). Empty = all teams. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected Linear user. On by default. |
+| `events` | array | no | Only fire for these comment events (empty = all). |
+
+Connection must hold: `read`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+#### `linear_issue` — Issue
+
+Fires when a Linear issue is created or updated, optionally scoped to one team. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `team_key` | string | no | Only watch issues in this Linear team key (e.g. ENG). Empty = all teams. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected Linear user. On by default. |
+| `events` | array | no | Only fire for these issue events (empty = all). |
+
+Connection must hold: `read`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Microsoft (`microsoft`)
+
+#### `microsoft_message` — New email
+
+Fires when a new email arrives in a Microsoft (Outlook) mail folder, optionally filtered by a subject substring. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string | no | Mail folder to watch. |
+| `subject_contains` | string | no | Only fire when the subject contains this text (case-insensitive). Empty = all. |
+
+Connection must hold: `Mail.Read`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Monday.com (`monday`)
+
+#### `monday_item` — Item
+
+Fires when an item on a Monday.com board is created or updated. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `board_id` | string | yes | Numeric Monday board id. |
+| `events` | array | no | Only fire for these item events (empty = all). |
+
+Connection must hold: `boards:read`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Notion (`notion`)
+
+#### `notion_page` — Page
+
+Fires when a shared Notion page is created or edited. Optionally scope it to one parent page or database. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `parent_page_id` | string | no | Only watch direct children of this parent page. Empty = all shared pages. |
+| `database_id` | string | no | Only watch pages in this database. Empty = all shared pages. |
+| `events` | array | no | Only fire for these page events (empty = all). |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected Notion bot itself. On by default. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Salesforce (`salesforce`)
+
+#### `salesforce_record` — Record
+
+Fires when a Salesforce record of a configured sObject is created or updated. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `sobject` | string | yes | sObject API name to watch (for example "Account" or "Contact"). |
+| `fields` | string | no | Comma-separated field API names to include in the event payload, up to 25 fields. |
+| `events` | array | no | Only fire for these record events (empty = all). |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected Salesforce user. On by default. |
+
+Connection must hold: `api`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Slack (`slack`)
+
+#### `slack_message` — Message
+
+Fires when a Slack channel message is posted or edited. Edits are detected within a recent lookback window. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `channel` | string | yes | Channel id to watch (C... for public, G... for private). |
+| `events` | array | no | Only fire for these message events (empty = all). |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected Slack bot. On by default. |
+
+Connection must hold: `channels:history`, `groups:history`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Stripe (`stripe`)
+
+#### `stripe_event` — Event
+
+Fires on a Stripe event — a payment succeeded, a subscription changed, a refund landed, and hundreds more. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `event_types` | array | no | Only fire for these Stripe event types (e.g. "checkout.session.completed", "invoice.paid", "charge.refunded"). Empty = every event. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Twilio (`twilio`)
+
+#### `twilio_incoming_message` — Incoming message
+
+Fires when an SMS, MMS, or WhatsApp message is received by one of your Twilio numbers. Optionally scope it to one number. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `to` | string | no | Only messages received by this Twilio number (e.g. +15551234567 or whatsapp:+14155238886). Empty = all numbers. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Zendesk (`zendesk`)
+
+#### `zendesk_ticket` — New or updated ticket
+
+Fires when a ticket is created or updated in Zendesk. Polled via the Incremental Ticket Export API - events arrive within ~15 minutes. Has no actor identity to self-echo-guard on; filter on a tag or status transition if this automation also writes back to tickets.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `statuses` | array | no | Only fire for tickets in one of these statuses. Empty/omitted = any status. |
+| `only_created` | boolean | no | Only fire when a ticket is first created, not on every later update. Off by default. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
