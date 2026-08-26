@@ -1,7 +1,7 @@
 ---
 name: arg-apps
-version: "2.11.1"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
+version: "2.12.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -187,6 +187,147 @@ export default function ContextMenuExample() {
 }
 ```
 
+### Native app chrome
+
+An HTML, TSX, or JSX app can describe controls that Arg renders outside the sandbox with its native editor chrome:
+
+- `leftToolbar` for tool groups in the collapsible left palette
+- `inspector` for the currently selected object's properties in the floating right panel
+- `bottomToolbar` for compact canvas actions in the floating bottom bar
+
+Declarations are data, not React nodes or authored HTML. Keep the app's own state authoritative: when a tool or property event changes state, register an updated declaration so active tools and displayed values stay current. The host coalesces rapid updates to the latest declaration per registration on its next frame. Set `inspector: null` when nothing is selected. IDs must be stable ASCII identifiers; labels are user-facing strings.
+
+One document may keep up to 16 simultaneous registrations. Prefer one registration per app or independently mounted feature, update its handle as state changes, and dispose it when the owning feature unmounts.
+
+In React, use `useAppChrome` from `@arg/ui`:
+
+```tsx
+import { useMemo, useState } from "react";
+import { useAppChrome, type AppChromeRegistration } from "@arg/ui";
+
+interface Selection {
+  id: string;
+  fill: string;
+  opacity: number;
+}
+
+export default function Diagram() {
+  const [tool, setTool] = useState("select");
+  const [selected, setSelected] = useState<Selection | null>({
+    id: "box-1",
+    fill: "#3366FF",
+    opacity: 80,
+  });
+
+  const chrome = useMemo<AppChromeRegistration>(
+    () => ({
+      leftToolbar: {
+        title: "Diagram tools",
+        searchable: true,
+        groups: [
+          {
+            id: "draw",
+            label: "Draw",
+            tools: [
+              { id: "select", label: "Select", icon: "mouse-pointer", active: tool === "select" },
+              {
+                id: "rectangle",
+                label: "Rectangle",
+                icon: "square",
+                shortcut: "R",
+                active: tool === "rectangle",
+              },
+            ],
+          },
+        ],
+      },
+      inspector: selected
+        ? {
+            title: "Rectangle",
+            subtitle: selected.id,
+            sections: [
+              {
+                id: "appearance",
+                label: "Appearance",
+                properties: [
+                  { id: "fill", label: "Fill", type: "color", value: selected.fill },
+                  {
+                    id: "opacity",
+                    label: "Opacity",
+                    type: "range",
+                    value: selected.opacity,
+                    min: 0,
+                    max: 100,
+                    unit: "%",
+                  },
+                ],
+              },
+            ],
+          }
+        : null,
+      bottomToolbar: {
+        groups: [
+          {
+            id: "history",
+            tools: [
+              { id: "undo", label: "Undo", icon: "undo" },
+              { id: "redo", label: "Redo", icon: "redo" },
+            ],
+          },
+        ],
+      },
+    }),
+    [selected, tool],
+  );
+
+  useAppChrome(chrome, {
+    onTool: ({ toolId }) => {
+      if (toolId === "select" || toolId === "rectangle") setTool(toolId);
+      // Handle undo and redo against the app's own history here.
+    },
+    onPropertyChange: ({ propertyId, value }) => {
+      if (propertyId === "fill" && typeof value === "string") {
+        setSelected((item) => (item ? { ...item, fill: value } : item));
+      }
+      if (propertyId === "opacity" && typeof value === "number") {
+        setSelected((item) => (item ? { ...item, opacity: value } : item));
+      }
+    },
+    onInspectorDismiss: () => setSelected(null),
+  });
+
+  return <main>{/* App canvas */}</main>;
+}
+```
+
+Property types are `text`, `number`, `range`, `boolean`, `select`, `color`, and `readonly`. A select property carries `options: [{ value, label }]`; number and range properties can carry `min`, `max`, `step`, and `unit`. Tools can carry `icon`, `shortcut`, `active`, `disabled`, and `danger`. Supported icon names are `arrow-left`, `arrow-right`, `box`, `check`, `circle`, `copy`, `crop`, `download`, `eye`, `frame`, `hand`, `image`, `layers`, `line`, `link`, `lock`, `maximize`, `minus`, `mouse-pointer`, `move`, `paint-bucket`, `pause`, `pen`, `play`, `plus`, `redo`, `rotate-ccw`, `rotate-cw`, `save`, `search`, `settings`, `shapes`, `sparkles`, `square`, `sticky-note`, `text`, `trash`, `undo`, `unlock`, `upload`, `wand`, `zoom-in`, and `zoom-out`.
+
+Classic HTML receives the same API as `window.argApp.chrome` whenever Scripts are enabled. There is no import:
+
+```html
+<script>
+  const handle = window.argApp.chrome.register(
+    {
+      leftToolbar: {
+        groups: [{ id: "draw", tools: [{ id: "pen", label: "Pen", icon: "pen" }] }],
+      },
+    },
+    {
+      onTool(event) {
+        if (event.toolId === "pen") activatePen();
+      },
+    },
+  );
+
+  // Reflect later state changes without recreating the registration.
+  handle.update(nextChrome);
+  // Remove every control owned by this registration.
+  // handle.dispose();
+</script>
+```
+
+`window.argApp.chrome.ready` resolves with `{ available, readOnly }` after the host handshake. App chrome is not a privileged capability and needs no Workspace access grant. It deliberately does not create `window.arg`, so existing `if (window.arg)` filesystem feature detection remains correct. When Workspace access or Actions has already created `window.arg`, the same object is also available as the convenience alias `window.arg.ui`. A read-only host still forwards tool and property events so local preview interactions work; use `readOnly` to avoid offering persistence and rely on the workspace bridge's write lock as the authority.
+
 ### File-type icons
 
 `@arg/ui` also ships the file icons Arg itself draws, so a preview that lists workspace files looks like the product rather than approximating it. Import them from the `@arg/ui/file-type-icons` and `@arg/ui/file-types` subpaths, or from `@arg/ui` directly.
@@ -231,7 +372,7 @@ Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `s
 
 ## Runtime theme
 
-HTML that receives the `window.arg` SDK also receives the active Arg theme as exactly one runtime `<body>` class: `light`, `dark`, or `focus`. Theme generated SDK-enabled pages - including `/me` pages - with explicit styles for all three classes, treating `focus` as its own design rather than a light alias. Use these classes instead of `prefers-color-scheme`, which may disagree with the user's selected Arg theme.
+In the web and desktop editor, an HTML preview with Scripts enabled receives the active Arg theme as exactly one runtime `<body>` class: `light`, `dark`, or `focus`. Theme generated pages - including `/me` pages - with explicit styles for all three classes, treating `focus` as its own design rather than a light alias. Use these classes instead of `prefers-color-scheme`, which may disagree with the user's selected Arg theme.
 
 ## Building an arg-app with the `window.arg` FS SDK
 
@@ -479,7 +620,7 @@ Every one of those surfaces runs the app in its own frame or web view, so `@medi
 
 ### Safe areas (`.html` apps)
 
-An `.html` app is the top-level document and nothing is injected into its `<head>`, so the viewport tag is yours to write. Write it **together with** the padding below, never on its own:
+An `.html` app is the top-level document, and the host does not author its viewport metadata, so the viewport tag is yours to write. Write it **together with** the padding below, never on its own:
 
 ```html
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
