@@ -1,6 +1,6 @@
 ---
 name: arg-mcp
-version: "1.7.1"
+version: "1.8.0"
 description: Access method for Arg file CRUD over the MCP server (read_file, write_file, edit_file, multi_edit, grep, semantic_search, run_bash, list_files, move_files, create_upload_session, download_file). Load this when Arg is connected over MCP — the cloud endpoint or the desktop app's local loopback server over shared folders. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 ---
 
@@ -22,6 +22,7 @@ Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.a
 ## Notes
 
 - **Endpoints:** the **organization** endpoint adds a required `workspace_id` to every tool — call `list_workspaces` to discover ids. The **workspace** endpoint `/mcp/{workspace_id}` omits it.
+- **Skills over MCP:** the hosted cloud endpoints advertise the draft `io.modelcontextprotocol/skills` extension. `skills/list` and `skills/get` expose Arg's bundled skills with complete per-file SHA-256 manifests; `resources/list` / `resources/read` serve their `skill://arg.ai/<name>/<path>` resources, and `resources/directory/read` lists a skill directory's direct children. The catalogue frontmatter is complete and reads are lazy. Workspace-authored `.skills/` still use `list_skills` / `load_skill` plus `read_file`; the desktop shared-folder loopback server does not advertise the extension.
 - **Created-file links:** successful cloud `write_file` results include a full canonical Arg URL. `create_upload_session` includes the same URL in its manifest, and the `completeUrl` response returns it as `url` after the multipart upload finishes.
 - **Binary formats** (image/video/audio/pptx/xlsx/sqlite): you cannot `write_file` them. Create with `create_upload_session` (follow the `instructions` in its response) or generate with `run_bash`; read with `download_file`.
 - **Always `read_file` first** before an edit. Prefer `edit_file`/`multi_edit` for big files; `write_file` overwrites the whole file.
