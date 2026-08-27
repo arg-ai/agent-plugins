@@ -27,10 +27,11 @@ From your candidate list, **pick something other than your first instinct.** Fir
 
 ## Start from a built-in theme
 
-New `.design` documents ship with a full token set, and there are eight built-in themes to switch between. Each declares the **same token ids**, so changing theme is a value swap - the document retargets wholesale, and nothing you authored moves.
+New `.design` documents ship with a full token set, and there are nine built-in themes to switch between. Each declares the **same token ids**, so changing theme is a value swap - the document retargets wholesale, and nothing you authored moves. `neutral` is the intentionally plain default; reach for one of the mood-led themes when the brief calls for a stronger direction.
 
 | Theme       | Scene                           | Ground x accent                 |
 | ----------- | ------------------------------- | ------------------------------- |
+| `neutral`   | blank canvas                    | pure white x black              |
 | `editorial` | gallery wall                    | pure white x cobalt             |
 | `bookish`   | plaster, oak pew, ink           | warm plaster x near-black brown |
 | `mineral`   | limestone dust, oxidized copper | bone x deep green               |
