@@ -1,6 +1,6 @@
 ---
 name: arg-overview
-version: "1.3.2"
+version: "1.3.3"
 description: The map of the Arg (arg.ai) product — what Arg is, every offering (workspace, agent, editors, skills, automations, actions, apps, developer/agent APIs, platform surfaces, plans), who it's for, and which skill or URL to go deeper with. Load this to answer any question about Arg itself ("what is Arg", "can Arg do X", "what does it cost"), to build a get-started or onboarding guide for someone who just signed up, or to orient another agent before it loads a specialist arg-* skill.
 ---
 
@@ -83,3 +83,5 @@ Three framings of the same platform:
 | Generating/transforming media, transcribing, scraping, screenshots           | `arg-actions`                                                     |
 | Building an internal app or web page on workspace files                      | `arg-apps`                                                        |
 | Authoring reusable skills or subagents                                       | `arg-skills-and-agents`                                           |
+
+If one of those skills is not installed in this session, fetch it as plain markdown at `https://arg.ai/skills/<name>.md` (e.g. `https://arg.ai/skills/arg-files.md`) and follow it directly. Every skill in the table is published there, and https://arg.ai/llms.txt lists them all.
