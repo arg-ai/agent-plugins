@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.8.0"
+version: "2.9.1"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -19,7 +19,7 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 - **Read before you edit.** Fetch the current contents first, change only what was asked, and preserve the rest of the structure.
 - **Edit surgically** where the method supports targeted edits; otherwise rewrite the whole file.
 - **Text vs binary.** Text/JSON formats are written/edited as text. Binary formats (image, video, audio, pptx, xlsx, docx, sqlite) can't be — create them by uploading bytes or, where the format guidance permits it, by running a generator (`sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`, `python-docx` — see Recommended libraries below); your access-method skill says exactly how and where that runs.
-- **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card.
+- **JSON formats:** valid, pretty-printed (2-space) JSON, with a unique `id` on every node / object / column / card. The only documented exception is one initial static-HTML write to a brand-new `.design` path that does not already exist; every update to an existing `.design` uses canonical JSON. `arg-file-design` defines that create-only authoring wire format and how Arg materializes it.
 - **Structured edit libraries:** the Design, Video, and Kanban skills bundle small dependency-free modules under `scripts/document-edit/`. Prefer their relationship-aware helpers over hand-editing linked ids and arrays; use their raw JSON edit operation for fields without a dedicated helper.
 - **Linked workspace files:** the durable stored form carries both a stable `argfile_...` id and a readable path snapshot. Author the documented path field only because editors such as `.video`, `.design`, `.kanban`, `.daw`, and `.dj` own id minting and refresh both fields when a linked file moves. Preserve a valid existing pair, and never invent a file id or replace a path with one.
 - **Delete / move:** to remove part of a structured file (a card, a node), edit the JSON rather than deleting the file; your access-method skill covers deleting/moving whole files.
@@ -39,7 +39,7 @@ For these, **load the named skill first** for format-specific guidance:
 | HTML / web / apps         | html, htm                                                   | `arg-apps`            | Text (file-backed apps via the `window.arg` FS SDK; also HyperFrames motion-graphic compositions) |
 | Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/projects)                                                   |
 | DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                                                                           |
-| Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`/`.svg`); `.fig` import-only                                                       |
+| Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`: JSON; HTML only on initial creation; `.svg`); `.fig` import-only                 |
 | CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)                                                            |
 | Whiteboard                | whiteboard                                                  | `arg-file-whiteboard` | Text (JSON)                                                                                       |
 | Task / project management | kanban                                                      | `arg-file-kanban`     | Text (JSON)                                                                                       |
@@ -57,7 +57,7 @@ For a product feature map of the Arg **web** and **desktop** apps — what each 
 
 Arg defines native, agent-friendly formats. Load the dedicated format skill before authoring one:
 
-- `.design` — vector canvas — see the `arg-file-design` skill.
+- `.design` — vector canvas. Native JSON is canonical. An agent may write static HTML only while creating a brand-new path and let Arg materialize it on open or render; read and update every existing `.design` as JSON - see the `arg-file-design` skill.
 - `.cad` — parametric CAD drawing (floor plans, buildings, structural frames, bridges), and LiDAR scan reconstruction — see the `arg-file-cad` skill.
 - `.whiteboard` — infinite canvas with font-selectable standalone text objects — see the `arg-file-whiteboard` skill.
 - `.kanban` — task board — see the `arg-file-kanban` skill.

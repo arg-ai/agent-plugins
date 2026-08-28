@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "1.6.0"
+version: "1.8.1"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas, plus .svg (round-trips) and .fig (import-only). Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; load arg-design alongside it whenever the work is visual rather than only structural, and arg-slides for presentation-specific workflow.
 ---
 
@@ -13,6 +13,40 @@ description: Create, read, update, and delete design files in Arg — the native
 ## CRUD
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Design-specific: `.design`/`.svg` are text — edit the JSON / SVG markup directly, and reuse the design's existing colors, type, and spacing. **`.fig` is binary and import-only** — read it for structure/tokens, but edits don't write back; to create a Figma-like file from scratch, produce a `.design` or `.svg` instead.
+
+## HTML creation wire format
+
+Native JSON is the canonical persisted `.design` format. Static HTML is a create-only shortcut: an agent may write it directly only as the initial contents of a brand-new path ending in `.design` when HTML and CSS are the faster authoring vocabulary. Check that the path does not already exist before using HTML. Before updating any existing `.design`, read it and edit native `.design` JSON; never overwrite an existing file with HTML, even if that file still contains unmaterialized HTML from its initial write. Materialize that source first, then make the requested update in JSON.
+
+Arg detects the initial contents rather than trusting the extension and runs HTML through the same converter used by the HTML file menu's **Convert to .design** action. The first editable open replaces the editor buffer with native JSON; read-only previews, nested design fills, headless rendering, and PSD conversion materialize the same native document in memory. Web and desktop materialize the menu conversion immediately; iOS and Android create the HTML-filled sibling and let the shared editor materialize it on first open, so there is still one DOM-to-layer implementation.
+
+Author this wire format like Paper's `write_html` input:
+
+- Write a complete document or one root fragment. Give the canvas and important regions explicit pixel dimensions so the result does not depend on a default viewport.
+- Prefer inline CSS and flex layouts. A `<style>` block is supported, but external stylesheets are removed and scripts never run.
+- Add `layer-name="..."` to meaningful elements. Arg preserves DOM nesting as editable groups and uses that attribute for layer names.
+- Use real DOM elements for every visible layer. Pseudo-elements and CSS gradient or background-image paint are not imported; use a solid background, an `<img>`, or inline `<svg>` instead.
+- Text converts the way the browser drew it. A block whose text is all one style becomes a single editable layer keeping its own line breaks and alignment, so paragraphs, `<br>` runs and centred copy survive intact. Native text holds one style per layer, so a `<strong>`, `<em>`, or coloured `<a>` inside a sentence becomes its own layer - keep inline styling for emphasis that earns a layer, and put a whole styled passage in its own block rather than mid-sentence when you want it editable as one thing.
+- The wire format is border-box: `width: 640px; padding: 48px` converts as 640 wide. Size regions accordingly rather than adding padding on top of a width.
+- Relative `<img src>` paths resolve from the source `.design` file's folder. Workspace-absolute paths and data URLs also work.
+- Treat conversion as a static visual snapshot. Event handlers, scripts, iframes, objects, embeds, unsafe metadata, and external stylesheet/preload links are stripped.
+
+Use native JSON when the document needs Arg-specific features such as tokens, auto-layout sizing, shaders, live file fills, presenter metadata, or precise round-trip edits. The HTML exception ends as soon as the new path exists. Every later update uses JSON through the design library or editor.
+
+### An HTML slide deck converts to a deck, not a tall page
+
+When the HTML is a slide deck, Arg gives each slide its own artboard, opens the file in Slides view, keeps each slide's presenter notes, and marks a slide hidden from playback as skipped. A reveal.js vertical stack becomes a named section. This applies to the same HTML whether it arrives through **Convert to .design** on an `.html` file or as an agent's initial static-HTML write to a new `.design` path. Load `arg-slides` for deck structure and presentation workflow.
+
+Arg recognizes a deck from its markup, in this order: `data-arg-slide` on each slide; reveal.js (`.reveal .slides > section`, where a section holding sections is a vertical stack); Marp's per-slide `<svg data-marpit-svg>`; class-named slides (`slide`, `step`, `swiper-slide`, or any `-slide` / `__slide` class); and last, sibling `<section>` elements - which are only read as slides when a deck library appears in a script tag, the container is deck-named (`#deck`, `.slides`, `.presentation`, …), or every section declares the same explicit pixel size. **A page whose sections are ordinary page sections stays one artboard**, so mark real slides with `class="slide"` or `data-arg-slide` when you want them split.
+
+To convert cleanly:
+
+- Fix the stage in CSS - on the slide container, or on `html` / `body` - or configure it (`Reveal.initialize({ width, height })`). Every slide converts at that one size; Arg falls back to 1920x1080 when the markup fixes no size at all, so a deck sized only by the viewport (`100vw` / `100vh`) gets the default rather than the browser window.
+- Hide inactive slides the usual way (`.slide { display: none }` plus `.slide.active { display: flex }`). Arg presents each slide by adding the active class your CSS already keys on, so authored flex or grid layout survives.
+- Put presenter notes in `<aside class="notes">` inside the slide. They become the artboard's `notes` and are never captured as a visible layer.
+- Add `data-visibility="hidden"` to a slide that should stay in the deck but not play; it converts as a skipped artboard.
+- Name a slide with `data-name`, `aria-label`, or a heading - Arg names the artboard from those, then from `id`, then `Slide N`.
+- `data-background-color` and `data-background-image` on a slide become the artboard's fills.
 
 ## Editing library
 

@@ -1,6 +1,6 @@
 ---
 name: arg-slides
-version: "2.0.0"
+version: "2.1.1"
 description: Create, edit, and present Arg slide decks. Load for presentations, pitch decks, keynote-style talks, slide redesigns, or deck generation. Default to a single self-contained .html deck; build a multi-artboard .design deck when the user wants an editable design canvas or a PowerPoint / PDF deliverable.
 ---
 
@@ -108,7 +108,13 @@ There is no import for the SDK - ordinary workspace previews start with **Script
 2. Outline the sections and slides, then fix the shared type scale, palette, margins, and grid.
 3. Write the file in one pass, then open the preview and step through every slide with the keyboard.
 4. Check fullscreen, the first and last slide edges, and a narrow window - the scaled stage must letterbox, never clip.
-5. If the user needs PowerPoint or PDF at the end, build the `.design` deck below instead of trying to convert the HTML.
+5. If the user needs PowerPoint or PDF at the end, build the `.design` deck below. Converting the HTML deck is the fallback, not the plan: it captures what the markup renders statically, so scripted motion, live data, and anything a stylesheet loads from the network do not survive.
+
+### Converting an HTML deck to a `.design` deck
+
+**Convert to .design** on an `.html` deck gives each slide its own artboard, opens the result in Slides view, keeps `<aside class="notes">` as presenter notes, and marks a `data-visibility="hidden"` slide as skipped. A reveal.js vertical stack becomes a named section. Write the deck the way this skill already prescribes - a fixed-size stage, one `<section class="slide">` per slide, inactive slides hidden by a class - and it converts without any extra markup. See `arg-file-design` for what Arg reads and what it cannot carry across.
+
+Convert when the user asks for an editable canvas, a PowerPoint, or a PDF from a deck that already exists as HTML. Author the `.design` deck directly when you are building for that outcome from the start.
 
 ## `.design` decks
 
@@ -116,6 +122,7 @@ Build this instead of HTML when the user wants a canvas they will keep editing b
 
 ### Start with a native deck
 
+- The static-HTML `.design` authoring shortcut applies only when creating a brand-new path. If a `.design` deck already exists, read and update its native JSON; if it still contains the initial HTML, materialize it first. Never replace an existing deck with HTML.
 - Set `metadata.defaultView` to `"slides"`.
 - Use one artboard per slide. Default to `1920x1080` for a 16:9 deck unless the user specifies another size.
 - Keep every slide the same size unless the format deliberately changes.
