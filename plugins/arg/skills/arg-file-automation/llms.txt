@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 23 triggers across 17 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 24 triggers across 18 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -153,6 +153,17 @@ Fires when a GitHub Actions workflow run in the repository is requested, starts,
 Connection must hold: `admin:repo_hook`.
 
 Delivery: provider webhook, so events arrive within seconds.
+### Gong (`gong`)
+
+#### `gong_call` — New call
+
+Fires when a new call is recorded in Gong. Polled - events arrive within ~15 minutes. Read-only (Gong exposes no call-events webhook), and calls have no later 'updated' state through this API, so every event is a new call.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `workspace_id` | string | no | Restrict to one Gong workspace. Empty = all workspaces. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Google (`google`)
 
 #### `gmail_message` — New email
