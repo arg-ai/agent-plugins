@@ -116,7 +116,7 @@ Deploy validates the configured service account against the automation file and 
 ## Tips
 
 - Start with a trigger node, then chain actions and flow control left→right (~340px apart).
-- **Choosing the trigger is the design decision, and a schedule is rarely the honest answer.** If the work starts when something happens somewhere else - an email lands, a Slack message arrives, an issue is filed, a calendar event is created, a CRM record changes - use the `integration` trigger for that event; `llms.txt` lists all 23 of them with their filter fields. A `schedule` is right for work that is genuinely periodic ("every Monday"), and a `poll` for a source with no event feed at all. `webhook` is the last resort - it needs the other system taught to call Arg.
+- **Choosing the trigger is the design decision, and a schedule is rarely the honest answer.** If the work starts when something happens somewhere else - an email lands, a Slack message arrives, an issue is filed, a calendar event is created, a CRM record changes - use the `integration` trigger for that event; `llms.txt` lists all 24 of them with their filter fields. A `schedule` is right for work that is genuinely periodic ("every Monday"), and a `poll` for a source with no event feed at all. `webhook` is the last resort - it needs the other system taught to call Arg.
 - Connect `output` → `input`; use the `false` handle for an `if` node's else branch.
 - Write valid, pretty-printed (2-space) JSON for `.automation`; write plain YAML for `.arg/workflows/*.yml`.
 - Keep YAML valid: unknown `uses` (including `uses: if`), duplicate trigger kinds, invalid cron expressions, and persistent triggers without a service account are compile errors surfaced on deploy.
