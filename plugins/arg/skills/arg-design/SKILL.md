@@ -138,6 +138,8 @@ then read the PNG back. Offline, `arg design render` does the same. Check, in or
 
 Fix what you find with targeted edits. **Do not delete the work and start over** - rebuilding is slow and reads as flailing. An overflowing frame is a sizing fix, not a reason to rewrite the frame.
 
+When the user needs the finished design deck as PowerPoint, discover and run the `design_to_pptx` action. It writes an editable `.pptx` into the workspace with slide order, notes, sections, hidden slides, shapes, text, media and fonts preserved where PowerPoint supports them. Keep the `.design` as the primary editable source; do not rebuild the deck with `python-pptx`.
+
 ## Build it up in pieces
 
 Write one visual group per edit - a header, a row, a card, a footer - rather than one call that emits the whole document. The user watches it appear, and a mistake costs one group instead of the page. It also keeps each diff small enough to check.

@@ -453,6 +453,12 @@ arg design render poster.design --artboard "Hero"   # → poster.png (single art
 
 Flags: `--format svg|png|jpg` (default png), `--scale <n>` (default 2), `--quality <0..1>` (jpeg, default 0.92), `--artboard <index|name>` (single artboard), `--all-artboards` (zip), `--outline-text`, `--include-id`, `--no-bounding-box`, `--ignore-overlapping`, `--color-profile document|srgb|display-p3` (default srgb). Referenced image/shader/3D fills are fetched from the workspace automatically. Run `arg design render install` once to provision the headless browser.
 
+## Export to PowerPoint (`design_to_pptx` action)
+
+Run the `design_to_pptx` action when the user wants a `.design` deck handed off as an editable PowerPoint file. The action calls the same exporter as **Download as .pptx** in Slides view, writes the result into the workspace, and preserves slide/section order, presenter notes, hidden slides, editable text and shapes, images, embedded fonts and playable video where PowerPoint supports them. Keep the `.design` as the source of truth instead of rebuilding the deck with `python-pptx`.
+
+Pass `source_path`; `output_path` defaults beside it with a `.pptx` extension. Skipped artboards remain in the package as hidden slides by default; pass `include_skipped_slides: false` only to remove them. The cloud action returns the package through a memory-bounded browser and is intended for outputs up to about 25 MB; for a larger media-heavy deck, direct the user to the Slides view Export pill.
+
 ## Convert to Photoshop (`design_to_psd` action)
 
 Run the `design_to_psd` action to turn a `.design` into a layered `.psd`. Text objects and solid rect/ellipse/line shapes arrive as live, editable Photoshop text and vector-shape layers. An axis-aligned shape whose only paint is an image fill keeps the complete source image in its raster layer and gets a Photoshop layer mask for the shape, so cover/crop overhang can be reframed after conversion without changing the initial composition. Rotated or mirrored shapes, tiles, mixed fills or strokes, baked effects, and unusually large off-mask images use the existing tight raster fallback. Shader, video, and 3D fills remain baked raster layers rather than being presented as original image pixels.

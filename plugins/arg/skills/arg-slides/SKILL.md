@@ -231,6 +231,8 @@ Deliver the `.design` deck as the primary artifact.
 
 In Slides view, **Download as .pptx** (the Export pill, or the More menu) writes the deck as an editable PowerPoint file - real shapes, text runs, pictures and notes pages, not one flat image per slide. Author for `.design` first and treat `.pptx` as the hand-off format; there is no need to build a second deck by hand. **Download as .pdf** sits beside it and is a page-per-artboard render, so it is the right choice when exact visual fidelity matters more than editability.
 
+From the agent, discover and run `design_to_pptx` with the deck's `source_path` (and an optional `output_path`). It calls the same exporter as the Slides view, saves the `.pptx` back into the workspace, and keeps skipped artboards as hidden slides by default. Set `include_skipped_slides: false` only when the user wants them omitted from the hand-off entirely.
+
 What carries over:
 
 | Deck feature                                             | In the `.pptx`                                                                          |
