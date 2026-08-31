@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.12.0"
+version: "2.13.0"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -388,15 +388,15 @@ A `.html` page can read/write workspace files and read the signed-in user's iden
 
 On an in-app cloud HTML preview, the separate `window.arg.actions` namespace exposes:
 
-| Method                                                              | Result                                              |
-| ------------------------------------------------------------------- | --------------------------------------------------- |
-| `list({ query?, category?, runtime?, backend?, includeSchema? })`   | Matching Action catalog entries                     |
-| `schema(actionId)`                                                  | `{ id, inputSchema }`                               |
-| `describe(actionId, { field?, value?, query?, category?, limit? })` | Base or dynamic-field schema/options                |
-| `run(actionId, input, { idempotencyKey? })`                         | `{ runId, status, output?, error? }`                |
-| `runBatch([{ actionId, input?, idempotencyKey? }, ...])`            | Positionally aligned per-call success/error results |
-| `getRun(runId)`                                                     | One durable run record with status/progress/output  |
-| `listRuns({ actionId?, status?, limit? })`                          | Recent run records                                  |
+| Method                                                                       | Result                                                                   |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `list({ query?, category?, runtime?, backend?, provider?, includeSchema? })` | Matching Action catalog entries, optionally for one integration provider |
+| `schema(actionId)`                                                           | `{ id, inputSchema }`                                                    |
+| `describe(actionId, { field?, value?, query?, category?, limit? })`          | Base or dynamic-field schema/options                                     |
+| `run(actionId, input, { idempotencyKey? })`                                  | `{ runId, status, output?, error? }`                                     |
+| `runBatch([{ actionId, input?, idempotencyKey? }, ...])`                     | Positionally aligned per-call success/error results                      |
+| `getRun(runId)`                                                              | One durable run record with status/progress/output                       |
+| `listRuns({ actionId?, status?, limit? })`                                   | Recent run records                                                       |
 
 There is no import and no token in authored code. The isolated iframe sends an origin-pinned `postMessage` to the Arg editor; the parent fixes the current workspace and audit surface, calls the normal authenticated Action API as the signed-in viewer, and the backend rechecks workspace permissions plus the Action's current Zod schema. Call `await window.arg.actions.ready`, then check `window.arg.actions.enabled`.
 
