@@ -1,6 +1,6 @@
 ---
 name: arg-mcp
-version: "1.8.0"
+version: "1.8.1"
 description: Access method for Arg file CRUD over the MCP server (read_file, write_file, edit_file, multi_edit, grep, semantic_search, run_bash, list_files, move_files, create_upload_session, download_file). Load this when Arg is connected over MCP — the cloud endpoint or the desktop app's local loopback server over shared folders. Format/schema knowledge lives in arg-files and the arg-file-* skills; this skill is only the how-to-read-and-write layer.
 ---
 
@@ -8,16 +8,16 @@ description: Access method for Arg file CRUD over the MCP server (read_file, wri
 
 Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.ai/mcp`. (Use `arg-cli` instead when MCP isn't connected and the `arg` command-line tool is installed.)
 
-| Operation           | Tool(s)                                                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Create**          | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)      |
-| **Read**            | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                              |
-| **Update**          | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                               |
-| **Move / rename**   | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                   |
-| **Delete**          | `run_bash` (`rm`) — no dedicated tool                                                                                                                              |
-| **List / search**   | `list_files` (tree listing) · `grep` (exact text/regex) · `semantic_search` (semantic - find files by meaning when exact wording is unknown)                       |
-| **Run a generator** | `run_bash` — executes in the **remote Arg workspace sandbox**; the file it writes lands directly in the workspace (e.g. `sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`) |
-| **Share publicly**  | `create_share_link` (public, sign-in-free URL for a file or folder) · `list_share_links` · `delete_share_link`                                                     |
+| Operation           | Tool(s)                                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Create**          | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)       |
+| **Read**            | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                               |
+| **Update**          | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                                |
+| **Move / rename**   | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                    |
+| **Delete**          | `run_bash` (`rm`) — no dedicated tool                                                                                                                               |
+| **List / search**   | `run_bash` `ls`/`ls -1` (fastest names at mount root) · `list_files` (full tree, not cheap) · `grep` (exact text/regex, not cheap) · `semantic_search` (by meaning) |
+| **Run a generator** | `run_bash` — executes in the **remote Arg workspace sandbox**; the file it writes lands directly in the workspace (e.g. `sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`)  |
+| **Share publicly**  | `create_share_link` (public, sign-in-free URL for a file or folder) · `list_share_links` · `delete_share_link`                                                      |
 
 ## Notes
 
@@ -26,7 +26,7 @@ Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.a
 - **Created-file links:** successful cloud `write_file` results include a full canonical Arg URL. `create_upload_session` includes the same URL in its manifest, and the `completeUrl` response returns it as `url` after the multipart upload finishes.
 - **Binary formats** (image/video/audio/pptx/xlsx/sqlite): you cannot `write_file` them. Create with `create_upload_session` (follow the `instructions` in its response) or generate with `run_bash`; read with `download_file`.
 - **Always `read_file` first** before an edit. Prefer `edit_file`/`multi_edit` for big files; `write_file` overwrites the whole file.
-- **Workspace is network-mounted:** the remote sandbox accesses files over the network, so per-file access is slow and a recursive walk can hang. When using `run_bash`, never run `grep -r`, `find`, or `ls -R` from the workspace root — use `grep`, `list_files`, or `semantic_search` instead, or scope a bash search to a specific subdirectory.
+- **Workspace is network-mounted:** the remote sandbox accesses files over the network, so per-file access is slow and a recursive walk can hang. Fastest listing of the mount root is `run_bash` `ls` or `ls -1` (names only). Never `ls -l` / `ls -la` of `/` or `/ws` (cwd is `/ws`; `-l` stats every name) — for mode/size, `ls -l` a subdirectory or `stat` one path. Never run `grep -r`, `find`, or `ls -R` from the workspace root. `list_files` still walks the whole tree even at depth 1, so it is not a cheap root listing. `grep` and `semantic_search` are content search, not listing, and are not cheap — pass a subdirectory when you can.
 - **Installing packages in the sandbox:** `requests`, `pandas`, `numpy`, `scipy`, `matplotlib`, `pillow`, `pillow-heif`, `beautifulsoup4`, `pyyaml`, `openpyxl`, `xlsxwriter`, `python-docx`, `python-pptx`, `pymupdf`, `pypdf`, `pypdfium2`, `pdfplumber`, `opencv-python-headless`, `imageio-ffmpeg`, `fonttools` and `brotli` are preinstalled (`ffmpeg` and `ffprobe` are on PATH) — check before installing, since the user watches every install run. For anything else, `pip install <pkg> -q`. Use `apt-get` only for system binaries, never for a Python package. `arg-files` lists the recommended library per format. Treat reinstall after a cold container as normal and cheap. Keep venvs and `node_modules` under `/tmp` or `$HOME` for the session - never dump a dependency tree onto the workspace mount (network store the user browses; thousands of vendored files slow later bash and pollute search).
 - **Sandbox is ephemeral:** after ~10 minutes of inactivity (or any cold start), local state is gone - extra pip/apt you added this session, `/tmp`, cwd, shell exports, background processes. Workspace files on the mount survive. Image-baked packages and `ffmpeg`/`ffprobe` are already on a fresh container - import/use them, do not reinstall. Reinstall only extra packages after a cold start. Named `sandbox_id` only shares a container while it is still warm; omit it unless you intentionally need a shared named box, and do not pass the word `default` as a name.
 - **`run_bash` shell rules:** a file just created with `write_file` can lag briefly under the mount (lookups are cached) — verify new files with `read_file`, not a `[ -f ... ]` shell poll loop. Never use a bare `exit` in a command: while the container is warm the shell session is reused, so `exit` terminates that shell (losing cwd/env state), not just your command.
