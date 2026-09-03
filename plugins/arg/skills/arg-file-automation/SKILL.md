@@ -1,6 +1,6 @@
 ---
 name: arg-file-automation
-version: "1.16.0"
+version: "1.17.1"
 description: Create, read, update, delete, and deploy Arg automation files (.automation) and YAML workflows (.arg/workflows/*.yml) for scheduled jobs, webhooks, file-change reactions, provider events (new email, new Slack message, new issue, calendar event, CRM record) and multi-step pipelines. Load when building, editing, or deploying workflow automations, or when deciding what should trigger one.
 ---
 
@@ -32,6 +32,8 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
 **Tolerating a node's own failure** — any action/flow node (not `loop`) can set `config.continue_on_error: true`. By default a failed node stops its branch and the run reports `error`; with this set, the failure still emits a `node_error` event but execution continues along the node's normal output edges with `{ failed: true, error_message: "..." }` (plus any fields the failed result carried, e.g. a `code` node's `stdout`/`stderr`) as the downstream input — reference it as `{{ id.output.failed }}` / `{{ id.output.error_message }}`, never `{{ id.output.error }}` (a node result with a literal `error` field is what the engine's strict template resolver refuses to reference). Use this so one optional/flaky step (an enrichment lookup, a non-critical notification) can't take down an otherwise-working automation — wire an `if` after it to branch on `{{ id.output.failed }}`.
 
 **Retrying a flaky node** — any action/flow node (not `loop` or `delay`) can set `config.retry: true` (defaults: 3 attempts, 5s fixed delay) or `config.retry: { max_attempts, delay_seconds, backoff }` (`max_attempts` 2-5, `delay_seconds` 0-300, `backoff` `"fixed"` | `"exponential"`). Unlike `continue_on_error` (accept the failure and move on), `retry` re-attempts the node itself before counting it as failed — compose them so a transient error retries a few times and only falls through to `continue_on_error` handling once exhausted. On a deployed run the wait between attempts is a real durable sleep (no compute burned); a live editor preview retries immediately. Don't set it on a non-idempotent write (e.g. sending an email) unless a duplicate on retry is acceptable — retry re-submits the node's own side effects on each attempt.
+
+**A `loop`'s own per-iteration tolerance** — `continue_on_error`/`retry` aren't valid ON the `loop` node itself because a loop already tolerates a failing iteration on its own: an iteration whose body fails (and didn't set its own `continue_on_error` on the failing body node) doesn't stop the loop or the run. That iteration's entry in `{{ Loop.output.items }}` becomes `{ failed: true, error_message: "..." }` instead of whatever the body would have produced, every OTHER iteration's real result is still in `items` at its own index, and `{{ Loop.output.failedCount }}` (always present — `0` when nothing failed) tells you how many without scanning `items` by hand. Wire an `if` on `{{ Loop.output.failedCount }} > 0` after the loop to notify/branch on partial failure instead of assuming a big fan-out either fully succeeds or the whole automation errors.
 
 ## YAML workflow essentials
 

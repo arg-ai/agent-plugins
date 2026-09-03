@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 25 triggers across 19 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 26 triggers across 19 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -143,6 +143,21 @@ Fires when commits are pushed to the repository.
 | `owner` | string | yes | Repository owner (user or org login) |
 | `repo` | string | yes | Repository name |
 | `branch` | string | no | Only fire for pushes to this branch (e.g. "main"). Empty = all branches. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `github_release` — Release
+
+Fires when a release in the repository is published, edited, or otherwise changed — the way to react to a new version going out (announce it, kick off a follow-up deploy, file a changelog task) without polling.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `actions` | array | no | Only fire for these actions (empty = all — most loops only want "published"). |
+| `include_prereleases` | boolean | no | Also fire for releases marked as a prerelease. Off by default. |
 | `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
 
 Connection must hold: `admin:repo_hook`.
