@@ -1,4 +1,4 @@
-// Generated from sdk/typescript/src/documents/design.mts. Do not edit directly.
+// Generated from sdk/typescript/src/documents/design.ts. Do not edit directly.
 import {
   applyJsonEdits,
   cloneJson,
@@ -10,35 +10,15 @@ import {
   setJsonProperty,
   stringifyJsonDocument,
 } from "./common.mjs";
-// ---------- auto layout ----------
-// Names and value sets mirror frontend/src/components/editors/design-editor/types.ts;
-// design-layout-contract in test/design-document.test.ts pins them together.
-// The types are derived from these arrays rather than spelled twice, so the
-// runtime validator below cannot accept a value the type rejects.
-export const DESIGN_LAYOUT_SIZINGS = ["fixed", "fill", "hug"];
-export const DESIGN_LAYOUT_ALIGNS = ["start", "center", "end", "stretch"];
-export const DESIGN_LAYOUT_JUSTIFIES = [
-  "start",
-  "center",
-  "end",
-  "space-between",
-  "space-around",
-  "space-evenly",
-];
-export const DESIGN_LAYOUT_AXES = ["row", "column"];
-export const DESIGN_GRID_TRACK_UNITS = ["px", "fr", "auto"];
-export const DESIGN_LAYOUT_DISTRIBUTES = [
-  "start",
-  "center",
-  "end",
-  "stretch",
-  "space-between",
-  "space-around",
-  "space-evenly",
-];
-export const DESIGN_LAYOUT_POSITIONINGS = ["auto", "absolute"];
-export const DESIGN_GRID_AUTO_REPEATS = ["auto-fill", "auto-fit"];
-/** What a scalar token means. Inside the document every scalar is document
+// `design-html.ts` imports this module back, but only with `import type`, which
+// `verbatimModuleSyntax` erases from both the tsc build and the skill
+// generator's `transpileModule` output. The cycle is therefore types-only —
+// TypeScript resolves that without trouble and no runtime import graph closes.
+// Hoisting `DesignDocument` into `common.ts` would break the cycle at the cost
+// of moving the format's public types away from the module that owns them.
+import { isDesignHtml, parseDesignHtml } from "./design-html.mjs";
+import { applyDesignLayout } from "./layout.mjs";
+/** What a `number` token measures. Every role is authored in document
  *  pixels (except `leading`, a ratio of the font size); the role picks the CSS
  *  unit and the Tailwind v4 namespace, and in v4 the namespace is what turns a
  *  variable into utilities. */
@@ -222,6 +202,18 @@ function internalShaderId(fill) {
   return typeof fill.shaderId === "string" ? fill.shaderId : undefined;
 }
 /**
+ * A shape's point count is geometry too, so it answers to the same rule as a
+ * frame's — the codec turns it into that many coordinates, and a non-finite one
+ * is not a count. Absent is fine; the serializer has a default for that.
+ */
+function hasFiniteShapeCount(value, field, label, errors) {
+  const number = value[field];
+  if (number === undefined) return;
+  if (typeof number !== "number" || !Number.isFinite(number)) {
+    errors.push(`${label}.${field} must be finite`);
+  }
+}
+/**
  * `derivable` relaxes the check for a child of a layout group: the layout owns
  * those numbers and recomputes them on load, so a document is allowed to leave
  * them off disk entirely. A value that IS written still has to be usable, since
@@ -237,90 +229,39 @@ function hasFiniteGeometry(value, label, errors, derivable = false) {
     }
   }
 }
-function validateEnum(value, allowed, label, errors) {
+const LAYOUT_DIRECTIONS = ["row", "column", "row-reverse", "column-reverse"];
+const LAYOUT_WRAPS = ["nowrap", "wrap", "wrap-reverse"];
+const LAYOUT_JUSTIFICATIONS = [
+  "start",
+  "center",
+  "end",
+  "space-between",
+  "space-around",
+  "space-evenly",
+];
+const LAYOUT_ALIGNMENTS = ["start", "center", "end", "stretch"];
+const LAYOUT_AUTO_FLOWS = ["row", "column"];
+const LAYOUT_PADDING_SIDES = ["top", "right", "bottom", "left"];
+function optionList(allowed) {
+  if (allowed.length < 3) return allowed.join(" or ");
+  return `${allowed.slice(0, -1).join(", ")}, or ${allowed[allowed.length - 1]}`;
+}
+function hasAllowedValue(value, allowed, label, errors) {
   if (value === undefined) return;
   if (typeof value !== "string" || !allowed.includes(value)) {
-    errors.push(`${label} must be one of ${allowed.join(", ")}`);
+    errors.push(`${label} must be ${optionList(allowed)}`);
   }
 }
-function validateNonNegative(value, label, errors) {
+function hasNonNegativeNumber(value, label, errors) {
   if (value === undefined) return;
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
     errors.push(`${label} must be a non-negative number`);
   }
 }
-function validateLayoutPadding(value, label, errors) {
-  if (value === undefined || typeof value === "number") {
-    validateNonNegative(value, label, errors);
-    return;
-  }
-  if (!isJsonObject(value)) {
-    errors.push(`${label} must be a non-negative number or a per-edge object`);
-    return;
-  }
-  for (const edge of ["top", "right", "bottom", "left"]) {
-    validateNonNegative(value[edge], `${label}.${edge}`, errors);
-  }
-}
-function validateGridTracks(value, label, errors) {
-  if (typeof value === "number") {
-    if (!Number.isInteger(value) || value < 1) {
-      errors.push(`${label} must be a positive integer or an array of tracks`);
-    }
-    return;
-  }
-  if (!Array.isArray(value)) {
-    errors.push(`${label} must be a positive integer or an array of tracks`);
-    return;
-  }
-  if (value.length === 0) {
-    errors.push(`${label} must contain at least one track`);
-    return;
-  }
-  value.forEach((track, index) => {
-    validateGridTrack(track, `${label}[${index}]`, errors, true);
-  });
-}
-function validateGridTrack(track, owner, errors, allowRepeat) {
-  if (track === undefined) return;
-  if (!isJsonObject(track)) {
-    errors.push(`${owner} must be an object`);
-    return;
-  }
-  validateNonNegative(track.size, `${owner}.size`, errors);
-  if (track.size === undefined) errors.push(`${owner}.size must be a non-negative number`);
-  if (track.unit === undefined) errors.push(`${owner}.unit must be one of px, fr, auto`);
-  else validateEnum(track.unit, DESIGN_GRID_TRACK_UNITS, `${owner}.unit`, errors);
-  // `min`/`max` are bounds, not tracks: nesting a repeat inside one has no CSS
-  // reading, so it is rejected here rather than silently ignored on load.
-  validateGridTrack(track.min, `${owner}.min`, errors, false);
-  validateGridTrack(track.max, `${owner}.max`, errors, false);
-  if (track.repeat === undefined) return;
-  if (!allowRepeat) {
-    errors.push(`${owner}.repeat is only allowed on a track, not on a min/max bound`);
-    return;
-  }
-  if (typeof track.repeat === "number") {
-    if (!Number.isInteger(track.repeat) || track.repeat < 1) {
-      errors.push(`${owner}.repeat must be an integer of at least 1, auto-fill, or auto-fit`);
-    }
-    return;
-  }
-  validateEnum(track.repeat, DESIGN_GRID_AUTO_REPEATS, `${owner}.repeat`, errors);
-}
-function validateLayoutConstraints(value, label, errors) {
+function hasTrackList(value, label, errors) {
   if (value === undefined) return;
-  if (!isJsonObject(value)) {
-    errors.push(`${label} must be an object`);
-    return;
-  }
-  for (const field of ["minWidth", "maxWidth", "minHeight", "maxHeight"]) {
-    validateNonNegative(value[field], `${label}.${field}`, errors);
-  }
-  const ratio = value.aspectRatio;
-  if (ratio === undefined) return;
-  if (typeof ratio !== "number" || !Number.isFinite(ratio) || ratio <= 0) {
-    errors.push(`${label}.aspectRatio must be a positive number (width divided by height)`);
+  if (!Array.isArray(value) || value.some((track) => typeof track !== "string")) {
+    errors.push(`${label} must be an array of strings`);
   }
 }
 function validateTokenRef(value, label, errors) {
@@ -329,88 +270,131 @@ function validateTokenRef(value, label, errors) {
     errors.push(`${label} must be a token id`);
   }
 }
-function validateLayout(value, label, errors) {
+const TOKEN_ALIAS_RE = /^\{[^{}]+\}$/;
+/** A token's value has to match the shape its `type` promises, or every
+ *  reference to it would read back something the reference site cannot use. An
+ *  alias (`"{other}"`) stands in for any of them and is resolved by the editor,
+ *  which is also where a broken chain is caught — the SDK only has to reject a
+ *  value that could never be one. */
+function validateDesignTokens(value, errors) {
+  const tokens = value.tokens;
+  if (tokens === undefined) return;
+  if (!isJsonObject(tokens)) {
+    errors.push("tokens must be an object keyed by token id");
+    return;
+  }
+  for (const [id, token] of Object.entries(tokens)) {
+    const owner = `tokens.${id}`;
+    if (!isJsonObject(token)) {
+      errors.push(`${owner} must be an object`);
+      continue;
+    }
+    hasAllowedValue(token.type, DESIGN_TOKEN_TYPES, `${owner}.type`, errors);
+    hasAllowedValue(token.role, DESIGN_NUMBER_TOKEN_ROLES, `${owner}.role`, errors);
+    const tokenValue = token.value;
+    if (tokenValue === undefined) {
+      errors.push(`${owner}.value must be set`);
+      continue;
+    }
+    if (typeof tokenValue === "string" && TOKEN_ALIAS_RE.test(tokenValue.trim())) continue;
+    switch (token.type) {
+      case "color":
+      case "fontFamily":
+        if (typeof tokenValue !== "string" || !tokenValue) {
+          errors.push(`${owner}.value must be a non-empty string`);
+        }
+        break;
+      case "number":
+        if (typeof tokenValue !== "number" || !Number.isFinite(tokenValue)) {
+          errors.push(`${owner}.value must be a finite number`);
+        }
+        break;
+      case "paint":
+      case "shadow":
+        if (!isJsonObject(tokenValue) || typeof tokenValue.type !== "string") {
+          errors.push(`${owner}.value must be an object with a type`);
+        }
+        break;
+      case "textStyle":
+        if (!isJsonObject(tokenValue)) errors.push(`${owner}.value must be an object`);
+        break;
+      default:
+        break;
+    }
+  }
+}
+/**
+ * A layout is solved into every child's frame, so a value the solver has to
+ * fall back on produces a silently wrong drawing rather than a visible failure.
+ * Unknown fields pass: this format preserves them everywhere else too.
+ */
+function hasValidLayout(value, label, errors) {
   if (value === undefined) return;
   if (!isJsonObject(value)) {
     errors.push(`${label} must be an object`);
     return;
   }
-  if (value.type !== "flex" && value.type !== "grid") {
-    errors.push(`${label}.type must be one of flex, grid`);
-    return;
+  if (value.mode !== "flex" && value.mode !== "grid") {
+    errors.push(`${label}.mode must be flex or grid`);
   }
-  validateNonNegative(value.gap, `${label}.gap`, errors);
-  validateNonNegative(value.rowGap, `${label}.rowGap`, errors);
-  validateLayoutPadding(value.padding, `${label}.padding`, errors);
-  validateEnum(value.align, DESIGN_LAYOUT_ALIGNS, `${label}.align`, errors);
-  validateEnum(value.alignContent, DESIGN_LAYOUT_DISTRIBUTES, `${label}.alignContent`, errors);
+  hasAllowedValue(value.direction, LAYOUT_DIRECTIONS, `${label}.direction`, errors);
+  hasAllowedValue(value.wrap, LAYOUT_WRAPS, `${label}.wrap`, errors);
+  hasAllowedValue(value.justify, LAYOUT_JUSTIFICATIONS, `${label}.justify`, errors);
+  hasAllowedValue(value.align, LAYOUT_ALIGNMENTS, `${label}.align`, errors);
+  hasAllowedValue(value.alignContent, LAYOUT_JUSTIFICATIONS, `${label}.alignContent`, errors);
+  hasNonNegativeNumber(value.rowGap, `${label}.rowGap`, errors);
+  hasNonNegativeNumber(value.columnGap, `${label}.columnGap`, errors);
+  hasValidLayoutTokenRefs(value, label, errors);
+  if (value.padding !== undefined) {
+    if (!isJsonObject(value.padding)) errors.push(`${label}.padding must be an object`);
+    else {
+      for (const side of LAYOUT_PADDING_SIDES) {
+        hasNonNegativeNumber(value.padding[side], `${label}.padding.${side}`, errors);
+      }
+    }
+  }
+  hasTrackList(value.columns, `${label}.columns`, errors);
+  hasTrackList(value.rows, `${label}.rows`, errors);
+  hasAllowedValue(value.autoFlow, LAYOUT_AUTO_FLOWS, `${label}.autoFlow`, errors);
+}
+function hasValidLayoutTokenRefs(value, label, errors) {
   validateTokenRef(value.gapToken, `${label}.gapToken`, errors);
   validateTokenRef(value.rowGapToken, `${label}.rowGapToken`, errors);
-  validateTokenRef(value.paddingToken, `${label}.paddingToken`, errors);
-  if (value.type === "flex") {
-    validateEnum(value.direction, DESIGN_LAYOUT_AXES, `${label}.direction`, errors);
-    validateEnum(value.justify, DESIGN_LAYOUT_JUSTIFIES, `${label}.justify`, errors);
-    if (value.wrap !== undefined && typeof value.wrap !== "boolean") {
-      errors.push(`${label}.wrap must be a boolean`);
-    }
-    return;
-  }
-  validateNonNegative(value.columnGap, `${label}.columnGap`, errors);
   validateTokenRef(value.columnGapToken, `${label}.columnGapToken`, errors);
-  validateEnum(value.justify, DESIGN_LAYOUT_ALIGNS, `${label}.justify`, errors);
-  validateEnum(value.justifyContent, DESIGN_LAYOUT_DISTRIBUTES, `${label}.justifyContent`, errors);
-  validateEnum(value.autoFlow, DESIGN_LAYOUT_AXES, `${label}.autoFlow`, errors);
-  validateGridTrack(value.autoRows, `${label}.autoRows`, errors, false);
-  validateGridTrack(value.autoColumns, `${label}.autoColumns`, errors, false);
-  if (value.dense !== undefined && typeof value.dense !== "boolean") {
-    errors.push(`${label}.dense must be a boolean`);
-  }
-  if (value.columns === undefined) {
-    errors.push(`${label}.columns must be a positive integer or an array of tracks`);
-  } else validateGridTracks(value.columns, `${label}.columns`, errors);
-  if (value.rows !== undefined) validateGridTracks(value.rows, `${label}.rows`, errors);
+  validateTokenRef(value.paddingToken, `${label}.paddingToken`, errors);
 }
-function validateObjectLayoutFields(entry, label, errors) {
-  const sizing = entry.layoutSizing;
-  if (sizing !== undefined) {
-    if (!isJsonObject(sizing)) errors.push(`${label}.layoutSizing must be an object`);
-    else {
-      validateEnum(sizing.width, DESIGN_LAYOUT_SIZINGS, `${label}.layoutSizing.width`, errors);
-      validateEnum(sizing.height, DESIGN_LAYOUT_SIZINGS, `${label}.layoutSizing.height`, errors);
-    }
-  }
-  validateNonNegative(entry.layoutGrow, `${label}.layoutGrow`, errors);
-  validateNonNegative(entry.layoutShrink, `${label}.layoutShrink`, errors);
-  validateEnum(entry.layoutAlign, DESIGN_LAYOUT_ALIGNS, `${label}.layoutAlign`, errors);
-  validateEnum(entry.layoutJustify, DESIGN_LAYOUT_ALIGNS, `${label}.layoutJustify`, errors);
-  validateEnum(
-    entry.layoutPositioning,
-    DESIGN_LAYOUT_POSITIONINGS,
-    `${label}.layoutPositioning`,
-    errors,
-  );
-  validateLayoutConstraints(entry.layoutConstraints, `${label}.layoutConstraints`, errors);
-  const area = entry.gridArea;
-  if (area === undefined) return;
-  if (!isJsonObject(area)) {
-    errors.push(`${label}.gridArea must be an object`);
+function hasValidLayoutItem(value, label, errors) {
+  if (value === undefined) return;
+  if (!isJsonObject(value)) {
+    errors.push(`${label} must be an object`);
     return;
   }
-  for (const field of ["column", "row", "columnSpan", "rowSpan"]) {
-    const number = area[field];
-    if (number === undefined) continue;
-    if (typeof number !== "number" || !Number.isInteger(number) || number < 1) {
-      errors.push(`${label}.gridArea.${field} must be an integer of at least 1`);
-    }
+  hasNonNegativeNumber(value.grow, `${label}.grow`, errors);
+  hasNonNegativeNumber(value.shrink, `${label}.shrink`, errors);
+  const basis = value.basis;
+  if (
+    basis !== undefined &&
+    basis !== "auto" &&
+    (typeof basis !== "number" || !Number.isFinite(basis))
+  ) {
+    errors.push(`${label}.basis must be a finite number or auto`);
+  }
+  hasAllowedValue(value.alignSelf, LAYOUT_ALIGNMENTS, `${label}.alignSelf`, errors);
+  if (
+    value.order !== undefined &&
+    (typeof value.order !== "number" || !Number.isFinite(value.order))
+  )
+    errors.push(`${label}.order must be finite`);
+  for (const field of ["column", "row"]) {
+    if (value[field] !== undefined && typeof value[field] !== "string")
+      errors.push(`${label}.${field} must be a string`);
   }
 }
-/** Ids whose frame geometry a layout owns and recomputes on load — a laid-out
- *  group's children, and an artboard's `layoutRoot`. An absolutely-positioned
- *  child is inside its container but outside its flow, so its frame is authored
- *  and stays. */
-function laidOutChildIds(document) {
+/** Children whose frames a layout container derives — a document written by the
+ *  earlier layout model's serializer may omit those numbers entirely, so the
+ *  validator relaxes for them and the reader backfills. */
+function laidOutChildIds(objects) {
   const ids = new Set();
-  const objects = objectRecord(document) ?? {};
   for (const entry of Object.values(objects)) {
     if (!isJsonObject(entry) || entry.layout === undefined || !Array.isArray(entry.children))
       continue;
@@ -420,11 +404,6 @@ function laidOutChildIds(document) {
       if (isJsonObject(target) && target.layoutPositioning === "absolute") continue;
       ids.add(child);
     }
-  }
-  if (!Array.isArray(document.artboards)) return ids;
-  for (const artboard of document.artboards) {
-    if (!isJsonObject(artboard) || typeof artboard.layoutRoot !== "string") continue;
-    if (Object.hasOwn(objects, artboard.layoutRoot)) ids.add(artboard.layoutRoot);
   }
   return ids;
 }
@@ -442,8 +421,176 @@ export function createDesignDocument(options = {}) {
   assertValid(document);
   return document;
 }
+/** One track of the earlier layout model's grid, as `{ size, unit }`. */
+function legacyTrackToCss(track) {
+  if (!isJsonObject(track)) return "auto";
+  if (track.unit === "fr") return `${typeof track.size === "number" ? track.size : 1}fr`;
+  if (track.unit === "auto") return "auto";
+  return `${typeof track.size === "number" ? track.size : 0}px`;
+}
+function legacyTracksToCss(value) {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return Array.from({ length: value }, () => "1fr");
+  }
+  if (Array.isArray(value)) return value.map(legacyTrackToCss);
+  return undefined;
+}
+function legacyPadding(value) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return { top: value, right: value, bottom: value, left: value };
+  }
+  return isJsonObject(value) ? value : undefined;
+}
+function compactRecord(record) {
+  for (const key of Object.keys(record)) if (record[key] === undefined) delete record[key];
+  return record;
+}
+/**
+ * Fold the earlier layout model (PR #5049: `layout.type`, `layoutSizing`
+ * fixed/fill/hug, `layoutGrow`, `layoutAlign`, `gridArea`) into the current
+ * CSS-1:1 one (`layout.mode` + `layoutItem`), so a document written between the
+ * two implementations keeps its layout.
+ *
+ * Two semantic gaps are bridged deliberately:
+ * - That model laid children out in the visible hierarchy's top-to-bottom order
+ *   — the REVERSE of the painter-order `children` array the current solver
+ *   follows. Reversing `children` would flip paint order, so each migrated
+ *   child gets `layoutItem.order` instead, which reverses layout order alone.
+ * - `hug` has no equivalent (nothing measures content here); a hug child keeps
+ *   whatever frame is on disk, and a frame that model omitted as derived is
+ *   backfilled with a placeholder the solver then positions.
+ */
+export function migrateLegacyDesignLayout(document) {
+  const objects = isJsonObject(document.objects) ? document.objects : undefined;
+  if (!objects) return document;
+  const legacyContainers = Object.entries(objects).filter(
+    ([, entry]) =>
+      isJsonObject(entry) && isJsonObject(entry.layout) && typeof entry.layout.type === "string",
+  );
+  const legacyChildFields = Object.values(objects).some(
+    (entry) =>
+      isJsonObject(entry) &&
+      (entry.layoutSizing !== undefined ||
+        entry.layoutGrow !== undefined ||
+        entry.layoutAlign !== undefined ||
+        entry.gridArea !== undefined),
+  );
+  if (legacyContainers.length === 0 && !legacyChildFields) return document;
+  const next = cloneJson(document);
+  const nextObjects = next.objects;
+  for (const [containerId, rawEntry] of Object.entries(nextObjects)) {
+    if (!isJsonObject(rawEntry)) continue;
+    const entry = rawEntry;
+    const old = entry.layout;
+    if (!isJsonObject(old) || typeof old.type !== "string") continue;
+    const direction = old.direction === "column" ? "column" : "row";
+    entry.layout = compactRecord(
+      old.type === "grid"
+        ? {
+            mode: "grid",
+            columns: legacyTracksToCss(old.columns),
+            rows: legacyTracksToCss(old.rows),
+            columnGap: typeof old.columnGap === "number" ? old.columnGap : old.gap,
+            rowGap: typeof old.rowGap === "number" ? old.rowGap : old.gap,
+            padding: legacyPadding(old.padding),
+            // That model's grid `justify`/`align` are in-cell placements; the
+            // start/center/end words survive, `stretch` is already the default.
+            justify: old.justify === "stretch" ? undefined : old.justify,
+            align: old.align,
+            autoFlow: old.autoFlow,
+          }
+        : {
+            mode: "flex",
+            direction,
+            wrap: old.wrap === true ? "wrap" : undefined,
+            justify: old.justify,
+            align: old.align,
+            columnGap: old.gap,
+            rowGap: typeof old.rowGap === "number" ? old.rowGap : old.gap,
+            padding: legacyPadding(old.padding),
+          },
+    );
+    const children = Array.isArray(entry.children) ? entry.children : [];
+    const count = children.length;
+    children.forEach((childId, index) => {
+      if (typeof childId !== "string") return;
+      const child = nextObjects[childId];
+      if (!isJsonObject(child)) return;
+      const sizing = isJsonObject(child.layoutSizing) ? child.layoutSizing : {};
+      const mainSizing = direction === "column" ? sizing.height : sizing.width;
+      const crossSizing = direction === "column" ? sizing.width : sizing.height;
+      const area = isJsonObject(child.gridArea) ? child.gridArea : undefined;
+      const item = compactRecord({
+        ...(isJsonObject(child.layoutItem) ? child.layoutItem : {}),
+        order: count > 1 ? count - 1 - index : undefined,
+        grow:
+          typeof child.layoutGrow === "number"
+            ? child.layoutGrow
+            : mainSizing === "fill"
+              ? 1
+              : undefined,
+        alignSelf:
+          typeof child.layoutAlign === "string"
+            ? child.layoutAlign
+            : crossSizing === "fill"
+              ? "stretch"
+              : undefined,
+        column: area ? gridAreaToLine(area.column, area.columnSpan) : undefined,
+        row: area ? gridAreaToLine(area.row, area.rowSpan) : undefined,
+      });
+      if (Object.keys(item).length > 0) child.layoutItem = item;
+      delete child.layoutSizing;
+      delete child.layoutGrow;
+      delete child.layoutAlign;
+      delete child.gridArea;
+      // That model omitted derived geometry on disk; the solver needs a frame
+      // to start from, so backfill a placeholder it will position and size.
+      const frame = isJsonObject(child.frame) ? child.frame : {};
+      child.frame = {
+        x: typeof frame.x === "number" ? frame.x : 0,
+        y: typeof frame.y === "number" ? frame.y : 0,
+        width: typeof frame.width === "number" ? frame.width : 100,
+        height: typeof frame.height === "number" ? frame.height : 100,
+        ...(typeof frame.rotation === "number" ? { rotation: frame.rotation } : {}),
+      };
+    });
+    void containerId;
+  }
+  // Child fields can also linger on objects whose container already migrated
+  // (or was deleted); they are that model's spelling either way.
+  for (const entry of Object.values(nextObjects)) {
+    if (!isJsonObject(entry)) continue;
+    delete entry.layoutSizing;
+    delete entry.layoutGrow;
+    delete entry.layoutAlign;
+    delete entry.gridArea;
+  }
+  return next;
+}
+function gridAreaToLine(start, span) {
+  const hasStart = typeof start === "number" && Number.isInteger(start) && start >= 1;
+  const hasSpan = typeof span === "number" && Number.isInteger(span) && span > 1;
+  if (hasStart && hasSpan) return `${start} / span ${span}`;
+  if (hasStart) return `${start}`;
+  if (hasSpan) return `span ${span}`;
+  return undefined;
+}
+/**
+ * Read canonical `.design` JSON or the transient HTML creation wire.
+ *
+ * The exact HTML codec (`serializeDesignHtml` in ./design-html) is also used by
+ * canvas-owned `.html` projections. A brand-new `.design` may carry that input
+ * until its first editable open materializes JSON, so readers tolerate it even
+ * though writers persist JSON.
+ *
+ * Everything downstream of this function — `editDesign`, the artboard/object
+ * mutators, `validateDesign`, `collectDesignFileReferences` — operates on the
+ * parsed document object and is unchanged by the input spelling.
+ */
 export function parseDesign(text) {
-  let document = parseJsonDocument(text, "Design document");
+  let document = isDesignHtml(text)
+    ? parseDesignHtml(text)
+    : parseJsonDocument(text, "Design document");
   if (!Array.isArray(document.artboards) || document.artboards.length === 0) {
     const canvas = isJsonObject(document.canvas) ? document.canvas : {};
     const background = isJsonObject(canvas.background)
@@ -465,11 +612,27 @@ export function parseDesign(text) {
     };
   }
   normalizeDesignFileFillsInPlace(document);
+  document = migrateLegacyDesignLayout(document);
+  // `parseDesignHtml` already solved its branch, and the solve is idempotent, so
+  // this is here for the legacy-JSON branch — which has no CSS to carry a layout
+  // child's position and would otherwise hand back the authored frames the
+  // container's own rules are supposed to override.
+  // Guarded because the solve reads author-controlled span and track counts and
+  // a read must degrade, never throw: the authored frames are a worse layout
+  // than the solved ones but still the user's document.
+  try {
+    document = applyDesignLayout(document);
+  } catch {
+    // Keep the authored frames.
+  }
   assertValid(document);
   return document;
 }
+/** Write a `.design` file: JSON, until the deferred HTML flip (see
+ *  `parseDesign`). Flipping this body to `serializeDesignHtml(normalized)` is
+ *  the whole launch. */
 export function stringifyDesign(document) {
-  const normalized = normalizedDesign(document);
+  const normalized = normalizedDesign(migrateLegacyDesignLayout(document));
   assertValid(normalized);
   return stringifyJsonDocument(normalized);
 }
@@ -527,59 +690,6 @@ function validateDesignMetadata(value, artboardIds, errors) {
     });
   });
 }
-const TOKEN_ALIAS_RE = /^\{[^{}]+\}$/;
-/** A token's value has to match the shape its `type` promises, or every
- *  reference to it would read back something the reference site cannot use. An
- *  alias (`"{other}"`) stands in for any of them and is resolved by the editor,
- *  which is also where a broken chain is caught — the SDK only has to reject a
- *  value that could never be one. */
-function validateDesignTokens(value, errors) {
-  const tokens = value.tokens;
-  if (tokens === undefined) return;
-  if (!isJsonObject(tokens)) {
-    errors.push("tokens must be an object keyed by token id");
-    return;
-  }
-  for (const [id, token] of Object.entries(tokens)) {
-    const owner = `tokens.${id}`;
-    if (!isJsonObject(token)) {
-      errors.push(`${owner} must be an object`);
-      continue;
-    }
-    validateEnum(token.type, DESIGN_TOKEN_TYPES, `${owner}.type`, errors);
-    validateEnum(token.role, DESIGN_NUMBER_TOKEN_ROLES, `${owner}.role`, errors);
-    const tokenValue = token.value;
-    if (tokenValue === undefined) {
-      errors.push(`${owner}.value must be set`);
-      continue;
-    }
-    if (typeof tokenValue === "string" && TOKEN_ALIAS_RE.test(tokenValue.trim())) continue;
-    switch (token.type) {
-      case "color":
-      case "fontFamily":
-        if (typeof tokenValue !== "string" || !tokenValue) {
-          errors.push(`${owner}.value must be a non-empty string`);
-        }
-        break;
-      case "number":
-        if (typeof tokenValue !== "number" || !Number.isFinite(tokenValue)) {
-          errors.push(`${owner}.value must be a finite number`);
-        }
-        break;
-      case "paint":
-      case "shadow":
-        if (!isJsonObject(tokenValue) || typeof tokenValue.type !== "string") {
-          errors.push(`${owner}.value must be an object with a type`);
-        }
-        break;
-      case "textStyle":
-        if (!isJsonObject(tokenValue)) errors.push(`${owner}.value must be an object`);
-        break;
-      default:
-        break;
-    }
-  }
-}
 export function validateDesign(value) {
   if (!isJsonObject(value)) return ["Design document must be an object"];
   const errors = [];
@@ -611,33 +721,7 @@ export function validateDesign(value) {
         if (entry.skipped !== undefined && typeof entry.skipped !== "boolean") {
           errors.push(`artboards[${index}].skipped must be a boolean`);
         }
-        validateLayoutPadding(entry.padding, `artboards[${index}].padding`, errors);
-        validateTokenRef(entry.paddingToken, `artboards[${index}].paddingToken`, errors);
-        validateLayoutConstraints(
-          entry.layoutConstraints,
-          `artboards[${index}].layoutConstraints`,
-          errors,
-        );
-        const sizing = entry.layoutSizing;
-        if (sizing !== undefined && !isJsonObject(sizing)) {
-          errors.push(`artboards[${index}].layoutSizing must be an object`);
-        } else if (isJsonObject(sizing)) {
-          validateEnum(
-            sizing.width,
-            DESIGN_LAYOUT_SIZINGS,
-            `artboards[${index}].layoutSizing.width`,
-            errors,
-          );
-          validateEnum(
-            sizing.height,
-            DESIGN_LAYOUT_SIZINGS,
-            `artboards[${index}].layoutSizing.height`,
-            errors,
-          );
-        }
-        if (entry.layoutRoot !== undefined && typeof entry.layoutRoot !== "string") {
-          errors.push(`artboards[${index}].layoutRoot must be an object id`);
-        }
+        hasValidLayout(entry.layout, `artboards[${index}].layout`, errors);
       }
     });
   }
@@ -693,8 +777,10 @@ export function validateDesign(value) {
       if (!derivable) errors.push(`objects.${id}.frame must be an object`);
     } else if (!isJsonObject(entry.frame)) errors.push(`objects.${id}.frame must be an object`);
     else hasFiniteGeometry(entry.frame, `objects.${id}.frame`, errors, derivable);
-    validateObjectLayoutFields(entry, `objects.${id}`, errors);
-    validateLayout(entry.layout, `objects.${id}.layout`, errors);
+    if (entry.type === "polygon") hasFiniteShapeCount(entry, "sides", `objects.${id}`, errors);
+    if (entry.type === "star") hasFiniteShapeCount(entry, "points", `objects.${id}`, errors);
+    hasValidLayout(entry.layout, `objects.${id}.layout`, errors);
+    hasValidLayoutItem(entry.layoutItem, `objects.${id}.layoutItem`, errors);
     if (entry.type !== "group") continue;
     if (!Array.isArray(entry.children)) {
       errors.push(`group ${id} must have children`);
@@ -877,116 +963,102 @@ export function moveDesignObject(document, id, placement = {}) {
     order.splice(0, order.length, ...insertAt(order, id, placement.index));
   });
 }
-function requireObject(document, id) {
-  const object = Object.hasOwn(document.objects, id) ? document.objects[id] : undefined;
-  if (!object) error("not_found", `Object not found: ${id}`);
+function layoutContainer(document, containerId) {
+  const artboard = document.artboards.find((entry) => entry.id === containerId);
+  if (artboard) return artboard;
+  const object = Object.hasOwn(document.objects, containerId)
+    ? document.objects[containerId]
+    : undefined;
+  if (!object) error("not_found", `Layout container not found: ${containerId}`);
+  if (object.type !== "group")
+    error("invalid_container", `Object is not an artboard or a group: ${containerId}`);
   return object;
 }
-/** Sets or clears a group's auto layout. `null` removes it, which hands the
- *  children's geometry back to their own frames - any child that had none gets
- *  the fallback frame. Setting a layout leaves existing frames alone; the editor
- *  overwrites the derived axes at runtime. */
-export function setDesignLayout(document, groupId, layout) {
+/**
+ * Lay a group's or an artboard's children out, or with `null` stop doing so.
+ * Removal deletes the key, because the model has no disabled layout: any value
+ * stored under it is one, and the format emits no `layout` for a container
+ * that has none.
+ */
+export function setDesignLayout(document, containerId, layout) {
   return mutate(document, (next) => {
-    const group = requireObject(next, groupId);
-    if (group.type !== "group") error("invalid_parent", `Object is not a group: ${groupId}`);
-    if (layout === null) delete group.layout;
-    else group.layout = cloneJson(layout);
+    const container = layoutContainer(next, containerId);
+    if (layout === null) delete container.layout;
+    else container.layout = cloneJson(layout);
   });
 }
-/** Shallow-merges into an existing layout, leaving unmentioned fields alone. */
-export function patchDesignLayout(document, groupId, patch) {
+/** Set or, with `null`, remove one object's overrides within its container. */
+export function setDesignLayoutItem(document, objectId, item) {
   return mutate(document, (next) => {
-    const group = requireObject(next, groupId);
-    const layout = group.layout;
-    if (!isJsonObject(layout)) error("not_found", `Object has no layout: ${groupId}`);
-    group.layout = { ...layout, ...cloneJson(patch) };
+    const object = Object.hasOwn(next.objects, objectId) ? next.objects[objectId] : undefined;
+    if (!object) error("not_found", `Object not found: ${objectId}`);
+    if (item === null) delete object.layoutItem;
+    else object.layoutItem = cloneJson(item);
   });
 }
-export function setDesignLayoutSizing(document, objectId, sizing) {
-  return mutate(document, (next) => {
-    const object = requireObject(next, objectId);
-    if (sizing === null) delete object.layoutSizing;
-    else object.layoutSizing = cloneJson(sizing);
-  });
+function finiteField(value, field) {
+  const number = value?.[field];
+  return typeof number === "number" && Number.isFinite(number) ? number : undefined;
 }
-export function createDesignFlexGroup(document, options, placement = {}) {
-  return mutate(document, (next) => {
-    if (Object.hasOwn(next.objects, options.id))
-      error("duplicate_id", `Object already exists: ${options.id}`);
-    const adopted = new Set();
-    for (const child of options.children ?? []) {
-      if (!Object.hasOwn(next.objects, child)) error("not_found", `Object not found: ${child}`);
-      if (adopted.has(child)) error("duplicate_id", `Duplicate child: ${child}`);
-      adopted.add(child);
-    }
-    const pending = [...adopted];
-    while (pending.length > 0) {
-      const objectId = pending.pop();
-      if (placement.parentId === objectId)
-        error("group_cycle", `Cannot place ${options.id} inside its own child ${objectId}`);
-      pending.push(...(groupChildren(next.objects[objectId]) ?? []));
-    }
-    // Resolve the destination before detaching, so an unusable parentId fails
-    // without having already pulled the adopted children out of the tree.
-    targetOrder(next, placement.parentId);
-    const parentLaidOut =
-      !!placement.parentId && isJsonObject(next.objects[placement.parentId]?.layout);
-    removePlacements(next, adopted);
-    const group = {
-      id: options.id,
-      type: "group",
-      layout: cloneJson(options.layout ?? { type: "flex" }),
-      // The document stores a painter's stack (last child on top), while auto
-      // layout follows that same top-to-bottom order shown in Layers.
-      children: [...adopted].reverse(),
-    };
-    if (options.name !== undefined) group.name = options.name;
-    if (options.frame !== undefined) group.frame = cloneJson(options.frame);
-    else if (!parentLaidOut) group.frame = { ...LAYOUT_FALLBACK_FRAME };
-    setJsonProperty(next.objects, options.id, group);
-    const order = targetOrder(next, placement.parentId);
-    order.splice(0, order.length, ...insertAt(order, options.id, placement.index));
-  });
-}
-/** Sets or clears an object's min/max bounds and aspect ratio. */
-export function setDesignLayoutConstraints(document, objectId, constraints) {
-  return mutate(document, (next) => {
-    const object = requireObject(next, objectId);
-    if (constraints === null) delete object.layoutConstraints;
-    else object.layoutConstraints = cloneJson(constraints);
+/**
+ * An artboard holds no `children`, so a root object belongs to one by geometry:
+ * the frame-centre test `design-html.ts` also uses to decide which
+ * `<section data-arg-artboard>` a layer serializes inside.
+ */
+function artboardOwning(document, object) {
+  const frame = record(object.frame);
+  const x = finiteField(frame, "x");
+  const y = finiteField(frame, "y");
+  const width = finiteField(frame, "width");
+  const height = finiteField(frame, "height");
+  if (x === undefined || y === undefined || width === undefined || height === undefined)
+    return undefined;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  return document.artboards.find((artboard) => {
+    const left = finiteField(artboard, "x");
+    const top = finiteField(artboard, "y");
+    const artboardWidth = finiteField(artboard, "width");
+    const artboardHeight = finiteField(artboard, "height");
+    if (
+      left === undefined ||
+      top === undefined ||
+      artboardWidth === undefined ||
+      artboardHeight === undefined
+    )
+      return false;
+    return (
+      centerX >= left &&
+      centerX <= left + artboardWidth &&
+      centerY >= top &&
+      centerY <= top + artboardHeight
+    );
   });
 }
 /**
- * Give an artboard a content root, or take it away.
- *
- * With `layoutSizing: { height: "hug" }` this is how a page GROWS with what it
- * holds instead of being a fixed rectangle its content overflows. Clearing it
- * hands the root's geometry back to its own frame, which `mutate` materializes
- * if the root never had one.
+ * The same test the solver applies: a `layout` it can read no `mode` from lays
+ * nothing out, so a document that carries one derives no frame from it. Reading
+ * the untrusted key more loosely than the solver does would report a container
+ * that never places its children — leaving them unmovable, since the editor
+ * stops offering a free drag as soon as this answers non-null.
  */
-export function setDesignArtboardLayout(document, artboardId, layout) {
-  return mutate(document, (next) => {
-    const artboard = next.artboards.find((entry) => entry.id === artboardId);
-    if (!artboard) error("not_found", `Artboard not found: ${artboardId}`);
-    if (layout === null) {
-      delete artboard.layoutRoot;
-      delete artboard.padding;
-      delete artboard.layoutSizing;
-      delete artboard.layoutConstraints;
-      return;
-    }
-    if (!Object.hasOwn(next.objects, layout.layoutRoot)) {
-      error("not_found", `Object not found: ${layout.layoutRoot}`);
-    }
-    artboard.layoutRoot = layout.layoutRoot;
-    if (layout.padding === undefined) delete artboard.padding;
-    else artboard.padding = cloneJson(layout.padding);
-    if (layout.layoutSizing === undefined) delete artboard.layoutSizing;
-    else artboard.layoutSizing = cloneJson(layout.layoutSizing);
-    if (layout.layoutConstraints === undefined) delete artboard.layoutConstraints;
-    else artboard.layoutConstraints = cloneJson(layout.layoutConstraints);
-  });
+function isSolvedLayout(value) {
+  return isJsonObject(value) && (value.mode === "flex" || value.mode === "grid");
+}
+/**
+ * The id of the container laying this object out, or `null` when nothing does.
+ * A non-null answer means the object's `frame` position is derived — the solver
+ * recomputes it — so writing `frame.x`/`frame.y` on it has no lasting effect.
+ */
+export function designLayoutContainerId(document, objectId) {
+  if (!Object.hasOwn(document.objects, objectId)) return null;
+  for (const [id, object] of Object.entries(document.objects)) {
+    if (!isJsonObject(object) || !groupChildren(object)?.includes(objectId)) continue;
+    return isSolvedLayout(object.layout) ? id : null;
+  }
+  if (!document.order.includes(objectId)) return null;
+  const artboard = artboardOwning(document, document.objects[objectId]);
+  return artboard && isSolvedLayout(artboard.layout) ? artboard.id : null;
 }
 /** Adds a design token, or replaces the one already under `id`. */
 export function upsertDesignToken(document, id, token) {
@@ -997,10 +1069,11 @@ export function upsertDesignToken(document, id, token) {
 }
 /**
  * Whether anything still names `id` — a `token` or `<prop>Token` field
- * anywhere in the document, or another token's `{id}` alias. Walked structurally rather than
- * field by field: the format carries token refs on fills, gradient stops,
- * strokes, effects, text styles, layout gaps, padding and corner radius, and a
- * hand-maintained list of those would drift behind the next one added.
+ * anywhere in the document, or another token's `{id}` alias. Walked
+ * structurally rather than field by field: the format carries token refs on
+ * fills, gradient stops, strokes, effects, text styles, layout gaps, padding
+ * and corner radius, and a hand-maintained list of those would drift behind
+ * the next one added.
  */
 function isDesignTokenReferenced(document, id) {
   const alias = `{${id}}`;

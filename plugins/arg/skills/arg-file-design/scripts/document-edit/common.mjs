@@ -1,4 +1,4 @@
-// Generated from sdk/typescript/src/documents/common.mts. Do not edit directly.
+// Generated from sdk/typescript/src/documents/common.ts. Do not edit directly.
 export class DocumentEditError extends Error {
   code;
   path;

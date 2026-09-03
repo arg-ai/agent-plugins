@@ -1,4 +1,4 @@
-// Generated from sdk/typescript/src/documents/kanban.mts. Do not edit directly.
+// Generated from sdk/typescript/src/documents/kanban.ts. Do not edit directly.
 import { applyJsonEdits, cloneJson, DocumentEditError, insertAt, isJsonObject } from "./common.mjs";
 import {
   mergeJsonObject,

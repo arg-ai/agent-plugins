@@ -1,4 +1,4 @@
-// Generated from sdk/typescript/src/documents/video.mts. Do not edit directly.
+// Generated from sdk/typescript/src/documents/video.ts. Do not edit directly.
 import {
   DocumentEditError,
   applyJsonEdits,

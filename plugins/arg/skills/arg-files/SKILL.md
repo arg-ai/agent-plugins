@@ -39,7 +39,7 @@ For these, **load the named skill first** for format-specific guidance:
 | HTML / web / apps         | html, htm                                                   | `arg-apps`            | Text (file-backed apps via the `window.arg` FS SDK; also HyperFrames motion-graphic compositions) |
 | Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/projects)                                                   |
 | DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                                                                           |
-| Design                    | design, svg, fig                                            | `arg-file-design`     | Text (`.design`: JSON; HTML only on initial creation; `.svg`); `.fig` import-only                 |
+| Design                    | design, svg, fig, html                                      | `arg-file-design`     | Text (`.design`: JSON; HTML only on initial creation; `.svg`; canvas `.html`); `.fig` import-only |
 | CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)                                                            |
 | Whiteboard                | whiteboard                                                  | `arg-file-whiteboard` | Text (JSON)                                                                                       |
 | Task / project management | kanban                                                      | `arg-file-kanban`     | Text (JSON)                                                                                       |
@@ -57,7 +57,7 @@ For a product feature map of the Arg **web** and **desktop** apps — what each 
 
 Arg defines native, agent-friendly formats. Load the dedicated format skill before authoring one:
 
-- `.design` — vector canvas. Native JSON is canonical. An agent may write static HTML only while creating a brand-new path and let Arg materialize it on open or render; read and update every existing `.design` as JSON - see the `arg-file-design` skill.
+- `.design` — vector canvas. Native JSON is canonical. An agent may write static HTML only while creating a brand-new path and let Arg materialize it on open or render; read and update every existing `.design` as JSON. The same canvas also edits plain `.html` pages in place - see the `arg-file-design` skill.
 - `.cad` — parametric CAD drawing (floor plans, buildings, structural frames, bridges), and LiDAR scan reconstruction — see the `arg-file-cad` skill.
 - `.whiteboard` — infinite canvas with font-selectable standalone text objects — see the `arg-file-whiteboard` skill.
 - `.kanban` — task board — see the `arg-file-kanban` skill.
