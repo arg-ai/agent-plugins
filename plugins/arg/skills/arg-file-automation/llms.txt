@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 26 triggers across 19 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 27 triggers across 19 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -129,6 +129,21 @@ Fires when a pull request in the repository is opened, merged, closed, labeled, 
 | `repo` | string | yes | Repository name |
 | `actions` | array | no | Only fire for these actions (empty = all). "merged" matches merged PRs; "closed" matches PRs closed without merging. |
 | `labels` | array | no | Only fire "labeled"/"unlabeled" events for these label names (empty = all). Other actions are unaffected by this filter. |
+| `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
+
+Connection must hold: `admin:repo_hook`.
+
+Delivery: provider webhook, so events arrive within seconds.
+#### `github_pull_request_review` — Pull request review
+
+Fires when a review is submitted, edited, or dismissed on a pull request in the repository - the way to react to an approval or a changes-requested review (auto-merge, unblock the author, reassign) without polling.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `owner` | string | yes | Repository owner (user or org login) |
+| `repo` | string | yes | Repository name |
+| `actions` | array | no | Only fire for these actions (empty = all - most loops only want "submitted"). |
+| `states` | array | no | Only fire for reviews left in these states (empty = all). Most loops only care about "approved" or "changes_requested". |
 | `ignore_self_events` | boolean | no | Ignore events caused by the connected account itself — prevents infinite loops when this flow writes back to GitHub. On by default. |
 
 Connection must hold: `admin:repo_hook`.
