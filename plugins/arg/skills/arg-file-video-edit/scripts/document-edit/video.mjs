@@ -11,6 +11,8 @@ import {
   stringifyJsonDocument,
 } from "./common.mjs";
 const SRC_REQUIRED_CLIP_TYPES = new Set(["video", "audio", "image", "gif", "cast"]);
+/** Slack for float error when a clip abuts or dissolves into its predecessor; well under one frame at any frame rate. */
+const OVERLAP_TOLERANCE_SECONDS = 1e-6;
 let generatedId = 0;
 const id = (prefix) => `${prefix}_${Date.now().toString(36)}_${generatedId++}`;
 const fail = (code, message) => {
@@ -163,7 +165,10 @@ export function validateVideo(value) {
         isJsonObject(transitionIn) && transitionIn.type === "cross-dissolve"
           ? finite(transitionIn.duration, "Cross-dissolve duration")
           : 0;
-      if (occupiedUntil - start > dissolveDuration)
+      // Authors overlap a dissolve by exactly its duration (`start = previous
+      // end - duration`), and in binary floats `4 - 3.4` is `0.6000000000000001`,
+      // so an exact comparison rejected the documented pattern for most values.
+      if (occupiedUntil - start > dissolveDuration + OVERLAP_TOLERANCE_SECONDS)
         fail("overlap", `Video clip ${String(rawClip.id)} overlaps another clip`);
       previousStart = start;
       occupiedUntil = Math.max(occupiedUntil, start + duration);

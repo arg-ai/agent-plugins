@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "2.3.1"
+version: "2.3.2"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas (JSON), plus .svg (round-trips), .fig (import-only), and plain .html pages the same canvas edits in place as HTML/CSS. Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; for presentation-specific workflow load arg-slides alongside it.
 ---
 
@@ -226,29 +226,6 @@ Minimal document — an artboard (background in its `fills`), a gradient card, a
   "order": ["stack"]
 }
 ```
-
-## Artboards that grow with their content
-
-An artboard is normally a fixed rectangle. Give it a `layoutRoot` - the id of a **top-level** object (one listed in `order`) - and the artboard becomes that object's layout parent: it positions the root inside the artboard's `padding` and sizes it against the artboard's box. Add `"layoutSizing": { "height": "hug" }` and the direction reverses on that axis: the **artboard** takes its size from the root plus padding, so a page grows as you add to it and shrinks when you take content away. `layoutConstraints` bounds it (a page that grows but stops at A4's height, a column that never gets narrower than its measure).
-
-```json
-{
-  "id": "page",
-  "name": "Memo",
-  "x": 0,
-  "y": 0,
-  "width": 816,
-  "height": 400,
-  "layoutRoot": "body",
-  "padding": 72,
-  "layoutSizing": { "height": "hug" },
-  "fills": [{ "type": "solid", "color": "#ffffff" }]
-}
-```
-
-with `body` a `{ "type": "flex", "direction": "column", "gap": 24 }` group whose `layoutSizing` is `{ "width": "fill", "height": "hug" }`. Every paragraph appended to `body` lengthens the page; nothing has a coordinate.
-
-The root's `frame` is derived (position always, plus any axis the artboard decides), so omit it. Naming one root rather than adopting whatever happens to sit inside the rectangle is deliberate: membership by containment would depend on the size the hug is computing. Wrap the page's contents in a single laid-out group and point `layoutRoot` at it. The artboard's own `width`/`height` are recomputed on load, and `canvas` follows them.
 
 ## Design tokens
 

@@ -1,6 +1,6 @@
 ---
 name: arg-design
-version: "1.0.0"
+version: "1.0.1"
 description: How to make a `.design` document look like a designer made it - committing to a mood before picking colour, building a type ramp with real contrast, spending space deliberately, and putting every repeated value in the document's design tokens. Load alongside arg-file-design whenever you are creating or restyling a visual `.design` (poster, social graphic, landing page, deck, mockup) rather than only editing its data.
 ---
 
@@ -90,13 +90,13 @@ Hierarchy is made of **contrast**, not of many sizes. Three or four steps is a s
 - `lineHeight` in `.design` is a **ratio of the font size**, not pixels. Display type sits near `1.0`-`1.1`; body text wants `1.5`-`1.65`. Writing `76` here is a 76x line - the single most common way to destroy a layout.
 - `letterSpacing` **is** in document pixels, unlike line height. At 72px, `-2` is a normal tightening.
 - Never go below 13px, and treat 13px as needing a reason - all-caps with open tracking is one. Body copy is 16px+.
-- Cap a paragraph's measure with `layoutConstraints.maxWidth` (about 60-70 characters) rather than letting it run the full width. A hug-height text box wraps at the cap and its height follows.
+- Cap a paragraph's measure at about 60-70 characters by giving the text layer a fixed `frame.width` (`grow: 0`, `shrink: 0` when it sits in a row) rather than letting it run the full width. Nothing measures text, so set `frame.height` to fit the wrapped lines and confirm it in the render.
 
 ## Space
 
 - **Vary spacing deliberately.** Tight inside a group, generous between groups. Uniform gaps everywhere read as a wireframe. `space.2` binds a label to its value; `space.5`/`space.6` separates sections.
 - White space is the feature. Give hero content room; resist filling a quiet area.
-- Use `layoutRoot` + `layoutSizing: { height: "hug" }` on the artboard so the page **grows with its content** instead of you guessing a pixel height. Never hand-tune an artboard height to stop clipping.
+- An artboard is a fixed rectangle and nothing measures content, so size it deliberately: pick the format's height first, then fit the content to it. When the render shows clipping, grow the artboard or cut content - never let a stack of `space.*` gaps silently push the last section off the page.
 - Favour asymmetry and scale contrast over a tidy grid: one very large headline beside small muted text beats four equal columns.
 
 ## Colour
@@ -111,9 +111,9 @@ Hierarchy is made of **contrast**, not of many sizes. Three or four steps is a s
 
 - **Prefer surfaces to boxes.** Information sitting directly on the page usually beats the same information in a card. Reach for a card when it groups something genuinely separable.
 - A container with a `layout` paints its own background, radius, stroke and shadow - so a card is **one** object, not a rectangle plus a group whose frames you keep in step. A plain group (no `layout`) paints nothing, which is the Frame-versus-Group rule.
-- Repeated rows (lists, tables, nav) must form **vertical lanes**. Give icons and trailing actions a fixed-width slot - a fixed `frame.width` with no `fill` sizing - even when a row's slot is empty. Never rely on `gap` alone to line columns up across rows with different content.
+- Repeated rows (lists, tables, nav) must form **vertical lanes**. Give icons and trailing actions a fixed-width slot - a fixed `frame.width` with `grow: 0` and `shrink: 0` - even when a row's slot is empty. Never rely on `gap` alone to line columns up across rows with different content.
 - Reach for `layout` before coordinates. Anything repeated is fewer tokens and re-flows when it changes.
-- Use `layoutConstraints` instead of falling back to hand-placed numbers: `maxWidth` for a measure, `minWidth` so a column can't collapse, `aspectRatio` for media.
+- Reach for the layout item's own controls instead of hand-placed numbers: `basis` with `grow: 0` and `shrink: 0` for a column that must hold its width, `alignSelf: "stretch"` to fill the cross axis, and a fixed `frame` for media so it keeps its aspect ratio.
 
 ## Placeholder content
 
@@ -129,7 +129,7 @@ run_action render_design { "source_path": "/poster.design", "format": "png", "sc
 
 then read the PNG back. Offline, `arg design render` does the same. Check, in order:
 
-1. **Artboard fit** - anything clipped at an edge? Switch the artboard to `layoutRoot` + `layoutSizing: { height: "hug" }` rather than guessing a taller number.
+1. **Artboard fit** - anything clipped at an edge? Resize the artboard to its content (or trim the content) and re-render; the artboard never sizes itself.
 2. **Spacing** - uneven gaps, cramped groups, or a region that is empty by accident rather than by choice?
 3. **Typography** - is the smallest text readable? Is there a real step between heading, body and caption?
 4. **Contrast** - does anything disappear into its background?

@@ -1,6 +1,6 @@
 ---
 name: arg-file-video-edit
-version: "1.5.0"
+version: "1.5.1"
 description: Create, read, and update Arg's .video non-linear editor (NLE) timeline projects — multi-track video/audio/GIF/text/effects edits, including reusable nested .video compositions, stingers, title packages, and prebuilt sequences, that composite a live preview and render to MP4/WebM. Load when building or editing a .video timeline (montages, animated GIFs, titles, transitions, color grades, or nested video projects). For raw video files (mp4/mov/webm), see arg-files.
 ---
 
@@ -278,7 +278,7 @@ Optional `render_video` inputs, for when the finished file matters more than the
 
 ## Photo-slideshow recipe
 
-The most common request — stills with Ken Burns, crossfades, captions, and music. Photos on one video track (overlap each pair by the dissolve length; the incoming clip gets a `cross-dissolve` `transitionIn`; every photo gets gentle `scale` keyframes); captions on a **second** video track above it, positioned out of each other's way; music on an audio track with `fadeIn` / `fadeOut`.
+The most common request — stills with Ken Burns, crossfades, captions, and music. Photos on one video track (overlap each pair by the dissolve length; the incoming clip gets a `cross-dissolve` `transitionIn`; every photo gets gentle `scale` keyframes); the title and its caption on **separate** video tracks above it (clips on one track cannot overlap, and two on screen at once must be offset with `transform.y`); music on an audio track with `fadeIn` / `fadeOut`.
 
 ```json
 "tracks": [
@@ -296,7 +296,9 @@ The most common request — stills with Ken Burns, crossfades, captions, and mus
   { "id": "v-titles", "kind": "video", "name": "Titles", "clips": [
     { "id": "tt1", "type": "text", "name": "Title", "enabled": true, "text": "VAN GOGH",
       "start": 0.3, "duration": 3.4, "fadeIn": 0.4, "fadeOut": 0.4, "transform": { "y": 300 },
-      "textStyle": { "fontSize": 0.06, "color": "#ffffff", "fontWeight": 700, "align": "left", "verticalAlign": 0.5, "shadow": true } },
+      "textStyle": { "fontSize": 0.06, "color": "#ffffff", "fontWeight": 700, "align": "left", "verticalAlign": 0.5, "shadow": true } }
+  ] },
+  { "id": "v-captions", "kind": "video", "name": "Captions", "clips": [
     { "id": "ts1", "type": "text", "name": "Caption", "enabled": true, "text": "Wheat Field with Cypresses, 1889",
       "start": 0.5, "duration": 3.2, "fadeIn": 0.4, "fadeOut": 0.4, "transform": { "y": 378 },
       "textStyle": { "fontSize": 0.028, "color": "#e8c87a", "fontWeight": 400, "align": "left", "verticalAlign": 0.5 } }
