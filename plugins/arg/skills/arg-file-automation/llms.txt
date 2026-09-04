@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 27 triggers across 19 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 28 triggers across 19 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -302,6 +302,18 @@ Connection must hold: `read`.
 Delivery: polled, so events arrive within roughly 15 minutes.
 ### Microsoft (`microsoft`)
 
+#### `microsoft_calendar_event` — New or updated calendar event
+
+Fires when an event is created or updated on the connected Microsoft (Outlook) calendar. Polled - events arrive within ~15 minutes. Cancelled/deleted events are not reported. Has no actor identity distinct from the calendar owner, so an automation that also writes events via microsoft_create_event can re-fire itself on its own write - filter on a marker in the event description if building a write-back loop.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `calendar_id` | string | no | Calendar id to watch (default: the connected account's default calendar). |
+| `only_created` | boolean | no | Only fire when an event is first created, not on every later update/reschedule. Off by default. |
+
+Connection must hold: `Calendars.ReadWrite`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 #### `microsoft_message` — New email
 
 Fires when a new email arrives in a Microsoft (Outlook) mail folder, optionally filtered by a subject substring. Polled - events arrive within ~15 minutes.
