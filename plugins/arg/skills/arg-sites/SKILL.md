@@ -14,7 +14,7 @@ Every deploy creates an immutable **version**. The live URL points at one versio
 
 Publishing a **Site** is the default way to put anything the user wants to **keep or share** on a public URL - a static page, landing page, report/dashboard, a built SPA, or an SSR app. A Site is permanent, versioned, and hands back a clean shareable URL.
 
-Do **not** use `deploy_server` (the workspace tunnel) to serve static files or a finished site. A tunnel is **ephemeral** - it auto-expires within minutes and is capped at 3 per workspace - so the link dies and the user is left with a dead URL. Reach for `deploy_server` only when the app genuinely needs a long-running server a Site cannot be: a persistent process, WebSockets, or a non-JS backend (Flask / FastAPI / Node). If it is really just static files, publish a Site.
+Do **not** use `deploy_server` (the workspace tunnel) to serve static files or a finished site. A tunnel is **ephemeral** - it auto-expires within minutes and is capped at 3 per workspace - so the link dies and the user is left with a dead URL. Reach for `deploy_server` only when the app genuinely needs a long-running server a Site cannot be: a persistent process, WebSockets, or a non-JS backend (Flask / FastAPI / Node). If it is really just static files, publish a Site. Over MCP the `.server` tools (`deploy_server`/`list_servers`/`delete_server`) are not offered at all - write the `.server` file for the user to launch, or publish a Site.
 
 ## Deploy
 
