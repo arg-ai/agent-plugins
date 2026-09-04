@@ -162,6 +162,22 @@ Integrations are not automation-only: whatever the user has connected, you can r
 
 A `not_configured` failure means the account is disconnected or the grant is missing a scope - tell the user to reconnect that service rather than retrying or trying a different account.
 
+### Calling an endpoint that has no dedicated action
+
+Every connected service also has a generic `<provider>_api_request` action (`github_api_request`, `notion_api_request`, `google_drive_api_request`, …) that calls any endpoint of that provider's API as the connected account - Arg attaches the credential, so never pass one. It runs only on a connection the user owns: a connection someone shared with them is refused, so use a dedicated action there or connect their own account. Use it when `search_actions({ provider })` has nothing that fits; prefer the dedicated action when one exists.
+
+- `method` + `path`: the path is relative to the API base named in the action's description (e.g. `/repos/{owner}/{repo}/releases` on GitHub, `/databases/{id}/query` on Notion), never an absolute URL. Read the provider's own API docs for the path and payload.
+- `query` (object; an array value repeats the key), `headers` (object; `Authorization`, `Cookie` and `Host` are refused, credential headers are always Arg's).
+- One body kind: `body` (JSON, sent as `application/json`), `form` (url-encoded - Stripe, Twilio and many Slack methods want this), or `raw_body` + `content_type` for anything else. GraphQL providers (Linear, monday.com, GitHub GraphQL) are a POST with a JSON `{query, variables}` body.
+- `host` picks an alternative API host where a provider has several (Google Drive: `sheets`, `docs`, `slides`, `drive_upload`; Twilio: `lookups`, `messaging`, `verify`, …; Microsoft: `graph_beta`); the action's description lists them.
+- `output_path` saves the response bytes to a workspace file (exports, PDFs, media) instead of returning them.
+- The output is `{ status, headers, body, body_format }` with `body` parsed when the response is JSON. A 4xx/5xx fails the run and the error message carries the provider's response, so read it before retrying - it usually names the bad field or the missing permission.
+
+```
+run_action({ action_id: "github_api_request", input: { connection: "<id>", method: "GET", path: "/repos/arg-ai/arg/releases", query: { per_page: 5 } } })
+run_action({ action_id: "stripe_api_request", input: { connection: "<id>", method: "POST", path: "/customers", form: { email: "a@b.co", "metadata[plan]": "team" } } })
+```
+
 ## Running an action from an automation
 
 The same registry backs `.automation` files, so anything runnable here is runnable on a
