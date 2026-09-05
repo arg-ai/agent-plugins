@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 28 triggers across 19 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 29 triggers across 20 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -195,6 +195,19 @@ Fires when a GitHub Actions workflow run in the repository is requested, starts,
 Connection must hold: `admin:repo_hook`.
 
 Delivery: provider webhook, so events arrive within seconds.
+### GitLab (`gitlab`)
+
+#### `gitlab_pipeline` — Pipeline status changed
+
+Fires when a GitLab CI/CD pipeline's status changes (pending, running, success, failed, …), optionally scoped to specific statuses and/or a branch. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `project_id` | string | yes | GitLab project id (numeric) or URL-encoded path (e.g. "my-group/my-project") |
+| `statuses` | array | no | Only fire when the pipeline reaches one of these statuses. Empty = every status change. |
+| `ref` | string | no | Only watch pipelines for this branch or tag. Empty = every ref. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Gong (`gong`)
 
 #### `gong_call` — New call
