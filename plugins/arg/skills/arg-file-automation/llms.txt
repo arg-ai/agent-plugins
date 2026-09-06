@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 29 triggers across 20 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 30 triggers across 20 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -411,6 +411,17 @@ Fires on a Stripe event — a payment succeeded, a subscription changed, a refun
 Delivery: polled, so events arrive within roughly 15 minutes.
 ### Twilio (`twilio`)
 
+#### `twilio_call_ended` — Call ended
+
+Fires when a Twilio voice call reaches a terminal status (completed, busy, failed, no-answer, or canceled). Optionally scope it to one number or a subset of statuses. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `to` | string | no | Only calls to this Twilio number (e.g. +15551234567). Empty = all numbers. |
+| `from` | string | no | Only calls from this number. Empty = all numbers. |
+| `statuses` | array | no | Only fire for these terminal statuses. Empty = any terminal status (the call ended for any reason). |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 #### `twilio_incoming_message` — Incoming message
 
 Fires when an SMS, MMS, or WhatsApp message is received by one of your Twilio numbers. Optionally scope it to one number. Polled - events arrive within ~15 minutes.
