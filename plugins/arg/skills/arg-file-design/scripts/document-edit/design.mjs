@@ -654,9 +654,10 @@ function validateDesignMetadata(value, artboardIds, errors) {
     defaultView !== undefined &&
     defaultView !== "design" &&
     defaultView !== "creative" &&
-    defaultView !== "slides"
+    defaultView !== "slides" &&
+    defaultView !== "illustrator"
   ) {
-    errors.push("metadata.defaultView must be design, creative, or slides");
+    errors.push("metadata.defaultView must be design, creative, slides, or illustrator");
   }
   const sections = metadata.sections;
   if (sections === undefined) return;
