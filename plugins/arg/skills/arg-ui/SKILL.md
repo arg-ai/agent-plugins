@@ -78,6 +78,7 @@ Desktop-only functionality:
 - **Native notifications** — OS toasts and a dock/taskbar unread badge that keep working while the window is minimized or closed to tray (as long as the app is running), plus the in-app notification bell.
 - **Meeting detection & recorder** — an over-everything "Meeting detected" prompt that starts a recording note in one click, and a native screen recorder (WebM-first capture, honors the selected output format).
 - **Native context menu & spellcheck** — right-click spelling suggestions, "Add to Dictionary", and cut/copy/paste inside the reused editors and composer.
+- **Local agent attachments** - Drop or paste images and files into desktop Claude Code/Codex chats, including Home/Create and Code chat panes. Files are saved under the desktop app's `.arg/attachments` directory and passed to the harness as local paths, with native image input and preview chips. They are not uploaded to an Arg workspace. Terminal panes also accept dropped/pasted files as paths without submitting the prompt. These attachments stay on this device and remain available for resumed sessions.
 - **Local provider settings** — a Providers settings tab for local integrations (e.g. Codex connection checks and a "store history in the cloud" toggle).
 
 ## Choosing a surface
