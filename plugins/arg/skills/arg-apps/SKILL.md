@@ -108,6 +108,18 @@ export default function GenerateButton() {
 
 The TSX/JSX editor supplies autocomplete and diagnostics for the package and browser contract. Action ids and per-action inputs remain registry-driven: use `list()`, `schema()`, and `describe()` rather than guessing, and expect the backend to validate the input against the current Action schema.
 
+For an app that uses the viewer's connected account, call
+`actions.run("integration_connections_list", { provider: "github" })` at runtime. Its sync
+`output` contains `{ connections, next_offset }`, with each account's `id`, `provider`, `label`,
+`is_owner`, `access_mode`, and stored scopes. The listing includes accounts the viewer owns,
+accounts shared with them, and accounts open to the current workspace's organization. Follow
+non-null `next_offset` values by passing `offset`, including after an empty page; `limit`
+defaults to 50 and caps at 100. Show a picker when several accounts match, and pass its selected
+`id` as the integration action's `connection` input. Never hardcode the author's connection id
+or save it as a shared app default. Add `owned_only: true` for generic `<provider>_api_request`
+actions, which currently refuse shared accounts; dedicated integration actions accept them.
+HTML uses the same call through `window.arg.actions`. See `arg-actions` for the full contract.
+
 ### Arg UI components
 
 `@arg/ui` exports Arg's exact shared `Button`, `IconButton`, `Card`, `FormInput` (`Input` is an alias), `FormTextarea` (`Textarea` is an alias), `KeyboardShortcut`, `Dropdown`, and `ContextMenu` primitives. The preview supplies the active Arg theme as `light`, `focus`, or `dark`; `focus` is the fallback when no explicit theme is present.

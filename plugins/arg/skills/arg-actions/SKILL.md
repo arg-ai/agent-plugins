@@ -189,6 +189,34 @@ A sampling — there are more:
 
 Integrations are not automation-only: whatever the user has connected, you can run here.
 
+Apps discover the current viewer's accounts with `integration_connections_list`. It takes an
+optional `provider`, `owned_only` (default false), `limit` (1-100, default 50), and `offset`
+(default 0). The output is `{ connections, next_offset }`; each connection has `id`, `provider`,
+`label`, `display_name`, `external_account_id`, `is_owner`, `access_mode`, and `granted_scopes`.
+It includes the viewer's own accounts, accounts shared with them, and accounts open to the
+workspace's organization. No credentials are returned. A provider filter also includes
+historical connection providers that service accepts, such as `google` for `google_drive`.
+Continue with `next_offset` until it is null, even if a page is empty after access filtering.
+This is a sync read: consume `output` directly. Access is checked again on execution; listed
+scopes describe the stored grant and do not guarantee every provider operation will succeed.
+
+```ts
+const run = await actions.run("integration_connections_list", {
+  provider: "github",
+  owned_only: true,
+});
+if (run.status === "succeeded") {
+  // Show the returned accounts in a picker, then pass the selected id as connection.
+  console.log(run.output);
+}
+```
+
+Use the same call through `window.arg.actions` in HTML. Discover accounts separately for each
+viewer; never bake the app author's connection id into shared source or workspace data.
+When several accounts are available, let the viewer choose. `owned_only: true` selects accounts
+usable by generic API request actions under their ownership rule; dedicated actions also
+accept shared connections. No organization or bound integration user returns an empty list.
+
 1. `search_actions({ provider: "slack" })` for that service's actions and their input schemas.
 2. Pass the `connection` id. Your system prompt names the connected services and their connection ids; otherwise `describe_action(action_id, "connection")` lists them. **Never invent one.**
 3. `run_action({ action_id: "slack_send_message", input: { connection: "<id>", channel: "C01ABC123", text: "..." } })`.
