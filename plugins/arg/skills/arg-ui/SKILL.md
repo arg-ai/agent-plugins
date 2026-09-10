@@ -1,6 +1,6 @@
 ---
 name: arg-ui
-version: "1.0.4"
+version: "1.0.5"
 description: Feature overview of the Arg web app and desktop (macOS/Windows/Linux) app — what a user or agent can do in each surface, and what the desktop app adds on top of the web app. Load this to explain Arg's product functionality, decide which surface a capability lives on, or point a user at the right feature. For file CRUD, load arg-files plus the access-method and arg-file-* skills instead.
 ---
 
@@ -30,7 +30,7 @@ The browser app is the full-featured surface. Main areas:
 - **File tree sidebar** — fast cached navigation with live updates when files change.
 - **Sharing & collaboration** — share files/workspaces with people or links, per-file comments, version history, and an audit log.
 - **Templates** — browse the public templates store, your organization's catalog, and your managed templates; clone a template into a new workspace.
-- **Integration imports** - the sidebar `+ New` menu's `Import` action opens a provider picker. Notion is available now: browse shared pages/databases in their available workspace hierarchy, paste Notion URLs, and import pages as `.mdx` documents or databases as `.csv` files with a matching saved view when supported (Notion boards become Kanban views; other databases use Pages). An optional recursive import preserves nested pages, databases, and database rows in named subfolders. The modal shows live per-page/database progress while the import runs, and Cancel stops the active import and removes its partial files. Google, Microsoft, and Jira are shown as coming soon. The same native Notion connection is reused by the web and desktop apps.
+- **Integration imports** - behind the default-off PostHog flag `allow_workspace_importing`, the file browser toolbar's More menu has an **Import** row that opens a full-page importer as a workspace tab. Notion is available now: paste links to the pages and databases you want (several at once) and each is looked up and listed before you import. Each entry has its own `Sub-pages` checkbox, on by default, deciding whether what is nested inside it comes too. Everything lands at the Arg workspace root: pages become `.mdx`, databases become `.csv` with a matching Pages/Kanban view, and nested content keeps its folder structure. A database's rows are always in its `.csv`; its checkbox only decides whether each row also becomes its own page. An import runs on the server, so closing the tab does not stop it - progress, cancellation and the finished result are reported by a floating indicator, and it survives a reload. The `+ New` menu and mobile still open the same importer as a modal, where Google Drive, Dropbox, Microsoft and Jira remain coming soon.
 
 ### Editors (native, in-browser)
 
