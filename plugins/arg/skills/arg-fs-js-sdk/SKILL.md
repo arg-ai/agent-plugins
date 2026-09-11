@@ -40,7 +40,7 @@ A classic `<script>` has no top-level `await`, so wrap calls in an async IIFE an
 </script>
 ```
 
-`arg.ready` is a `Promise` that resolves to the `arg` object once the editor's context handshake arrives. If the handshake never comes within ~4s (e.g. the capability is off), it **rejects** — so guard with `if (!window.arg) return;` and optionally `.catch()` on `arg.ready`. Every `arg.fs.*` / `arg.team.*` method returns a Promise; individual operations time out after ~30s.
+`arg.ready` is a `Promise` that resolves to the `arg` object once the editor's context handshake arrives. If the handshake never comes within ~4s (e.g. the capability is off), it **rejects** — so guard with `if (!window.arg) return;` and optionally `.catch()` on `arg.ready`. It resolves once and never again, while the host keeps re-pushing context as it changes - `arg.me` in particular can arrive after `arg.ready` has already resolved - so read changing values through `arg.onContext()` rather than once at startup. Every `arg.fs.*` / `arg.team.*` method returns a Promise; individual operations time out after ~30s.
 
 ## Files API — `arg.fs.*`
 
@@ -315,7 +315,7 @@ const cols = await arg.db.schema("/data/app.db", "users");
 
 ## Identity — `arg.me` and `arg.team`
 
-- `arg.me` — the signed-in user: `{ id, name, email, avatarUrl }`. It is `null` until the capability is enabled (identity is withheld from a page the user hasn't opted in). Use `arg.me.email` for the current user's email.
+- `arg.me` — the signed-in user: `{ id, name, email, avatarUrl }`. It is `null` until the capability is enabled (identity is withheld from a page the user hasn't opted in). Use `arg.me.email` for the current user's email. It can also still be `null` when `arg.ready` resolves and be filled in a moment later, so a page that shows who's signed in should subscribe with `arg.onContext()` instead of reading it once.
 - `arg.team.members()` (alias `arg.team.list()`) → `Member[]` — the workspace's members:
 
   ```ts
@@ -337,17 +337,18 @@ const cols = await arg.db.schema("/data/app.db", "users");
 
 ## Context — what this file knows about itself
 
-| Property          | Meaning                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------ |
-| `arg.dir`         | This file's folder, workspace-absolute (e.g. `/blog` or `/`). Relative paths resolve against it. |
-| `arg.path`        | This file's own workspace-absolute path.                                                         |
-| `arg.name`        | This file's name.                                                                                |
-| `arg.workspaceId` | The workspace id.                                                                                |
-| `arg.scope`       | The active file-path access scope: `"folder"` or `"workspace"`.                                  |
-| `arg.enabled`     | Whether the capability is currently on.                                                          |
-| `arg.canWrite`    | Whether this page may **change** the workspace, not just read it. See below.                     |
-| `arg.ready`       | Promise resolving to the `arg` object once the handshake completes.                              |
-| `arg.version`     | SDK version (currently `1`).                                                                     |
+| Property            | Meaning                                                                                                                                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `arg.dir`           | This file's folder, workspace-absolute (e.g. `/blog` or `/`). Relative paths resolve against it.                                                                                                                                                    |
+| `arg.path`          | This file's own workspace-absolute path.                                                                                                                                                                                                            |
+| `arg.name`          | This file's name.                                                                                                                                                                                                                                   |
+| `arg.workspaceId`   | The workspace id.                                                                                                                                                                                                                                   |
+| `arg.scope`         | The active file-path access scope: `"folder"` or `"workspace"`.                                                                                                                                                                                     |
+| `arg.enabled`       | Whether the capability is currently on.                                                                                                                                                                                                             |
+| `arg.canWrite`      | Whether this page may **change** the workspace, not just read it. See below.                                                                                                                                                                        |
+| `arg.ready`         | Promise resolving to the `arg` object once the handshake completes.                                                                                                                                                                                 |
+| `arg.onContext(fn)` | Subscribes to every context the host pushes, replaying the current one on subscribe; `fn` receives the `arg` object and the call returns an unsubscribe function. Use it for values that can change after `arg.ready` resolves, `arg.me` above all. |
+| `arg.version`       | SDK version (currently `1`).                                                                                                                                                                                                                        |
 
 ## Read vs read and write
 

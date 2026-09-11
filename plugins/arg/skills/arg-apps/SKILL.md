@@ -444,6 +444,14 @@ A classic `<script>` has no top-level `await` — wrap calls in an async IIFE an
 </script>
 ```
 
+Identity is the one value worth subscribing to rather than reading once: the host pushes context again when it changes, and `arg.me` can still be `null` when `arg.ready` resolves. In a `.tsx` preview that is an effect returning the unsubscribe:
+
+```tsx
+// onContext replays the current context on subscribe, so nothing is missed.
+const [me, setMe] = useState(window.arg?.me ?? null);
+useEffect(() => window.arg?.onContext?.((sdk) => setMe(sdk.me)), []);
+```
+
 ### Files API — `arg.fs.*`
 
 File operations return Promises. `watch*()` returns its stop function synchronously.
@@ -582,6 +590,7 @@ Use `dataUrlById(id)` only for small inline images. Id helpers resolve id-to-pat
 - `arg.team.members()` (alias `arg.team.list()`) → members `{ id, name, avatarUrl, role, kind, isMe }` — **names + avatars only, no emails**.
 - Identity `avatarUrl` values are absolute and can be passed directly to `<img src>` from the isolated preview.
 - `arg.dir` (this file's folder), `arg.path`, `arg.name`, `arg.workspaceId`, `arg.scope` (`"folder"` | `"workspace"`), `arg.enabled`, `arg.readOnly`, `arg.ready`, `arg.version`.
+- `arg.onContext(fn)` → unsubscribe. The host re-pushes context whenever it changes, and `arg.me` in particular can land after `arg.ready` has resolved, so subscribe rather than reading identity once. The listener is handed the `arg` object and the current context is replayed on subscribe.
 
 ### Paths, scope & errors
 
