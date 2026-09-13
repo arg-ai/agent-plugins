@@ -12,7 +12,7 @@ An optional **runtime** SDK that lets a single self-contained `.html` file read 
 
 ## What it is, in one paragraph
 
-When a `.html` file is previewed inside arg it renders in a **sandboxed, null-origin iframe** with no session cookie. Ordinary workspace previews start with **Scripts** and folder-scoped, read-only **Workspace access** on, so the editor **injects `window.arg` inline** into the page. The user can turn it off or explicitly grant **Read and write**. Each call is relayed over `postMessage` to the editor, which performs the backend operation with the signed-in user's session and posts the result back. The page never sees a token; the backend still enforces that user's own permissions on every call.
+When a `.html` file is previewed inside arg it renders in a **sandboxed, null-origin iframe** with no session cookie. Ordinary workspace previews start with **Scripts** and folder-scoped, read-only **Workspace access** on, so the editor **injects `window.arg` inline** into the page. If a first-open source scan finds requirements beyond that default, the approval popup preselects Read or Read and write plus This folder or Entire workspace from the visible literal paths, and includes Actions when used, so the user can approve the complete request once. Dynamic paths retain the narrow folder recommendation. The user can turn access off or change its mode and scope later. Each call is relayed over `postMessage` to the editor, which performs the backend operation with the signed-in user's session and posts the result back. The page never sees a token; the backend still enforces that user's own permissions on every call.
 
 ## Runtime theme
 

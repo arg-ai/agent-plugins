@@ -372,11 +372,11 @@ The icons carry their own colours and retint with the preview theme, so they nee
 
 React previews expose Actions through `@arg/actions` (backed by `window.arg.actions`) and scoped persistent workspace files through `window.arg.fs`, with independent grants. Enabling one never enables the other.
 
-React previews start with folder-scoped, read-only Workspace access and receive `window.arg` automatically. The user can turn it off or grant Read and write in the preview permissions menu. Keep filesystem capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
+React previews start with folder-scoped, read-only Workspace access and receive `window.arg` automatically. On first open, Arg scans direct `arg.fs` / `arg.db` calls and preselects the required Read or Read and write mode plus This folder or Entire workspace scope; it includes Actions in the same approval when used. Literal paths outside the source file's folder require workspace scope, while dynamic paths keep the narrower folder recommendation. The user can change every grant later in the preview permissions menu. Keep filesystem capability-dependent code behind `if (window.arg)` and `await arg.ready`; use `.html` when a build-free, single-document arg-app is the better fit.
 
 An **arg-app** is an internal app your team builds and runs inside Arg: a single self-contained `.html` file that becomes its own backend by reading and writing real workspace files — and reading the signed-in user's identity — **at runtime** via the `window.arg` FS SDK. Data persists as ordinary workspace files, so a page turns into a durable tool: dashboards, CRMs, admin panels, trackers, note apps, blogs. No server, no database, no build step — just an HTML file sitting on the workspace filesystem.
 
-Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup. Filesystem access starts on in folder-scoped Read mode; Actions use a separate session-only **Actions access** grant on the isolated web preview.
+Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup. Filesystem access starts on in folder-scoped Read mode; when source-detected requirements exceed it, the first-open popup presents the complete file mode, inferred scope, and Actions request for one-click approval. Actions remain a separate session-only **Actions access** grant on the isolated web preview.
 
 ## CRUD
 
