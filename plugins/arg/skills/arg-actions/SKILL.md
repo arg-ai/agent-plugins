@@ -168,7 +168,7 @@ A sampling — there are more:
   - Google Keep
   - HubSpot
   - Jira
-  - Linear
+  - Linear (issues and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
   - Microsoft
   - Microsoft Teams (chat messages/search and Outlook Contacts)
   - Monday.com
