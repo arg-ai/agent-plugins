@@ -1,6 +1,6 @@
 ---
 name: arg-fs-js-sdk
-version: "1.3.1"
+version: "1.6.1"
 description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html, .tsx, and .jsx apps. Load when building or modifying an app that reads, writes, or watches workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
 ---
 
