@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.13.0"
+version: "2.15.1"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -777,10 +777,39 @@ Reference workspace audio by path (`/audio/vo.mp3`) - Arg signs those before mou
 
 To use one in a video: open a `.video` and drag the `.html` file onto the timeline, or use **Insert → Composition**. See `arg-file-video-edit` for the `hyperframes` clip's fields.
 
+## Declaring permissions in a `.app` launcher
+
+A `.app` launcher can declare, in one optional top-level `permissions` object, everything its app needs beyond reading its own folder. Opening the app then asks the user **once** for all of it, on one sheet, and Arg remembers that person's answer on that device - web, desktop, iOS and Android each keep their own. It asks again only when the part of the declaration the target can use changes or the launcher is pointed at a different file or Site. Declare what the app actually uses, and nothing more:
+
+```json
+{
+  "version": 2,
+  "name": "Standup",
+  "icon": "<svg viewBox=\"0 0 24 24\">...</svg>",
+  "entry": { "kind": "file", "id": "argfile_<uuid>", "path": "/apps/standup.tsx" },
+  "permissions": {
+    "files": { "access": "readwrite", "scope": "folder" },
+    "actions": ["file_read", "text_generate"],
+    "devices": ["camera", "microphone"]
+  }
+}
+```
+
+- `files` - `access` is `"read"` or `"readwrite"`, `scope` is `"folder"` (the target file's own folder) or `"workspace"`. A missing or unknown value falls back to `read` / `folder`.
+- `actions` - the Action ids the app may run through `window.arg.actions` / `@arg/actions`, at most 32 (lowercase letters, digits and underscores). Once allowed they run without the per-preview confirmation, and **any other id is refused** with code `action_not_declared` and the message `This app did not declare the Action "<id>" in its .app permissions.`, so list every Action the app calls, including ones whose id it builds at run time. An allowed app that declares no `actions` gets no Actions at all.
+- `devices` - permissions-policy feature names: `accelerometer`, `autoplay`, `camera`, `clipboard-read`, `compute-pressure`, `display-capture`, `gamepad`, `geolocation`, `gyroscope`, `hid`, `idle-detection`, `local-fonts`, `magnetometer`, `microphone`, `midi`, `payment`, `publickey-credentials-create`, `publickey-credentials-get`, `serial`, `storage-access`, `usb`, `window-management`, `xr-spatial-tracking`. The app's frame is delegated exactly these; the browser or the phone may still ask the first time.
+
+Unknown ids and names are dropped. A hosted Site or `.server` target uses only `devices` - a `.server` declares its own Actions in the `.server` file. Once allowed, the declaration is everything the app gets: undeclared `files` means reading its own folder only, and any per-file setting the user chose for that file does not add to it. The desktop app refuses `display-capture`, `hid`, `serial` and `usb` to embedded apps whatever the answer, so the sheet does not offer them there.
+
+A declaration that asks for nothing beyond reading the app's own folder - `"permissions": {}`, `files` of `read` / `folder` alone, or a Site launcher that declares only `files` or `actions` (which no Site can use) - shows no sheet and grants nothing: the app behaves exactly as if it had no `permissions` object, with per-file prompts and toggles.
+
+If the user answers **Don't allow**, the app gets **no Actions at all** - not even ones the user once allowed for the file - and otherwise runs with ordinary preview access, so keep degrading gracefully (check `arg.canWrite`, catch a refused Action or device). **Save as .app** on web, desktop, iOS and Android fills `permissions` from source-detected file mode and scope, literal Action ids and device APIs; folder-scoped read needs no declaration. On web and desktop, the open launcher's Settings cog shows **Restore permissions** after a denial; every client can also reopen the same consent sheet from its app permissions menu.
+
 ## Guidance
 
 - **Prefer storing data in plain `.json` files** so it stays inspectable and editable inside Arg.
 - Supported on web, desktop, iOS, and Android - always feature-detect for pages opened outside Arg.
+- HTML and React apps, Sites and `.server` apps may use browser device APIs - `navigator.mediaDevices.getUserMedia` (camera, microphone), geolocation, clipboard read, WebMIDI and the like - but only once the user allows it for that file. An HTML or React app whose source calls one gets a one-time per-file "Use your camera, microphone and other devices" prompt in Arg before the browser's own prompt; a Site or `.server` needs **Allow camera, microphone and other devices** turned on from its More menu on web. The grant belongs to what a `.app` launcher points at, so repointing the launcher needs it allowed again. A `.app` that declares its `devices` (see "Declaring permissions in a `.app` launcher") asks for them on its own consent sheet instead. Until then (and always in public or shared previews) the call is refused, so always catch the rejection and show a usable fallback when access is off, the user says no, or the device is unavailable. Fullscreen, clipboard write, picture-in-picture and Web Share need no grant. Screen capture (`getDisplayMedia`) works in the browser but is refused in the desktop app.
 - Need a real server/process (a framework, a backend, a port) instead of a file-backed arg-app? Use a **`.server`** file instead - a JSON config (`command`, `port`, optional `exec`/`timeout`, and optional `access`) that launches a process in a sandboxed container. `access` can be `"public"`, `"personal"`, or `"workspace"` and defaults to `"public"` for compatibility. Personal servers require a human launcher and only that launcher can open them; workspace servers require workspace-wide read access. A `.server` can be the `kind: "file"` target of a version 2 `.app` launcher, so it gets a named/icon-bearing tile on every platform while retaining the ordinary server launch, review, access, and stop lifecycle. The server editor's More menu can create that root launcher with **Save as .app**. The `deploy_server` chat tool is not offered over MCP; write the `.server` file and let the user launch it.
 - A `.server` that needs built-in workspace Actions declares the smallest explicit allowlist, for example `"actions": ["file_read", "text_generate"]`. Only declared Actions whose backend is not `integration` are visible or runnable. The file will not auto-launch; the user must review and launch it. Server code can use the preinstalled `arg-action` helper through injected `ARG_API_URL`, `ARG_WORKSPACE_ID`, and `ARG_ACTION_TOKEN`. Treat the token as sensitive: never print, persist, return, or copy it into source. It is revoked with the tunnel or when the launching principal loses authority. Servers run from the live workspace mount, so requests from the approved audience and collaborators who change live server code can exercise the declared Actions until the server stops.
 - A `.server` that calls a third-party API declares portable provider aliases, for example `"integrations": { "github": { "provider": "github" } }`. Never write OAuth tokens, PATs, refresh tokens, connection ids, or an upstream base URL into the file or generated source. Arg asks the user to bind each alias to one of their real connections when they explicitly launch the server; an integration-enabled file does not auto-launch. The connection keeps its existing owner: user-owned connections run only as that user, and service-account-owned connections run only as that service account. Runtime ownership checks support service accounts, but the current connection creation flow provisions user-owned connections only.
