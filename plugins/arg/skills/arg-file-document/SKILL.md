@@ -96,8 +96,9 @@ Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) an
 - **`<Math />`** — block void. Block-level KaTeX equation. `latex` — the expression; `align` (default `"center"`).
 - **`<Audio />`** — block void. Playback for an existing workspace audio file. `src` — workspace audio path; `mime` (e.g. `audio/mpeg`); `durationMs` — number.
 - **`<Recording />`** — block void. A persistable meeting-recording card (Notes / Transcript / Summary tabs).
-  - Content: `title`, `notes`, `transcript`, `summary`, `citations`, `audioPath`, `audioMime`, `durationMs`.
+  - Content: `title`, `notes`, `transcript`, `summary`, `citations`, `audioPath`, `audioMime`, `durationMs`, `recordedAt` (ISO, stamped when capture starts).
   - Behavior: `instructions` (default `"auto"`), `transcriptionProvider` (default `"deepgram"`), `phase` — `new` (default) or `recorded`, `autostart` (boolean, default `false`), `keepAudio` (boolean, default `true`), `timestamps` (boolean, default `true`).
+  - Sharing: `participants` — who the finished notes get emailed to, as a readable address list (`"Alice Smith (alice@acme.com), bob@acme.com"`). Comma-separated; a name goes in **parentheses before** the address, never `Name <addr>` (the MDX serializer escapes the angle brackets, and the entry is then dropped). Entries that do not parse as an address are dropped silently, so check your spelling. Seeded from the calendar event the note was started from; safe to read and edit. Never fabricate a transcript or summary.
 
 ### Raw-HTML constructs
 
