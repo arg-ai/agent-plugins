@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 30 triggers across 20 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 31 triggers across 20 providers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
@@ -396,6 +396,18 @@ Fires when a Slack channel message is posted or edited. Edits are detected withi
 | `ignore_self_events` | boolean | no | Ignore events caused by the connected Slack bot. On by default. |
 
 Connection must hold: `channels:history`, `groups:history`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+#### `slack_reaction` — Reaction added
+
+Fires when someone reacts to a message in a Slack channel, e.g. a 👍/👎 on an approval request or a ✅ on a task reminder. Optionally scope it to specific emoji. Polled - events arrive within ~15 minutes; only reactions added within roughly the last 24 hours of a message are observed.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `channel` | string | yes | Channel id to watch (C... for public, G... for private). |
+| `emoji` | array | no | Only fire for these reaction names, without colons (e.g. 'thumbsup', 'white_check_mark'). Empty = any reaction. |
+
+Connection must hold: `channels:history`, `groups:history`, `reactions:read`.
 
 Delivery: polled, so events arrive within roughly 15 minutes.
 ### Stripe (`stripe`)
