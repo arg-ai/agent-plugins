@@ -246,6 +246,18 @@ Fires when an event is created or updated on the connected Google Calendar. Poll
 Connection must hold: `https://www.googleapis.com/auth/calendar.events`.
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+#### `google_calendar_upcoming_event` — Upcoming event
+
+Fires once when a timed (non-all-day) event on the connected Google Calendar is about to start within lead_minutes. Polled - checked every ~15 minutes, so treat lead_minutes as approximate rather than exact, and values under 15 are not reliable. A rescheduled event fires again at its new time; a cancelled event never fires. Polling capacity is shared across every org's triggers, so under heavy load this trigger's own check can be delayed past lead_minutes - if that happens an event can pass through its lead window and start without ever firing, not just fire late, so don't rely on this for a hard guarantee.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `calendar_id` | string | no | Calendar id to watch (default: the connected account's primary calendar). |
+| `lead_minutes` | number | no | How many minutes before an event starts to fire (15-10080, default 30). |
+
+Connection must hold: `https://www.googleapis.com/auth/calendar.events`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### HubSpot (`hubspot`)
 
 #### `hubspot_contact` — Contact
