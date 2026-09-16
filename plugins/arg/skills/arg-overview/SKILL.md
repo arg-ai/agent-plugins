@@ -9,6 +9,7 @@ description: The map of the Arg (arg.ai) product — what Arg is, every offering
 **Arg (arg.ai) is one shared workspace where teams and AI agents plan, create, and ship work together.** It pairs a Google-Drive-style file manager with an AI chat agent that has full context of the files: you upload or create files, the agent reads and edits them inline, and everything it produces — docs, decks, spreadsheets, designs, videos, live sites — lands as real, versioned files that humans and agents keep editing together. Tagline: "One workspace, everyone in the loop."
 
 - Website: https://arg.ai · AI-readable site index: https://arg.ai/llms.txt
+- Product docs: https://arg.ai/docs (Markdown index: https://arg.ai/docs.md; outlines: https://arg.ai/docs/llms.txt)
 - Developer docs: https://developers.arg.ai
 
 Three framings of the same platform:
