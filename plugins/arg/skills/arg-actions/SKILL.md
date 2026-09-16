@@ -166,7 +166,7 @@ A sampling — there are more:
   - Google Calendar
   - Google Drive (the complete Docs, Sheets, Slides, and Drive REST catalogs, plus convenience actions such as `google_append_sheet_row`)
   - Google Keep
-  - HubSpot
+  - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners and property definitions - plus create/update contacts)
   - Jira
   - Linear (issues and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
   - Microsoft

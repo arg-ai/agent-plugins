@@ -1,6 +1,6 @@
 # Arg automation triggers — integration events
 
-> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers. 31 triggers across 20 providers.
+> Every third-party event that can START an Arg automation, with its exact trigger key, filter fields and required scopes. Generated from the integration registry the workflow editor's palette renders, so it lists what actually exists rather than what a model remembers.
 
 This file is the companion to the `arg-file-automation` skill, which documents the automation file format itself and the built-in trigger kinds (`schedule`, `webhook`, `file-change`, `notification`, `poll`, `form-submission`, `manual`). Everything below is the `integration` trigger kind.
 
