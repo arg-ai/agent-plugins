@@ -1,6 +1,6 @@
 ---
 name: arg-file-design
-version: "2.3.2"
+version: "2.5.0"
 description: Create, read, update, and delete design files in Arg — the native .design vector canvas (JSON), plus .svg (round-trips), .fig (import-only), and plain .html pages the same canvas edits in place as HTML/CSS. Also exportable offline via `arg design render` (svg/png/jpg). Load when authoring or editing vector graphics, social graphics, posters, mockups, logos, or slides; for presentation-specific workflow load arg-slides alongside it.
 ---
 
@@ -35,7 +35,7 @@ Arg detects the initial contents rather than trusting the extension and runs HTM
 Author this wire format like Paper's `write_html` input:
 
 - Write a complete document or one root fragment. Give the canvas and important regions explicit pixel dimensions so the result does not depend on a default viewport.
-- Prefer inline CSS and flex layouts. A `<style>` block is supported, but external stylesheets are removed and scripts never run.
+- Prefer inline CSS and flex layouts. A `<style>` block is supported, and scripts never run. External stylesheets are removed, with ONE exception: a `<link>` to `fonts.googleapis.com` is kept and awaited, because the page is measured in a browser and a font decides geometry - without it every frame would be sized for the fallback face and painted in the real one. Name the same families in your CSS that you want in the result.
 - Add `layer-name="..."` to meaningful elements. Arg preserves DOM nesting as editable groups and uses that attribute for layer names.
 - Use real DOM elements for every visible layer. Pseudo-elements and CSS gradient or background-image paint are not imported; use a solid background, an `<img>`, or inline `<svg>` instead.
 - Text converts the way the browser drew it. A block whose text is all one style becomes a single editable layer keeping its own line breaks and alignment, so paragraphs, `<br>` runs and centred copy survive intact. Native text holds one style per layer, so a `<strong>`, `<em>`, or coloured `<a>` inside a sentence becomes its own layer - keep inline styling for emphasis that earns a layer, and put a whole styled passage in its own block rather than mid-sentence when you want it editable as one thing.
@@ -86,7 +86,7 @@ Key call shapes: `addDesignObject(doc, object, { parentId?, index? })`, `moveDes
 
 Everything below is the native JSON model and the model the canvas projects onto a canvas-owned `.html` page. In that HTML spelling, a property appears as CSS where CSS can express it and as a `data-arg-*` attribute where it cannot.
 
-Top-level: `version` (use `1`), optional `tokens` (design tokens - see below), optional `metadata` (`{ "defaultView": "design" | "creative" | "slides" | "illustrator", "sections": [...] }`; use `creative` for social/content graphics that should open in the Canva-style UI, and `slides` for decks; use `illustrator` for the Illustrator-style vector-editing workspace), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`).
+Top-level: `version` (use `1`), optional `tokens` (design tokens - see below), optional `metadata` (`{ "defaultView": "design" | "creative" | "slides" | "illustrator", "sections": [...] }`; use `creative` for social/content graphics that should open in the Canva-style UI, and `slides` for decks; use `illustrator` for the Illustrator-style vector-editing workspace), `canvas` (`{ width, height }`), `artboards` (named rectangles in document space, ≥1), `objects` (flat map of id → object), `order` (array of object ids; **last renders on top**; group children live in the group's `children`, not `order`). **Every object is placed exactly once** - named by `order` or by exactly one group's `children`. An object in `objects` that neither reaches is unreachable and renders as nothing at all, which is why `parseDesign` refuses it with `object <id> must have exactly one placement`; parse before you render.
 
 Creative view presents artboards as a centered vertical page column in `artboards` array order. That layout is a transient editor projection: keep authoring normal document-space coordinates, and use the array itself to control Creative page order. Switching between Creative and Design views never rewrites artboard or object positions.
 
@@ -241,6 +241,8 @@ Minimal document — an artboard (background in its `fills`), a gradient card, a
 | `paint`      | a whole `Fill` object | a fill layer's `token`                                            |
 | `textStyle`  | a `TextStyle` object  | `TextObject.styleToken`                                           |
 | `shadow`     | an `Effect` object    | an effect entry's `token`                                         |
+
+**`src` is `fontFamily` tokens only**, and names where to load the stack's FIRST family from when it is a face Google Fonts cannot supply - `{ "type": "fontFamily", "value": "Acme Grotesk, Inter, sans-serif", "src": "/brand/fonts/Acme.woff2" }`. Two source shapes load: a **workspace path**, which travels with the document into share links and copies, and an **https URL on the reader's host allowlist** (`fonts.gstatic.com`, `use.typekit.net`, `p.typekit.net`, `fonts.bunny.net`, `cdn.jsdelivr.net/npm/@fontsource/…`), which the backend relays same-origin. Anything else - a relative path, a `data:` URL, another host - is ignored, and the stack falls through to its next family, so keep a real fallback in `value`. Prefer `.ttf`/`.otf`: the canvas decodes whatever the browser does, but raster export and headless render bake glyph outlines from the font tables and cannot read WOFF2, so a `.woff2` face is correct on screen and absent from an exported image. A family name the app or the platform already owns (`Inter`, `Arial`, any curated Google family) is refused rather than overridden. **Every other family must be a real Google Fonts family or a system fallback**: an unavailable one renders as the platform default sans and nothing reports it. `GET /api/fonts/google-ttf-v1?family=<Family%20Name>` returns 404 for a family that does not exist - check any name you did not read off <https://fonts.google.com/>.
 
 `role` is `number` tokens only and affects the stylesheet export alone: `spacing` (default), `radius`, `text`, `fontWeight`, `tracking`, `leading`, `breakpoint`, `container`. It picks the Tailwind v4 namespace, and in v4 the namespace is what turns a variable into utilities - a radius exported under `--spacing-*` generates no `rounded-*`. Inside the document every scalar is document pixels, except `leading`, which is a ratio of the font size (see Typography above).
 

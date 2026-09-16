@@ -299,9 +299,18 @@ function validateDesignTokens(value, errors) {
     if (typeof tokenValue === "string" && TOKEN_ALIAS_RE.test(tokenValue.trim())) continue;
     switch (token.type) {
       case "color":
+        if (typeof tokenValue !== "string" || !tokenValue) {
+          errors.push(`${owner}.value must be a non-empty string`);
+        }
+        break;
       case "fontFamily":
         if (typeof tokenValue !== "string" || !tokenValue) {
           errors.push(`${owner}.value must be a non-empty string`);
+        }
+        // Which sources are loadable is the reader's policy, not the
+        // document's, so only the shape is checked here.
+        if (token.src !== undefined && (typeof token.src !== "string" || !token.src)) {
+          errors.push(`${owner}.src must be a non-empty string`);
         }
         break;
       case "number":
