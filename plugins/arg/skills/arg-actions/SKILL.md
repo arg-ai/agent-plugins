@@ -177,7 +177,7 @@ A sampling — there are more:
   - Resend (send one email or a batch, check what happened to it, manage contacts and broadcasts)
   - Salesforce
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
-  - Slack (channels, DMs, messages, and workspace members)
+  - Slack (channels, DMs, messages, workspace members, and message reactions)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
   - Stripe (payments - get a charge, create a refund)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
