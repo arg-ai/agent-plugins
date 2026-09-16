@@ -1,7 +1,7 @@
 ---
 name: arg-apps
-version: "2.15.2"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
+version: "2.16.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps and be pinned, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -777,6 +777,39 @@ Reference workspace audio by path (`/audio/vo.mp3`) - Arg signs those before mou
 
 To use one in a video: open a `.video` and drag the `.html` file onto the timeline, or use **Insert → Composition**. See `arg-file-video-edit` for the `hyperframes` clip's fields.
 
+## Finish an app with a `.app` launcher
+
+**A `.html`, `.tsx` or `.jsx` file you built as an app is not finished until a `.app` launcher points at it.** Write one every time, in the same turn, unless the user asked for a component, a prototype, a page fragment or something else that is plainly not an app. Do not ask first - it is a small JSON file beside the source, and it is what the user meant by "build me an app".
+
+The reason is that the source file alone is invisible as an app:
+
+- **The Apps surface lists `.app` launchers and nothing else**, on web, desktop, iPhone and Android. A bare `.html` file never appears there, so the user's only route back to it is remembering which folder it is in.
+- **Only a launcher can be pinned** - to a person's rail, or by an organization admin to everyone's Apps.
+- **The launcher owns the name and the icon.** `q3-dash-v2.html` becomes **Q3 revenue** with your artwork, and that icon becomes the file's glyph everywhere it appears.
+- **The launcher's `entry` carries the file's registry id as well as its path**, so renaming or moving the source does not break the app.
+- **One consent sheet instead of many.** Everything the app needs - workspace files beyond its own folder, Actions, devices - is declared once (see below) and asked once.
+
+Write it to the workspace root as `<Name>.app`, and keep the name collision-free:
+
+```json
+{
+  "version": 2,
+  "name": "Q3 revenue",
+  "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">...</svg>",
+  "entry": { "kind": "file", "id": null, "path": "/dashboards/q3-revenue.html" },
+  "permissions": { "files": { "access": "readwrite", "scope": "folder" } }
+}
+```
+
+Four rules for the file itself:
+
+- `entry.path` is workspace-rooted and leading-slashed. `entry.id` may be `null`; Arg fills in the registry id the first time the launcher is opened, and the pointer becomes rename-safe from then on.
+- `icon` is **inline SVG markup**, not a URL, a data URI or an emoji, and at most 64 KB. It renders through an inert image boundary, so scripts and external references in it never run - draw a simple, legible mark rather than importing one. A launcher with no icon gets a generic placeholder, which is worth avoiding.
+- `permissions` is optional and should reflect what the source actually uses - the narrowest `files` scope that works, only the Action ids it calls, only the devices it touches. Omit the key entirely for an app that reads nothing beyond its own folder.
+- One launcher per app. Do not write a second `.app` pointing at a file that already has one.
+
+A `.app` can also point at a `.server` file (`entry.kind` stays `"file"`) or at a published Site (`entry.kind` is `"site"` with a `siteId`), so a running app and a deployed one get the same tile. The same "write the launcher too" rule applies to a `.server` app you build.
+
 ## Declaring permissions in a `.app` launcher
 
 A `.app` launcher can declare, in one optional top-level `permissions` object, everything its app needs beyond reading its own folder. Opening the app then asks the user **once** for all of it, on one sheet, and Arg remembers that person's answer on that device - web, desktop, iOS and Android each keep their own. It asks again only when the part of the declaration the target can use changes or the launcher is pointed at a different file or Site. Declare what the app actually uses, and nothing more:
@@ -807,6 +840,7 @@ If the user answers **Don't allow**, the app gets **no Actions at all** - not ev
 
 ## Guidance
 
+- **Every app you build gets a `.app` launcher in the same turn** - see "Finish an app with a `.app` launcher". A `.html`/`.tsx`/`.jsx` file on its own never reaches the Apps surface, cannot be pinned, and carries the filename as its name. Skip it only for a component, a prototype or a page fragment that is plainly not an app.
 - **Prefer storing data in plain `.json` files** so it stays inspectable and editable inside Arg.
 - Supported on web, desktop, iOS, and Android - always feature-detect for pages opened outside Arg.
 - HTML and React apps, Sites and `.server` apps may use browser device APIs - `navigator.mediaDevices.getUserMedia` (camera, microphone), geolocation, clipboard read, WebMIDI and the like - but only once the user allows it for that file. An HTML or React app whose source calls one gets a one-time per-file "Use your camera, microphone and other devices" prompt in Arg before the browser's own prompt; a Site or `.server` needs **Allow camera, microphone and other devices** turned on from its More menu on web. The grant belongs to what a `.app` launcher points at, so repointing the launcher needs it allowed again. A `.app` that declares its `devices` (see "Declaring permissions in a `.app` launcher") asks for them on its own consent sheet instead. Until then (and always in public or shared previews) the call is refused, so always catch the rejection and show a usable fallback when access is off, the user says no, or the device is unavailable. Fullscreen, clipboard write, picture-in-picture and Web Share need no grant. Screen capture (`getDisplayMedia`) works in the browser but is refused in the desktop app.
