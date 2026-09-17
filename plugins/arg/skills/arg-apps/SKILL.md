@@ -378,6 +378,12 @@ An **arg-app** is an internal app your team builds and runs inside Arg: a single
 
 Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `sitearg.com` origin; local desktop workspaces use a sandboxed inline preview. Plain HTML files are created with `write_file` using standard markup. Filesystem access starts on in folder-scoped Read mode; when source-detected requirements exceed it, the first-open popup presents the complete file mode, inferred scope, and Actions request for one-click approval. Actions remain a separate session-only **Actions access** grant on the isolated web preview.
 
+## Publishing an app template
+
+Publish a named app from its `.app` launcher, not directly from the linked HTML/TSX/JSX file. This portable template path accepts only `kind: "file"` launchers targeting HTML, HTM, TSX, or JSX; hosted-Site and server launchers retain live external state and are not snapshot templates. Arg bundles a portable version 2 launcher, the linked entry, parsed local static imports and assets, plus any runtime data files selected in the publish flow. Explicitly select every representative file read through `window.arg.fs` or `window.arg.db`; source comments and examples are never treated as permission to publish a workspace file.
+
+The catalog runs the launcher in an isolated Sitearg iframe on web or the on-device `arg-preview:` renderer on desktop. Its `window.arg.fs` is always read-only and can see only bundled snapshot files. Keep runtime data paths relative to the app source when possible so the same calls work in the preview and after cloning. A clone receives the complete bundle and a launcher whose entry path points at the cloned source.
+
 ## CRUD
 
 `.html`/`.htm` are plain text — use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`). A static page needs nothing more. The rest of this skill covers the runtime `window.arg` FS SDK that turns a static page into an arg-app.
