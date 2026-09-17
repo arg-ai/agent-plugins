@@ -1,6 +1,6 @@
 ---
 name: arg-file-whiteboard
-version: "1.2.0"
+version: "1.3.0"
 description: Create, read, update, and delete Arg whiteboard files (.whiteboard) — the native infinite-canvas / visual-canvas format with shapes, sticky notes, text, tables, sections, images, icons, emoji, 3D models, live embeds/bookmarks/stock/weather cards, generator nodes, and connectors/arrows. Load when authoring or editing diagrams, flowcharts, architecture maps, mind maps, or any node-and-edge visual board.
 ---
 
@@ -14,7 +14,23 @@ Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) an
 
 ## Schema essentials
 
-Top-level: `version` (use `1`), `nodes`, `edges`. Every node and edge needs a **unique `id`** (e.g. `n1`, `edge-1`). Pan/zoom is stored client-side per viewer, not in the file, so `viewport` is optional - include `viewport` (`{ x, y, zoom }`) only to hint the initial view; it's honored on first open, then superseded by the viewer's own pan/zoom.
+Top-level: `version` (use `1`), `nodes`, `edges`, and optional `background`. Every node and edge needs a **unique `id`** (e.g. `n1`, `edge-1`). Pan/zoom is stored client-side per viewer, not in the file, so `viewport` is optional - include `viewport` (`{ x, y, zoom }`) only to hint the initial view; it's honored on first open, then superseded by the viewer's own pan/zoom.
+
+**`background`** (optional) — the board-wide paper colour and tiling pattern, shared by everyone who opens the file. Leave the key out for the default board (the viewer's own themed canvas with faint dots); a board that HAS the key is drawn exactly as it reads, so `"background": {}` is how a plain sheet with no dots is written.
+
+- `color` - the paper under everything, as a hex or `rgb()`/`rgba()` value. Omit it to keep the viewer's theme colour. A colour you set is the document's own and looks the same in light, dark and focus, so pick one the board's text still reads on.
+- `pattern` - one tile, repeated across the infinite canvas and scaled with the viewer's zoom. `svg` is the tile as a standalone `<svg>` element, `size` is its edge in canvas units (4-400), `preset` names which pattern it is, and `color` is the ink it is drawn in.
+  - `preset` is `grid`, `dots`, `geometric` or `corkboard` for a built-in, and **the snippet is rebuilt from `preset` + `color` + `size` every time the board loads** - so change those three and the tile follows, and don't hand-edit a preset's `svg` (your edit is overwritten). `corkboard` also expects its own tan paper; the other three sit on any colour.
+  - `preset: "custom"` is the opposite: the `svg` you write IS the pattern and nothing rewrites it. Author one tile that repeats seamlessly, keep it under 8000 characters, and make it a single `<svg>…</svg>` with no `<script>`, no `<foreignObject>`, no `on*` handlers and no external `href`/`src` - a snippet failing any of those is dropped and the board falls back to its paper alone. The tile renders as an image, so it can't animate or run code. Use `currentColor` nowhere; bake the colours in.
+
+```json
+"background": {
+  "color": "#f5f2ea",
+  "pattern": { "preset": "grid", "color": "#a1a1aa", "size": 40, "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\"><path d=\"M 40 0 L 0 0 0 40\" fill=\"none\" stroke=\"#a1a1aa\" stroke-width=\"1\" stroke-opacity=\"0.55\"/></svg>" }
+}
+```
+
+In the editor this is **Board background…**, in the canvas bottom bar's ⋯ menu and in the right-click menu on empty canvas.
 
 **Node** — `id`, `type`, `position` (`{x,y}` canvas px), `width`, `height`, `data` (whose `kind` matches the type).
 
