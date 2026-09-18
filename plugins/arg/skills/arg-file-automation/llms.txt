@@ -88,6 +88,17 @@ Fires when a new message is posted in a Discord channel the bot can read. Requir
 | `ignore_self_events` | boolean | no | Ignore messages posted by this bot itself - prevents infinite loops when this flow posts back to the channel. On by default. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### Figma (`figma`)
+
+#### `figma_comment` — New comment
+
+Fires when a new comment or reply is posted on a Figma file. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `file_key` | string | yes | The file key from the Figma URL (figma.com/file/<file_key>/...) to watch. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### GitHub (`github`)
 
 #### `github_issue_comment` — Issue or PR comment

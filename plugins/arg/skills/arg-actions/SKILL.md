@@ -157,6 +157,7 @@ A sampling — there are more:
   - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages)
   - Exa (web search plus clean page extraction, and async agent runs for deep research)
+  - Figma (read a file's document tree and comments, and post a comment - as a reply or pinned to a node)
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
   - Firmable (ANZ company/people data)
   - GitHub
