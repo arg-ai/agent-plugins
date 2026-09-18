@@ -16,6 +16,26 @@ The `arg` CLI wraps Arg's REST API and provides three ways to work with a worksp
 
 Beyond file CRUD: `arg agent [message]` (start a workspace-aware terminal chat with live MCP context and skills), `arg claude` / `arg codex` / `arg pi` / `arg hermes` / `arg claw` (launch the user's own local harness in the current directory with temporary Arg skills and MCP - see below), `arg <type> render` (export `.video`/`.design`/`.psd`/`.daw` files to local disk - see **Native renderers** below), `arg action` (list/run built-in actions - see `arg-actions`), `arg exec -- <cmd>` (run a bash command in the workspace sandbox; Python via `arg exec -- python3 …`), `arg mcp` (run a local stdio MCP server so an MCP host can use the workspace), `arg automation deploy <path>` (deploy an automation file), `arg onboard` (import a local coding-agent setup - Claude Code, Cursor, Copilot, Gemini - into a workspace, see below), `arg sites deploy` (deploy a local folder as a hosted site, see below), `arg share create <path>` (mint a public, sign-in-free link and print the URL that serves the file's bytes - see below), and `arg init` / `arg skills` (read or install Arg skill bundles; add `--scope user` to install into `~/.claude/skills/` so every project on the machine sees them).
 
+## Publish a template (`arg templates publish`)
+
+```bash
+arg templates publish ./starter --title "Starter" --generate-thumbnail
+arg templates publish ./README.md --type file --thumbnail ./cover.png
+arg templates publish ./my-skill/SKILL.md --type skill --visibility org
+```
+
+The command packages one or more local files into a ZIP and publishes it without first creating a workspace. `--type` accepts `workspace`, `folder`, `file`, `skill`, or `subagent`. One directory contributes its contents at the template root, while multiple inputs retain their basenames. `file`, `skill`, and `subagent` each require one file; skill and subagent files are placed at the API's required `.skills/<name>/SKILL.md` and `.agents/<name>.md` path.
+
+Choose `--generate-thumbnail` to render the README or only file after staging, or `--thumbnail <path>` to attach image or short-video catalog media. These flags are mutually exclusive, and thumbnails never become cloned files. Use `--org <id>` or `ARG_ACTIVE_ORG` to select the publishing organization in a headless run. The archive limits are 25 MiB compressed, 50 MiB expanded, and 1,000 files.
+
+Publish an existing workspace with `arg templates publish --workspace <id-or-name> --title "Starter"`. Add `--type folder|file|skill|subagent` and `--source-path <path>` to select its source, and `--thumbnail-source-path <path>` for workspace catalog media. Workspace publishing takes its organization from the source; an explicit `--org` must match. Local paths and workspace source flags cannot be mixed.
+
+All publish-modal settings are available: `--type`, `--title`, `--description`, `--category`, repeatable `--tag`, `--visibility public|unlisted|org|private`, `--allow-preview` (off by default), and automatic/custom/no thumbnail (omit both thumbnail flags for none). The CLI also supports `--icon` and `--slug`.
+
+Publishing uses the account from `arg login` unless `--api-key` or `ARG_API_KEY` selects an API-key principal. `--org` selects the organization, never a different publisher; `arg whoami` shows the current identity, and JSON publish output includes `owner_user_id` and `owner_org_id`. The server checks membership, source write access, and publishing permissions before creating a snapshot.
+
+Local directory uploads skip dot-prefixed entries except root `.skills`, `.agents`, and `.well-known`, plus dependencies, cache/scratch files and root `.gitignore` matches. Explicit file inputs are included as requested; symlinks are rejected. Choose source files intended for distribution. Publishing does not automatically retry network/server failures because the original request might have completed; check the catalog before retrying manually.
+
 **Notify a person:** `arg notify [recipient...] <target-url>` sends a notification that opens an Arg file, folder, chat, or Action run. Recipients accept `me`, user ids, and emails; omit them to send to yourself. Add repeatable `--channel ios|email|in-app` to narrow delivery, or omit it for all channels. Recipient preferences still apply. `--title` overrides the inferred title and `--body` adds detail.
 
 ## Share a file outside Arg (`arg share`)
