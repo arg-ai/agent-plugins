@@ -49,6 +49,7 @@ See `arg-files` for the full format list and which formats have a dedicated skil
 - **AI chat** with full **file-context awareness** — the agent can read, create, and edit files in the workspace and run code in an isolated sandbox container.
 - **Composer power features** — `@` mentions to reference workspace files/folders, `/` to invoke workspace skills (`.skills/`), attachments, screen capture (screenshot or screen recording), model + reasoning selectors, and per-workspace toggles including a read-only (inspection-only) mode.
 - **Skills & subagents** — workspaces can carry reusable `.skills/<name>/SKILL.md` and `.agents/<name>.md` that the agent picks up automatically.
+- **Live voice (default in workspace chats on web and desktop)** - Spoken requests reach the existing chat agent with recent speaker-labelled conversation and current task context. Transcripts may arrive late or contain mistakes; clarify ambiguous requests and use the latest correction. Spoken assistant suggestions are not user approval. Return brief verified outcomes, including failures and next steps, with exact file names and paths. The full answer remains in chat if voice delivery fails. Mobile uses its separate voice transport.
 
 ### Automations, actions & connectors
 
