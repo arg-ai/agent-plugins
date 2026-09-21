@@ -1,6 +1,6 @@
 ---
 name: arg-sites
-version: "1.1.1"
+version: "1.2.0"
 description: Publish an Arg workspace folder as a hosted website on its own subdomain - static sites, framework builds, and server-side apps - via the workspace agent's site tools or the arg CLI (arg sites deploy). Load this whenever you are asked to deploy, publish, host, or update a website, dashboard, or internal tool from workspace files, or to roll one back, share it, or take it offline.
 ---
 
@@ -27,6 +27,22 @@ Do **not** use `deploy_server` (the workspace tunnel) to serve static files or a
 - `display_name` - optional label in site listings.
 
 Static sites usually go live inside the call (`status: "live"`). A framework build returns `status: "building"` plus a `site_id`; poll `get_site_deploy` until it reports live or `failed` (with a build-log tail you can fix and redeploy).
+
+### The folder needs an `index.html`
+
+A static site's root URL is served from `index.html` at the top of `source_path`, and every unmatched path falls back to it. Without one the deploy still succeeds and the URL you hand back is dead (404), so check for it before deploying - and point `source_path` at the site's own folder rather than the workspace root, which usually has no index page.
+
+A site serves files; it does not build or run them. A React/TSX app file is not a page - it is source, served verbatim, and the browser cannot execute it. Publish a real `.html` entry point (or a `vite`/`astro` build that emits one). `window.arg` does not exist on a deployed site either, so an app that reads workspace files through the JS FS SDK must fetch its data another way - bake it into the deployed folder, or call an external API.
+
+### A deploy is a snapshot - editing the source does not update the site
+
+Every deploy copies the folder's bytes into an immutable version. Serving reads that version and never looks at the workspace again, so **editing a source file changes nothing on the live URL until you deploy again** - and nothing watches the folder for you. A dashboard whose data file you just rewrote is still showing the numbers from its last build.
+
+So when asked to refresh a site's content, the edit is half the job: write the file, redeploy, and only then report it live. Never say updated data is live because the workspace file changed.
+
+This is also why a page that live-updates inside Arg looks frozen once deployed: `window.arg.fs.watch` has no host on a site origin, and the `fetch()` fallback reads the snapshot copy. There is no way for a deployed page to read live workspace bytes - redeploying is the update mechanism.
+
+A tool result carrying `root_document_warning` is telling you exactly this: say so rather than handing over the link.
 
 For a private site the returned `url` carries a time-limited access token. Hand the user that `url`, not a bare address.
 
