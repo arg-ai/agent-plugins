@@ -25,6 +25,14 @@ The brief is part of the deliverable. It is also the cheapest place to be correc
 
 From your candidate list, **pick something other than your first instinct.** First instincts converge on the same three answers, and the user has seen them.
 
+## Choose the authoring route and verify the result
+
+Native JSON and HTML are both authoring options. Use HTML/CSS when it helps you compose stronger typography and layouts, then use the standard HTML-to-design conversion described in `arg-file-design`. Use native JSON for direct control of tokens, editable geometry and Arg-specific features. A different file format does not supply art direction.
+
+For a template library, vary composition, typography, density, image treatment and palette across the collection. Start with a few representative designs and inspect them before scaling the batch. Do not generate dozens of the same layout with different colors.
+
+Keep the source HTML as a reference. Compare its browser image with a native render at the same dimensions, inspect conversion notes and repair visible differences. Judge authoring quality from the source composition and conversion fidelity from identical-source comparisons. Redesigning the HTML while comparing it to an older native layout cannot isolate format quality. Report baked regions and font substitutions that limit editability or fidelity.
+
 ## Start from a built-in theme
 
 New `.design` documents ship with a full token set, and there are nine built-in themes to switch between. Each declares the **same token ids**, so changing theme is a value swap - the document retargets wholesale, and nothing you authored moves. `neutral` is the intentionally plain default; reach for one of the mood-led themes when the brief calls for a stronger direction.
