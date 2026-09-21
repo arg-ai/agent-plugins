@@ -168,6 +168,7 @@ A sampling — there are more:
   - Google Drive (the complete Docs, Sheets, Slides, and Drive REST catalogs, plus convenience actions such as `google_append_sheet_row`)
   - Google Keep
   - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners and property definitions - plus create/update contacts)
+  - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
   - Jira
   - Linear (issues and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
   - Microsoft
