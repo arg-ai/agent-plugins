@@ -1,6 +1,6 @@
 ---
 name: arg-actions
-version: "1.8.1"
+version: "1.9.0"
 description: Run Arg's built-in actions - operations that generate or transform workspace files and data (image/video/3D/audio/music generation and editing, image crop/resize/recolor, transcription, web screenshot, web/social scraping, html→pdf/image, stock data, connected-service calls). Load when a task is better done by an Arg action than by hand - e.g. "generate an image", "make a video", "transcribe this audio", "screenshot a page", "convert html to pdf". Driven by four tools - search_actions, describe_action, run_action, list_runs.
 allowed-tools: search_actions, describe_action, run_action, list_runs
 ---
@@ -151,7 +151,7 @@ A sampling — there are more:
 - **video / 3d / audio** — `video_generate` (text/image/video→video; also drives audio-driven avatar / lip-sync models like Kling AI Avatar - pass the portrait as `source_path` and the voice track as `audio_path`), `three_d_generate`, `video_to_audio`, `music_generate`, `tts_generate` (text→speech), `sound_effect_generate` (text→sound effect), `transcribe_audio`.
 - **web / data / document** — `screenshot_webpage`, `web_to_markdown` (one-shot page → Markdown), `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`), `extract_webpage_data`, `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …), `get_stock_data`, `html_to_pdf`, `ad_search` / `advertiser_search` / `ad_creatives` (the public Meta, TikTok and Google ad libraries - what ads a brand is running, and saving an ad's image/video creatives into the workspace; public ad transparency data, not your own ad accounts), `social_search` / `social_profile` (public posts, accounts and engagement across Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Reddit and Threads - by keyword, hashtag, or the account whose posts you want; public social data, not your own accounts, feeds or inboxes), `seo_serp` / `seo_keywords` / `seo_backlinks` (what ranks for a keyword on Google, Bing and Yahoo; search volume, CPC and competition for keywords; the public backlink graph and authority of a domain) and `aeo_mentions` / `aeo_answers` (how often a brand or domain is mentioned in AI assistant answers and which sources they cite, and what ChatGPT, Perplexity, Gemini and Claude actually answer for a prompt - public search and answer-engine data, not your own Search Console or Analytics).
 - **integration** — calls to connected services where a connection is set up. Google products use separate connections; Google Meet is coming soon. Each action takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available. One provider per line, alphabetical - add a new one on its own line:
-  - Airtable
+  - Airtable (list bases, get a base's exact table/field/view schema, query/create/update records)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Confluence
   - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
