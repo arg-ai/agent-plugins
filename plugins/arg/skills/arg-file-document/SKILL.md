@@ -18,6 +18,12 @@ Arg's markdown editor is a rich block editor (slash commands, drag-and-drop, inl
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files` (`grep` / `arg grep` / native search to find content across documents). Document-specific: edit surgically — keep the heading hierarchy, list style, and existing conventions intact. Standard Markdown (headings, paragraphs, lists, code fences, GFM tables, task lists, links, images, blockquotes) works both inside and outside JSX components.
 
+In GFM table cells, escape a literal pipe as `\|` and use `<br />` for a hard line
+break. The MDX editor preserves inline marks, links and components when saving
+these tables. Multiple paragraphs or lists inside a cell require an HTML table;
+do not flatten them into a pipe row. Code containing literal pipes/backticks may
+be saved as `<code>` with numeric character references to preserve the exact text.
+
 ## MDX custom components
 
 `.mdx` documents may use the JSX components below. They are **case-sensitive PascalCase** — `<callout>` or `<note>` is not recognized. Numeric and boolean props use braces (`height={400}`, `open`); string props use quotes (`type="tip"`). **Void** components self-close (`<X … />`); **block** components have open/close tags and wrap inner Markdown.
