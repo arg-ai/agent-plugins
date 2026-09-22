@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.10.0"
+version: "2.10.1"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -51,7 +51,7 @@ For slide decks and presentations, load `arg-slides`. It makes a self-contained 
 
 Plus a meta skill, **`arg-skills-and-agents`**, for authoring reusable workspace skills (`.skills/<name>/SKILL.md`) and subagents (`.agents/<name>.md`).
 
-For a product feature map of the Arg **web** and **desktop** apps — what each surface can do, and which capabilities are desktop-only (local-folder workspaces, folder sync, local CLI agents, native notifications) — load **`arg-ui`**. For the full product overview — what Arg is, every offering, plans, and who it's for (e.g. to answer questions about Arg or onboard a new user) — load **`arg-overview`**.
+For how to use Arg's UI, permissions, sharing, settings, or web/desktop/mobile features, read the product docs at **https://arg.ai/docs**. Discover the relevant guide at https://arg.ai/docs/llms.txt, fetch its `.md` URL, and link the user to its normal page URL. For the full product overview, load **`arg-overview`**.
 
 ## Custom Arg formats
 
