@@ -110,6 +110,7 @@ A couple of editor features round-trip as raw HTML rather than JSX:
 ## Rules
 
 - Component names are case-sensitive PascalCase.
+- **An attribute value must stay on one line.** A quoted value is part of its tag and the tag is part of one markdown block, so a raw line break inside `summary="…"`, `quote="…"`, `title="…"` — any of them — ends that block and the parser then fails on the whole file, which opens showing its own source. Write the break as `&#10;` (and `&` `"` `<` `>` as `&amp;` `&quot;` `&lt;` `&gt;`); the editor decodes them back. This is how a multi-paragraph `summary` or a `quote` copied from two lines of notes is stored.
 - **Frontmatter (`---` blocks) is not supported** and is lost on save — put metadata in a leading paragraph or `<Callout>`.
 - `import` / `export` statements and `{js expressions}` outside attribute values are not interpreted — they round-trip as literal text.
 - Unknown JSX components are preserved but render as a placeholder; prefer the components above.
