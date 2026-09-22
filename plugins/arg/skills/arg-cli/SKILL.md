@@ -36,6 +36,18 @@ Publishing uses the account from `arg login` unless `--api-key` or `ARG_API_KEY`
 
 Local directory uploads skip dot-prefixed entries except root `.skills`, `.agents`, and `.well-known`, plus dependencies, cache/scratch files and root `.gitignore` matches. Explicit file inputs are included as requested; symlinks are rejected. Choose source files intended for distribution. Publishing does not automatically retry network/server failures because the original request might have completed; check the catalog before retrying manually.
 
+## Correct a published template (`arg templates update`)
+
+```bash
+arg templates update life-goals --tag teaching --tag school
+arg templates update life-goals --category Whiteboards --description "A weekly planner for teachers"
+arg templates update 22222222-2222-4222-8222-222222222222 --description ""
+```
+
+Changes the catalog listing of a template that is already published - `--title`, `--description`, `--icon`, `--category`, and repeatable `--tag`, the same metadata publish takes. Only the flags you pass are changed; an empty value clears a field (`--description ""`, `--tag ""` for every tag).
+
+It edits the listing only: the published files and their version history are untouched, no new version is created, and the slug never changes - it is the permalink, so use `arg templates publish` to publish new bytes. A slug is resolved against the templates you published; pass the template id to edit one your organization owns but you did not publish.
+
 **Notify a person:** `arg notify [recipient...] <target-url>` sends a notification that opens an Arg file, folder, chat, or Action run. Recipients accept `me`, user ids, and emails; omit them to send to yourself. Add repeatable `--channel ios|email|in-app` to narrow delivery, or omit it for all channels. Recipient preferences still apply. `--title` overrides the inferred title and `--body` adds detail.
 
 ## Share a file outside Arg (`arg share`)
