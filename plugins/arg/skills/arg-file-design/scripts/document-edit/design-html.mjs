@@ -274,6 +274,7 @@ const GLYPH_PAINTING_FILL_TYPES = new Set([
   "angular-gradient",
   "diamond-gradient",
   "webcam",
+  "qr",
 ]);
 /**
  * Whether a fill can paint glyphs, mirroring `resolveTextPaint` in the editor —

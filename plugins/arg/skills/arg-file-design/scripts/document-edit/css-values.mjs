@@ -777,6 +777,8 @@ const PLACEHOLDER_LAYER = {
 /** Neutral paint a plain browser shows for a fill kind CSS cannot run. */
 const FILL_PLACEHOLDER_COLOR = {
   webcam: "#737373",
+  // A QR code's own background, when it has one, is used ahead of this.
+  qr: "#ffffff",
   shader: "#7c3aed",
   video: "#e5e5e5",
   model3d: "#e5e5e5",
@@ -1084,7 +1086,9 @@ function placeholderFor(fill) {
   const color =
     kind === "webcam" && isCssSafeColor(fill.color)
       ? fill.color
-      : (FILL_PLACEHOLDER_COLOR[kind] ?? null);
+      : kind === "qr" && isCssSafeColor(fill.background)
+        ? fill.background
+        : (FILL_PLACEHOLDER_COLOR[kind] ?? null);
   return color === null ? { ...PLACEHOLDER_LAYER } : solidLayer(color);
 }
 /**
