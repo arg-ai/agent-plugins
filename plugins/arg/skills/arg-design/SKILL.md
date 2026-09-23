@@ -1,19 +1,20 @@
 ---
 name: arg-design
-version: "1.2.0"
-description: How to make a `.design` document look like a designer made it - committing to a mood before picking colour, building a type ramp with real contrast, spending space deliberately, and putting every repeated value in the document's design tokens. Load alongside arg-file-design whenever you are creating or restyling a visual `.design` (poster, social graphic, landing page, deck, mockup) rather than only editing its data.
+version: "1.3.0"
+description: How to make a `.design` document look like a designer made it - choosing (or researching and inventing) a named design language instead of the default AI look, committing to a mood before picking colour, building a type ramp with real contrast, spending space deliberately, and putting every repeated value in the document's design tokens. Load alongside arg-file-design whenever you are creating or restyling a visual `.design` (poster, social graphic, landing page, deck, mockup) rather than only editing its data.
 ---
 
 # Designing in `.design`
 
 `arg-file-design` is the schema. This is the taste. Load both: schema without judgement produces a technically valid document nobody wants to look at.
 
-The one-line summary: **decide the mood, take the tokens from it, then spend your effort on type, space and contrast rather than on decoration.**
+The one-line summary: **name the design language, decide the mood, take the tokens from them, then spend your effort on type, space and contrast rather than on decoration.**
 
 ## Before you write anything: the brief
 
-Unless the user has already given you a design system, post a short brief as a chat message **before** your first write, and keep it to four lines:
+Unless the user has already given you a design system, post a short brief as a chat message **before** your first write, and keep it to five lines:
 
+- **Design language** - the named style you are working in and the one you are deliberately not (see below); offer a shortlist of 3-5 across different families when the user hasn't named one
 - **Mood candidates** - 3-5 registers that could fit (skip if the user named a direction)
 - **Mood chosen** - one, plus a clause on why it isn't the obvious pick
 - **Palette** - the token values you're committing to, with roles
@@ -24,6 +25,57 @@ The brief is part of the deliverable. It is also the cheapest place to be correc
 **Pick a mood, not a colour.** A mood is a physical condition with real objects in it - sun-bleached, overcast, inky, mineral, botanical, maritime, bookish, foggy, alpine, arid, industrial, chapel, candlelit, chalky, rusted, tidal, nocturnal, brutalist, gallery, editorial, signage, phosphor, terminal, hypertext. Derive every colour from something in that scene: "bookish" is plaster, oak pew, ink, candle flame. If you can't name the object a colour comes from, the palette is abstract and will look glued together.
 
 From your candidate list, **pick something other than your first instinct.** First instincts converge on the same three answers, and the user has seen them.
+
+## Name a design language, not a vibe
+
+Generated design has a house look: the same centred layout, soft gradient, rounded cards and friendly sans on every brief. Nothing is wrong with any one of them; the problem is that the reader has seen it a hundred times, so it reads as "made by default". For event and community pieces the default is the craft-fayre template - bunting, hand-drawn florals, pastel palettes, airbrushed or oil-painted art, stock smiling people. A piece stands out first by simply being _different_, before it is anything else.
+
+Adjectives do not get you out of it. "Clean, bold, bright, modern" still lands on the default. What works is **a named style with a real history**: a movement, a studio, a decade, a print process or a scene - "Bauhaus", "Swiss International", "risograph two-ink", "1968 Atelier Populaire stencil", "Blue Note sleeve", "90s drum and bass flyer". A name carries a whole coherent vocabulary (palette rule, type, composition, texture) that a list of adjectives never will.
+
+1. **Write down the default first, and treat it as what not to do.** Before choosing, say in one clause what the obvious version would look like. Then choose against it: "not wrong, but we want ours to stand out from everything that looks like it."
+2. **Offer a shortlist across families**, not five variants of one idea: e.g. one modernist, one print-process, one vernacular, one bold/unusual, one quiet. The reliable stand-outs for everyday briefs are risograph, cut paper (Matisse), brutalist (toned down), Japanese minimal and wayfinding / signage.
+3. **Know what the language actually does, then do all of it.** Write a one-line style card before drawing: _palette rule · type · composition · texture/process · signature device · what it forbids._
+   - Bauhaus: primaries + black on off-white · geometric sans, often lowercase · asymmetric, diagonal, circle/square/triangle · flat · a bar or rule cutting the field · no ornament, no gradients.
+   - Swiss: black/white + one accent · one grotesk, flush-left ragged-right · strict grid, lots of white · objective photo or none · type as image · no decoration.
+   - Risograph: 2-3 spot inks · clean sans or simple serif in solid fills · bold simplified shapes · grain, slight misregistration, overprint mixing · halftone · no smooth gradients or photoreal colour.
+   - Japanese minimal: paper ground, one dark ink, one red · restrained serif or light sans, vertical text where it belongs · one strong element in a lot of space · hanko-style seal · no clutter.
+   - Wayfinding: signage yellow/black or transit colours · DIN-like sans · pictograms, arrows, numbered routes · everything reads as information · no decorative illustration.
+4. **Decide whether the language is a container or has its own subject.** Container styles (Swiss, risograph, monochrome + accent) take whatever picture the brief needs. Subject styles (Art Nouveau, Pre-Raphaelite, Madhubani, calavera) are built around their figures and ornament; strip those out and the style collapses, so either commit to its subject matter or choose a different language.
+5. **Shortlist the picture, then commit to one.** Name three or four things in the brief that could each carry the image, and pick one - not automatically the boldest or strangest. One piece of wit is allowed, and only one: inside the chosen subject or at its edge, never as a second element competing with it.
+6. **When you change direction, restart from the brief.** Restyling the previous iteration drags its trappings along - a switch to Designers Republic will happily add fake codes and extra text, and a switch back keeps them. Ask for the style you want from scratch rather than accumulating it.
+7. **Be honest about what's on offer.** The design promises only what the event or product actually has: no marquee that isn't there, no invented crowd, band or venue detail, no focal point so large it overstates the thing. Colour stays clean and newly printed - no accidental sepia or "aged" wash unless ageing is the point.
+8. **Change one thing per iteration**, and zoom in before calling it done: legibility at the real size, the headline, the date/time/place, nothing duplicated or garbled.
+
+A distinctive result may still be recognisably machine-made. That's fine - the goal is not to hide how it was made but to avoid the look everyone is tired of.
+
+## A map of design languages
+
+Reach across families, not within one. Names to start from (after John Hartnup's catalogue of one hundred poster styles, <https://john.hartnup.uk/poster-prompts/>):
+
+- **Graphic design movements** - Arts and Crafts, Art Nouveau, Glasgow Style, Vienna Secession, Art Deco, Streamline Moderne, Bauhaus, Constructivist, De Stijl, Swiss / International Typographic, mid-century modern, Push Pin Studios, New Wave typography (Weingart, Greiman), Memphis, grunge typography (Carson), brutalist, contemporary editorial, wayfinding / signage.
+- **Fine art** - Japonisme, Belle Époque lithograph, Futurist, Vorticist, Suprematist, Orphism, Dada collage, Cubist exhibition poster, Surrealist, Expressionist woodcut, Neue Sachlichkeit, CoBrA, Concrete art, Pop, Op, psychedelic sixties, minimalism, graffiti / street art.
+- **Print processes** - risograph, letterpress / woodtype, screenprint, cyanotype / blueprint, etching and engraving, halftone newsprint, mimeograph purple, stamp, cut paper, botanical scientific plate, monochrome + single accent.
+- **Folk and vernacular** - child's poster paint with professional typography, school cut-out collage, crayon folk, punk photocopy fanzine, zine cut-and-paste, Posada calavera, Pennsylvania Dutch fraktur, Madhubani, Scandinavian rosemaling. Folk traditions belong to living cultures: draw on them with respect and specificity, never as costume, and never borrow sacred imagery for a sale.
+- **National and era** - Polish poster school, golden-age travel poster (Cassandre), Festival of Britain, Taisho modern, Shanghai calendar poster, East German DEFA, Zagreb school animation, German Expressionist film, Hong Kong cinema, Tropicália, ukiyo-e, neon diner Americana.
+- **Political and activist** - WPA / New Deal, Soviet and Soviet space programme, Cuban OSPAAAL and ICAIC, Atelier Populaire (Paris 1968), ACT UP.
+- **Music scenes** - Blue Note, Factory / Haçienda, 4AD, 90s rave and acid, drum and bass, reggae sound system, 80s NYC hip hop, heavy metal, indie festival line-up, skate graphics.
+- **Digital and contemporary** - The Designers Republic, NASA worm modernism, seventies corporate psychedelia, Y2K chrome, vaporwave, synthwave, glitch, pixel, low poly, flat illustration, neo-brutalist web, bento grids, kinetic / variable type, big editorial serif, grain and duotone.
+
+## Research and invent languages
+
+The map is a starting point, not a menu to exhaust. When the brief deserves something fresh - or the user asks for it - go and find or make a language:
+
+- **Research the history.** Use web search and fetch tools where available: museum and archive collections (V&A, Cooper Hewitt, MoMA, Poster House, Letterform Archive, Design Museum), Fonts In Use, studio monographs and type foundry specimens. Look for a specific designer, year or artefact, not a genre page.
+- **Mine the subject's own visual culture.** Every field has printed matter nobody designed for show: seed packets, match-day programmes, airline safety cards, lab notebooks, shipping labels, transit maps, pharmacy packaging, railway timetables, museum tickets. A conference that looks like a timetable or a bakery that looks like a 1950s bread wrapper is instantly its own thing.
+- **Invent by combination, with rules.** Useful formulas:
+  - _Technique × period × subject_ - "risograph 1978 science-fair".
+  - _Transposition_ - one field's vernacular applied to another: "airline safety card for an onboarding deck", "seed packet for a SaaS launch".
+  - _Naive × expert_ - "a child's poster-paint drawing set in precise Swiss typography".
+  - _Constraint-led_ - two inks and one typeface; only circles; everything drawn with a single stroke weight.
+- **Name what you invented and write its style card** (palette rule, type, composition, texture, signature device, what it forbids), then hold every artboard to it. An invented language that bends on page three was never a language.
+- **Check it still does the job.** The headline reads from across the room, the facts are findable, and contrast holds. A striking language that hides the date has failed.
+
+In `.design`, a language's palette goes into the `color.*` tokens and its faces into `font.*`, so the whole piece can be re-themed at once. Keep text live; textures the canvas can't draw natively (grain, halftone) can be a subtle image or shader fill layered behind live type.
 
 ## Choose the authoring route and verify the result
 
