@@ -137,7 +137,7 @@ Plan the story before drawing: establish the audience, decision or takeaway, nar
 
 Search the workspace for existing source material before recreating it. When content already lives in a supported workspace file, place it through a file-backed fill so the deck remains connected to that source.
 
-Use `{ "type": "file", "fileType": "...", "src": "/workspace/path" }` on an artboard or shape for:
+Use `{ "type": "file", "fileType": "...", "src": "/path/to/file" }` on an artboard or shape for:
 
 - `design` - a reusable component, chart, diagram, branded frame, or another deck's artboard. Select it with `artboardId`.
 - `image` - raster, SVG, or PSD artwork without embedding a stale copy.
