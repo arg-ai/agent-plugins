@@ -1,6 +1,6 @@
 ---
 name: arg-files
-version: "2.10.1"
+version: "2.11.0"
 description: The file map of Arg — every supported format and how to work with files. Load this first whenever you create, read, update, or delete files in an Arg workspace — it lists every supported format, states the shared editing rules, recommends the library to generate each binary format (and how to install one fast), points to the arg-file-* skill for each format, and names the access-method skill to pair it with (arg-mcp / arg-cli). For the product overview load arg-overview instead.
 ---
 
@@ -36,20 +36,21 @@ Google Drive and Microsoft (OneDrive/SharePoint) imports reuse the user's existi
 
 For these, **load the named skill first** for format-specific guidance:
 
-| Type                      | Extensions                                                  | Skill                 | Storage                                                                                           |
-| ------------------------- | ----------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
-| Document / notes          | md, mdx, txt, markdown                                      | `arg-file-document`   | Text (`.mdx` adds custom JSX components)                                                          |
-| React UI / apps           | tsx, jsx                                                    | `arg-apps`            | Text (live preview on an isolated sitearg origin)                                                 |
-| HTML / web / apps         | html, htm                                                   | `arg-apps`            | Text (file-backed apps via the `window.arg` FS SDK; also HyperFrames motion-graphic compositions) |
-| Video editor (NLE)        | video                                                       | `arg-file-video-edit` | Text (JSON timeline with linked media/projects)                                                   |
-| DAW / music session       | daw                                                         | `arg-file-daw`        | Text (JSON arrangement)                                                                           |
-| Design                    | design, svg, fig, html                                      | `arg-file-design`     | Text (`.design`: JSON; HTML only on initial creation; `.svg`; canvas `.html`); `.fig` import-only |
-| CAD / architecture        | cad                                                         | `arg-file-cad`        | Text (JSON; `.dxf`/`.dwg` import-only)                                                            |
-| Whiteboard                | whiteboard                                                  | `arg-file-whiteboard` | Text (JSON)                                                                                       |
-| Task / project management | kanban                                                      | `arg-file-kanban`     | Text (JSON)                                                                                       |
-| Automation / workflow     | automation, `.arg/workflows/*.yml`, `.arg/workflows/*.yaml` | `arg-file-automation` | Text (JSON or YAML)                                                                               |
-| Diary / journal           | diary                                                       | `arg-file-document`   | Text (JSON, per-day rich text)                                                                    |
-| Shareable form / survey   | form                                                        | `arg-file-document`   | Text (MDX with form field components)                                                             |
+| Type                      | Extensions                                                  | Skill                   | Storage                                                                                           |
+| ------------------------- | ----------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
+| Document / notes          | md, mdx, txt, markdown                                      | `arg-file-document`     | Text (`.mdx` adds custom JSX components)                                                          |
+| React UI / apps           | tsx, jsx                                                    | `arg-apps`              | Text (live preview on an isolated sitearg origin)                                                 |
+| HTML / web / apps         | html, htm                                                   | `arg-apps`              | Text (file-backed apps via the `window.arg` FS SDK; also HyperFrames motion-graphic compositions) |
+| Video editor (NLE)        | video                                                       | `arg-file-video-edit`   | Text (JSON timeline with linked media/projects)                                                   |
+| DAW / music session       | daw                                                         | `arg-file-daw`          | Text (JSON arrangement)                                                                           |
+| Design                    | design, svg, fig, html                                      | `arg-file-design`       | Text (`.design`: JSON; HTML only on initial creation; `.svg`; canvas `.html`); `.fig` import-only |
+| CAD / architecture        | cad                                                         | `arg-file-cad`          | Text (JSON; `.dxf`/`.dwg` import-only)                                                            |
+| Whiteboard                | whiteboard                                                  | `arg-file-whiteboard`   | Text (JSON)                                                                                       |
+| Task / project management | kanban                                                      | `arg-file-kanban`       | Text (JSON)                                                                                       |
+| Automation / workflow     | automation, `.arg/workflows/*.yml`, `.arg/workflows/*.yaml` | `arg-file-automation`   | Text (JSON or YAML)                                                                               |
+| Diary / journal           | diary                                                       | `arg-file-document`     | Text (JSON, per-day rich text)                                                                    |
+| Shareable form / survey   | form                                                        | `arg-file-document`     | Text (MDX with form field components)                                                             |
+| Smaller text formats      | ics, shadertoy, dj, m3u, srt, vtt, cast, rss, vcf           | `arg-file-text-formats` | Text (plain text, XML or JSON)                                                                    |
 
 For slide decks and presentations, load `arg-slides`. It makes a self-contained `.html` deck the default and covers presentation structure, navigation and present mode, live workspace data, and when to build a multi-artboard `.design` deck instead (an editable design canvas, or a PowerPoint / PDF deliverable) alongside `arg-file-design`.
 
@@ -78,7 +79,7 @@ Two more custom surfaces:
 
 ## Other supported formats (no dedicated skill — handle directly)
 
-Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XML ones directly; build binary ones with a generator and write/upload the result (see your access-method skill).
+Arg opens, views, and (where noted) edits many more formats. Create text/JSON/XML ones directly; build binary ones with a generator and write/upload the result (see your access-method skill). The exact syntax for `.ics`, `.shadertoy`, `.dj`, `.m3u`, `.srt`/`.vtt`, `.cast`, `.rss` and `.vcf` is in the `arg-file-text-formats` skill.
 
 - **Diagrams & shaders** — `.excalidraw` (real Excalidraw JSON scene), `.mermaid`/`.mmd` (live SVG preview), `.shadertoy`/`.glsl`/`.frag` (WebGL render).
 - **Data, feeds & config** — `.json` (graph viewer), `.xml`, `.rss` (RSS 2.0 XML), `.yaml`/`.yml`, `.toml`, `.ini`, `.env`, `.sql`. RSS files open as editable XML source and support news, magazine, blog, gallery, podcast, records-table, structure-explorer, and custom AI views.
