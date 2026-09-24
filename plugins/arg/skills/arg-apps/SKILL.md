@@ -1,7 +1,7 @@
 ---
 name: arg-apps
-version: "2.16.0"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps and be pinned, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
+version: "2.18.0"
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg/actions, versioned npm imports, plus self-contained .html apps using window.arg for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps, be pinned, and register as the editor of a file type, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -807,14 +807,39 @@ Write it to the workspace root as `<Name>.app`, and keep the name collision-free
 }
 ```
 
-Four rules for the file itself:
+Five rules for the file itself:
 
 - `entry.path` is workspace-rooted and leading-slashed. `entry.id` may be `null`; Arg fills in the registry id the first time the launcher is opened, and the pointer becomes rename-safe from then on.
 - `icon` is **inline SVG markup**, not a URL, a data URI or an emoji, and at most 64 KB. It renders through an inert image boundary, so scripts and external references in it never run - draw a simple, legible mark rather than importing one. A launcher with no icon gets a generic placeholder, which is worth avoiding.
 - `permissions` is optional and should reflect what the source actually uses - the narrowest `files` scope that works, only the Action ids it calls, only the devices it touches. Omit the key entirely for an app that reads nothing beyond its own folder.
+- `file_types` is optional and registers the app as an editor/viewer of those formats (see below). Omit it for an app that is not about one file type.
 - One launcher per app. Do not write a second `.app` pointing at a file that already has one.
 
 A `.app` can also point at a `.server` file (`entry.kind` stays `"file"`) or at a published Site (`entry.kind` is `"site"` with a `siteId`), so a running app and a deployed one get the same tile. The same "write the launcher too" rule applies to a `.server` app you build.
+
+## Registering an app as a file type's editor
+
+An app built around one format - a CSV grid, a kanban board, a log reader - can say so, and every file of that format then offers it in its **App switcher** beside its own editor, under **Workspace apps**:
+
+```json
+{
+  "version": 2,
+  "name": "Grid",
+  "icon": "<svg viewBox=\"0 0 24 24\">...</svg>",
+  "entry": { "kind": "file", "id": null, "path": "/apps/grid.tsx" },
+  "file_types": ["csv", "tsv"],
+  "permissions": { "files": { "access": "readwrite", "scope": "folder" } }
+}
+```
+
+- `file_types` is a list of **extensions without the dot**, lowercase, at most 32. `".CSV"` and `"csv"` are the same type; anything that is not a plain extension is dropped when the manifest is read.
+- Only a `kind: "file"` launcher pointing at `.html`, `.htm`, `.tsx` or `.jsx` can register. A hosted Site and a `.server` cannot stand in for a file's editor, so a declaration on either is kept in the file and never offered.
+- **When the app opens this way, `window.arg` is anchored on the file it was opened on, not on the app's own source.** `arg.path` is that file, `arg.dir` is its folder, `arg.fs.read("./sibling.json")` resolves beside it, and folder-scoped access covers it. Do not hard-code a path, and do not assume `arg.dir` is the folder your app lives in.
+- **Reach the file through `arg.document`, not `arg.fs`.** `arg.document.current()` describes it, `read()` returns its bytes WITH the revision they are at, and `write(content, { expectRevision })` refuses to overwrite a change you never saw (`code: "conflict"`) - which plain `arg.fs.write` cannot do. `arg.document.collaborate()` joins the file's live Yjs room, so an edit is the same edit the file's own Arg editor sees and persists. The whole namespace is in the arg-fs-js-sdk skill; from `@arg-ai/sdk` it is the `document` named export.
+- The app is opened the same way from Apps, where there is no such file - `arg.path` is then the app's own source. Branch on the extension of `arg.path` if the two cases need different screens.
+- Declare `files.access: "readwrite"` only if the app actually writes the file back. A viewer wants `read`.
+- The registration is workspace-wide: one launcher serves every file of the types it names, and nothing is written to those files.
+- Any extension works, including one Arg has no editor of its own for. A `.log` file with a registered reader gets an App switcher it would otherwise not have.
 
 ## Declaring permissions in a `.app` launcher
 

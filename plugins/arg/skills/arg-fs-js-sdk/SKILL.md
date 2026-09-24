@@ -1,7 +1,7 @@
 ---
 name: arg-fs-js-sdk
-version: "1.6.1"
-description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html, .tsx, and .jsx apps. Load when building or modifying an app that reads, writes, or watches workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, or team member metadata from the injected arg-fs browser bridge.
+version: "1.7.0"
+description: Use the window.arg filesystem JavaScript SDK inside previewed Arg .html, .tsx, and .jsx apps. Load when building or modifying an app that reads, writes, or watches workspace files at runtime, needs stable file IDs, asset URLs, SQLite access, current-user identity, team member metadata, or the active document an app registered for a file type was opened on - including its live Yjs collaboration - from the injected arg-fs browser bridge.
 ---
 
 # Arg FS SDK (`window.arg`)
@@ -349,6 +349,61 @@ const cols = await arg.db.schema("/data/app.db", "users");
 | `arg.ready`         | Promise resolving to the `arg` object once the handshake completes.                                                                                                                                                                                 |
 | `arg.onContext(fn)` | Subscribes to every context the host pushes, replaying the current one on subscribe; `fn` receives the `arg` object and the call returns an unsubscribe function. Use it for values that can change after `arg.ready` resolves, `arg.me` above all. |
 | `arg.version`       | SDK version (currently `1`).                                                                                                                                                                                                                        |
+
+## The open document — `arg.document.*`
+
+A `.app` launcher that declares `file_types` runs as the editor for files of those types (see the arg-apps skill). `arg.document` is how it reaches the one it was opened on. Nothing here takes a path, so the app cannot be pointed at another file by a bug in its own code, and `arg.path` is that same file.
+
+```js
+const doc = await arg.document.current(); // null when launched from Apps
+// { path, name, extension, editor, workspaceId, fileId, size, readOnly, collaborative }
+
+const { content, revision } = await arg.document.read();
+await arg.document.write(next(content), { expectRevision: revision });
+```
+
+| Method                       | What it does                                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `current()`                  | The active document, or `null`.                                                                           |
+| `onChange(fn)`               | Fires when the document or its read-only state changes; returns an unsubscribe function.                  |
+| `read(options?)`             | `{ content, encoding, revision }`. `{ fresh: true }` bypasses caches, `{ encoding: "base64" }` for bytes. |
+| `readJSON()` / `readBytes()` | The same read, parsed or as a `Uint8Array`.                                                               |
+| `write(content, options?)`   | `{ path, revision }`. `expectRevision` makes it conflict-safe.                                            |
+| `writeJSON(value, options?)` | Pretty JSON plus a trailing newline - the shape Arg's own editors write.                                  |
+| `save()`                     | Flushes a collaborative document. A plain one is already saved by `write`.                                |
+| `watch(fn, options?)`        | The persisted file, through the shared watcher.                                                           |
+| `collaborate()`              | Joins the file's live Yjs room (below).                                                                   |
+
+**Always pass `expectRevision` when the write is an edit of something you read.** `arg.fs.write` is unconditional by design; a document editor that overwrote a collaborator's change with a silent last-write-wins would have no way to find out. A write whose revision has moved on rejects with `code: "conflict"` - re-read, reapply, write again.
+
+### Live collaboration
+
+`collaborate()` joins the Yjs room the file's own Arg editor is in, so an edit made through it is the edit that editor sees, undoes and persists. It carries CRDT **update bytes**, never a `Y.Doc`, so bring your own yjs:
+
+```js
+import * as Y from "https://esm.sh/yjs@13.6.27";
+
+const doc = new Y.Doc();
+const session = await arg.document.collaborate();
+
+Y.applyUpdate(doc, session.initialState);
+session.onUpdate((update) => Y.applyUpdate(doc, update, session));
+doc.on("update", (update, origin) => {
+  if (origin !== session) session.update(update);
+});
+
+session.awareness.setLocalState({ cursor: { row: 3 } });
+session.awareness.onChange((states) => renderCursors(states));
+session.onClose((reason) => warn(reason));
+```
+
+- **Pass the session as the update origin.** It is what tells your own edits from the room's; applying your own back is how a document ends up with everything in it twice.
+- `session.initialState` is the whole room as one update - apply it before any live one, or you render a half-synced document.
+- The shared types belong to whichever editor owns the format (`Y.Text("content")` for text, per-field maps for a `.kanban` board). Read that editor's shape; do not invent one.
+- `session.readOnly` means the room refuses this client's writes. Updates still arrive.
+- Awareness fields merge into the viewer's presence and `user` is never overwritten, so a cursor can be published without removing the person from anyone's collaborator list.
+- A format with no room (`.pdf` and the other non-collaborative types) rejects with `unsupported_capability`. Read and write it instead.
+- Web and desktop only for now; the iOS and Android web views report `unsupported_capability`.
 
 ## Read vs read and write
 
