@@ -62,6 +62,17 @@ Fires when a new application is created in Ashby, optionally scoped to a job or 
 | `status` | string | no | Only watch applications whose CURRENT status matches this at the moment they're polled, evaluated at creation time. Since this trigger only detects newly created applications, later stages like Hired or Archived rarely match — an application usually reaches those after this trigger's ~15 minute window. Empty = all statuses. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### Bland AI (`bland`)
+
+#### `bland_call_ended` — Call ended
+
+Fires when a Bland AI phone call finishes (completed, hung up, or failed to connect). Optionally scope it to one phone number. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `phone_number` | string | no | Only calls to or from this number (E.164, e.g. +15551234567). Empty = every call. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Confluence (`confluence`)
 
 #### `confluence_page` — Page
