@@ -35,7 +35,7 @@ Add a page filmstrip with `--thumbnail-pages a.png,b.png` (comma-separated or re
 
 Publish an existing workspace with `arg templates publish --workspace <id-or-name> --title "Starter"`. Add `--type folder|file|skill|subagent` and `--source-path <path>` to select its source, and `--thumbnail-source-path <path>` for workspace catalog media. Workspace publishing takes its organization from the source; an explicit `--org` must match. Local paths and workspace source flags cannot be mixed.
 
-All publish-modal settings are available: `--type`, `--title`, `--description`, `--category`, repeatable `--tag`, `--visibility public|unlisted|org|private`, `--allow-preview` (off by default), and automatic/custom/no thumbnail (omit both thumbnail flags for none). The CLI also supports `--icon` and `--slug`.
+All publish-modal settings are available: `--type`, `--title`, `--description`, `--category`, repeatable `--tag`, `--visibility public|unlisted|org|private`, `--allow-preview` (on by default; use `--allow-preview=false` to disable file preview), and automatic/custom/no thumbnail (omit both thumbnail flags for none). The CLI also supports `--icon` and `--slug`.
 
 Publishing uses the account from `arg login` unless `--api-key` or `ARG_API_KEY` selects an API-key principal. `--org` selects the organization, never a different publisher; `arg whoami` shows the current identity, and JSON publish output includes `owner_user_id` and `owner_org_id`. The server checks membership, source write access, and publishing permissions before creating a snapshot.
 
