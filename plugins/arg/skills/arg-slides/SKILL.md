@@ -23,7 +23,7 @@ Ask nothing extra when the request is just "make me a deck" - write the HTML.
 
 Load `arg-files` for shared file rules and the active access method (`arg-mcp` or `arg-cli`).
 
-For an HTML deck, load `arg-apps` for the `.html` preview contract and `arg-fs-js-sdk` when the deck reads workspace files at runtime through `window.arg`.
+For an HTML deck, load `arg-apps` for the `.html` preview contract and `arg-sdk` when the deck reads workspace files at runtime.
 
 For a `.design` deck, load `arg-file-design` before editing for the complete schema, file-fill rules, GLSL contract, and bundled `scripts/document-edit/design.mjs` helper.
 
@@ -68,7 +68,7 @@ Write one document. Every slide is a section inside a deck root, and the whole d
 ```
 
 - `<meta name="arg-full-view" />` in the `<head>` hides the source pane so the deck fills the editor and the toolbar collapses to breadcrumbs plus **View code**. Put it on every deck.
-- Never link out to a second HTML page. A navigation reloads the sandboxed preview and drops `window.arg`; switch slides with in-page state.
+- Never link out to a second HTML page. A navigation reloads the sandboxed preview and restarts the SDK session; switch slides with in-page state.
 - Fix the stage size (`1920x1080` for 16:9 unless the user asks otherwise) and scale it with a `transform: scale()` recomputed on `resize`. Fluid `vw`-based type looks fine on your screen and breaks on the projector.
 - Paint the background explicitly. A deck commits to its own palette, so do not rely on the host page's colors. If the deck should follow the app instead, style all three of the `light`, `dark`, and `focus` `<body>` classes an SDK-enabled page receives, not `prefers-color-scheme`.
 
@@ -90,17 +90,14 @@ Write one document. Every slide is a section inside a deck root, and the whole d
 A deck can read real numbers instead of hard-coding them:
 
 ```html
-<script>
-  if (window.arg) {
-    arg.ready.then(async () => {
-      const runs = await arg.fs.readJSON("data/q3.json");
-      document.querySelector("#arr").textContent = runs.arr;
-    });
-  }
+<script type="module">
+  import { fs } from "@arg-ai/sdk";
+  const runs = await fs.readJSON("data/q3.json");
+  document.querySelector("#arr").textContent = runs.arr;
 </script>
 ```
 
-There is no import for the SDK - ordinary workspace previews start with **Scripts** and folder-scoped, read-only **Workspace access** enabled, so the editor injects it automatically. Feature-detect with `if (window.arg)` and render a sensible static fallback when it is absent, because public, read-only, or explicitly disabled previews do not receive it. Load `arg-fs-js-sdk` for the full reference.
+The preview resolves `@arg-ai/sdk` without an install. Workspace access still governs the read. See https://developers.arg.ai/guides/sdk/embedded-apps for setup and fallback behavior.
 
 ### Build and verify
 

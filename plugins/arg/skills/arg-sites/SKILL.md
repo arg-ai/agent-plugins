@@ -32,7 +32,7 @@ Static sites usually go live inside the call (`status: "live"`). A framework bui
 
 A static site's root URL is served from `index.html` at the top of `source_path`, and every unmatched path falls back to it. Without one the deploy still succeeds and the URL you hand back is dead (404), so check for it before deploying - and point `source_path` at the site's own folder rather than the workspace root, which usually has no index page.
 
-A site serves files; it does not build or run them. A React/TSX app file is not a page - it is source, served verbatim, and the browser cannot execute it. Publish a real `.html` entry point (or a `vite`/`astro` build that emits one). `window.arg` does not exist on a deployed site either, so an app that reads workspace files through the JS FS SDK must fetch its data another way - bake it into the deployed folder, or call an external API.
+A site serves files; it does not build or run them. A React/TSX app file is not a page - it is source, served verbatim, and the browser cannot execute it. Publish a real `.html` entry point (or a `vite`/`astro` build that emits one). A deployed Site needs a supported SDK transport and its own access policy; see https://developers.arg.ai/guides/sdk/hosted-sites.
 
 ### A deploy is a snapshot - editing the source does not update the site
 
@@ -40,7 +40,7 @@ Every deploy copies the folder's bytes into an immutable version. Serving reads 
 
 So when asked to refresh a site's content, the edit is half the job: write the file, redeploy, and only then report it live. Never say updated data is live because the workspace file changed.
 
-This is also why a page that live-updates inside Arg looks frozen once deployed: `window.arg.fs.watch` has no host on a site origin, and the `fetch()` fallback reads the snapshot copy. There is no way for a deployed page to read live workspace bytes - redeploying is the update mechanism.
+This is also why a page that live-updates inside Arg looks frozen once deployed: a preview file watcher has no host on a Site origin. Use the hosted SDK transport for live access, or redeploy updated snapshot files.
 
 A tool result carrying `root_document_warning` is telling you exactly this: say so rather than handing over the link.
 

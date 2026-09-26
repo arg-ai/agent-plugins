@@ -91,57 +91,22 @@ A `.server` backend must opt in with an explicit top-level allowlist, for exampl
 
 Hosted-site server code can call the same endpoint directly using its incoming `X-Arg-Api-Url` and `X-Arg-Action-Token` headers.
 
-## From an in-app TSX or JSX preview - `@arg/actions`
+## From an in-app HTML, TSX or JSX preview
 
-Cloud `.tsx` and `.jsx` previews can discover and run Actions through the typed package facade:
+Use the host-provided SDK in a module. The viewer must grant Actions for the current source session. Importing the SDK does not grant permission. See https://developers.arg.ai/guides/sdk/actions for the current Action API and host availability.
 
 ```ts
-import { actions } from "@arg/actions";
+import { actions } from "@arg-ai/sdk";
 
-await actions.ready;
 const catalog = await actions.list({ query: "generate image" });
-const gmail = await actions.list({ provider: "google_gmail" });
-const { inputSchema, outputSchema } = await actions.schema(catalog[0].id);
-const details = await actions.describe(catalog[0].id);
-const run = await actions.run(catalog[0].id, {
-  prompt: "a red bicycle on a beach at sunset",
-  output_path: "/images/bicycle.png",
-});
-const latest =
-  run.status === "queued" || run.status === "running" ? await actions.getRun(run.runId) : run;
+const { inputSchema } = await actions.schema(catalog[0].id);
+const run = await actions.run(catalog[0].id, { prompt: "a red bicycle" });
+if (run.status === "queued" || run.status === "running") {
+  console.log(await actions.getRun(run.runId));
+}
 ```
 
-For many independent calls, batch them into one request. Every result is positionally aligned with its input and has its own `ok` discriminator:
-
-```ts
-const { results } = await actions.runBatch([
-  { actionId: "file_read", input: { path: "/brief.md" } },
-  {
-    actionId: "image_generate",
-    input: { prompt: "A red bicycle", output_path: "/images/bike.png" },
-    idempotencyKey: "dashboard-bike-v1",
-  },
-]);
-```
-
-`runBatch` accepts 1-50 calls. It is not a transaction: one failed call neither rejects nor rolls back its siblings, and later calls cannot consume earlier outputs. Give every write, billable, or provider-backed call a stable `idempotencyKey` before retrying a batch after a transport failure.
-
-The package is a lazy facade over `window.arg.actions`, not another transport. The viewer must enable the separate, session-only Actions grant in the preview toolbar or permissions menu. The grant is available only for cloud workspaces and is bound to the exact authored source revision, so any local or collaborative code change revokes it before changed code can execute. It is deliberately not covered by folder-scoped filesystem access: registry Actions can reach the whole workspace, spend credits, and act through the viewer's connected services. The iframe never receives a token or chooses the workspace/audit surface; its exact sitearg origin posts to the authenticated Arg parent, and the backend applies the signed-in viewer's permissions and validates the current registry schema.
-
-Use `list`, `schema`, and `describe` for reflection instead of hardcoding current inputs. Poll only a queued/running asynchronous Action with `getRun` or `listRuns`. A succeeded sync read carries its output inline and its audit-only `runId` may return not found. This browser API applies only to framed `r-*.sitearg.com` previews inside Arg, not a deployed top-level Site.
-
-## From an in-app HTML preview - `window.arg.actions`
-
-Classic `.html` and `.htm` scripts use the equivalent injected namespace directly:
-
-```js
-await window.arg.actions.ready;
-const catalog = await window.arg.actions.list({ query: "generate image" });
-const teams = await window.arg.actions.list({ provider: "microsoft_teams" });
-const { inputSchema, outputSchema } = await window.arg.actions.schema(catalog[0].id);
-```
-
-It has the same methods, including `runBatch`, grant, and backend validation as `@arg/actions`. On web and desktop the page is a framed sitearg preview and the grant is origin-pinned; on iOS and Android `.html` renders in a native WebView, so the same namespace arrives over a platform transport that the viewer enables per file from the "…" menu. Either way the page never sees a token and never picks the workspace or audit surface.
+Use `list`, `schema`, and `describe` to inspect current registry contracts. Give each billable or mutating call a stable `idempotencyKey` before retrying.
 
 ## What you can run (search_actions is authoritative)
 
@@ -213,7 +178,7 @@ if (run.status === "succeeded") {
 }
 ```
 
-Use the same call through `window.arg.actions` in HTML. Discover accounts separately for each
+Use the same `@arg-ai/sdk` import in HTML modules. Discover accounts separately for each
 viewer; never bake the app author's connection id into shared source or workspace data.
 When several accounts are available, let the viewer choose. `owned_only: true` selects accounts
 usable by generic API request actions under their ownership rule; dedicated actions also
