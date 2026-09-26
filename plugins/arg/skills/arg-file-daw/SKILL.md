@@ -46,7 +46,9 @@ This is the _session/arrangement_, not an audio file. Audio clips **reference** 
 
 ### Clip — `DawClip`
 
-`{ id, type, trackId, name, start, duration, offset, gain, fadeIn, fadeOut, stretch, warpMode, color, src, srcFileId?, notes, automation }`
+`{ id, type, trackId, name, start, duration, offset, gain, fadeIn, fadeOut, stretch, warpMode, color, src, srcFileId?, audioEnhance?, enhancedAudioSrc?, enhancedAudioFileId?, notes, automation }`
+
+- `audioEnhance` / `enhancedAudioSrc` / `enhancedAudioFileId` (audio clips): **Enhance voice**, set by the editor (right-click an audio clip -> Enhance voice). While `audioEnhance.enabled`, the clip plays `enhancedAudioSrc` - a render of the whole `src` in the same timebase - instead of `src`; `engine` is `"local"` | `"deepfilternet"` | `"voice-isolation"` and `amount` (0..1) is the baked dry/wet mix. Leave them alone, and delete all three if you change `src`.
 
 - `type`: `"midi"` | `"audio"` | `"automation"`.
 - `start`, `duration`: in **beats**. `start` is the clip's position on the arrangement.

@@ -371,6 +371,7 @@ export function collectVideoFileReferences(project) {
     for (const clip of track.clips) {
       collectReference(references, track, clip, "src", "srcFileId");
       collectReference(references, track, clip, "cursorTelemetrySrc", "cursorTelemetryFileId");
+      collectReference(references, track, clip, "enhancedAudioSrc", "enhancedAudioFileId");
     }
   return references;
 }
@@ -381,6 +382,10 @@ export function replaceVideoClipSource(project, clipId, src, options = {}) {
   const previous = clip.src;
   clip.src = src;
   delete clip.srcFileId;
+  // An enhanced render is of the previous media's audio.
+  delete clip.audioEnhance;
+  delete clip.enhancedAudioSrc;
+  delete clip.enhancedAudioFileId;
   const stillUsed = next.tracks.some((track) =>
     track.clips.some((entry) => entry.id !== clipId && entry.src === previous),
   );

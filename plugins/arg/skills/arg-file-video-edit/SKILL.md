@@ -75,6 +75,8 @@ Base: `{ id, type, name, enabled, start, duration }`.
 
 Workspace-backed `src` clips may also contain the UI-managed `srcFileId` (`argfile_<uuid>`). A clip with cursor telemetry may pair `cursorTelemetrySrc` with `cursorTelemetryFileId`. These ids are optional and additive; the path remains the readable fallback.
 
+**Enhance voice** (video and audio clips): `audioEnhance: { enabled, engine, amount }` plus `enhancedAudioSrc` (and its UI-managed `enhancedAudioFileId`). While `enabled`, the clip's sound plays from `enhancedAudioSrc` - a render of the whole `src` in the same timebase - and the picture stays on `src`. `engine` is `"local"` | `"deepfilternet"` | `"voice-isolation"`; `amount` (0..1) is the dry/wet mix baked into the render. The editor produces the render (right-click a clip -> Enhance voice, or the Audio inspector); do not point `enhancedAudioSrc` at arbitrary audio, and when you change a clip's `src`, delete all three fields - the render is of the old media's voice. To enhance audio yourself, run the `enhance_audio` action and put its output on an audio track.
+
 - `type` — `video` / `audio` / `image` / `gif` / `cast` / `text` / `solid` / `adjustment` / `stock` / `weather` / `shape` / `qr` / `embed` / `object3d` / `shader` / `kml` / `hyperframes` / `zoom`.
 - `start` = position on the timeline (s); `duration` = length on the timeline (s). Clips on one track must not overlap except when an incoming clip uses a `cross-dissolve` `transitionIn`; put other overlapping content (titles over footage, picture-in-picture) on separate tracks.
 
