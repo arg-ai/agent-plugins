@@ -12,6 +12,8 @@ A freeform 2D canvas of nodes (shapes, sticky notes, text, tables, sections, ima
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Whiteboard-specific: read the board first to learn existing nodes and their coordinates; to remove a node, edit the JSON and drop it plus any edges that reference it.
 
+If a board fails to parse or appears empty while loading, retain the original bytes and check the saved file or version history before editing. Never replace unreadable content with an empty board as a repair. Live editors wait for the collaboration room before enabling edits, and refuse malformed replacements rather than saving an empty fallback.
+
 ## Schema essentials
 
 Top-level: `version` (use `1`), `nodes`, `edges`, and optional `background`. Every node and edge needs a **unique `id`** (e.g. `n1`, `edge-1`). Pan/zoom is stored client-side per viewer, not in the file, so `viewport` is optional - include `viewport` (`{ x, y, zoom }`) only to hint the initial view; it's honored on first open, then superseded by the viewer's own pan/zoom.
