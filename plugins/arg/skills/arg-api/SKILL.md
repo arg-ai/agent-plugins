@@ -32,6 +32,8 @@ Errors are always `{ "detail": "…" }` with the matching HTTP status: `401` bad
 
 **Organizations → workspaces → files.** Discover ids with `GET /api/organizations` and `GET /api/workspaces`; file paths are workspace-rooted (`/reports/q3.md`).
 
+**New workspace visibility defaults to Private.** On `POST /api/organizations/{orgId}/workspaces`, an explicit `visibility` (`"org"`, `"private"`, or `"restricted"`) wins. If omitted, Arg uses the caller's account preference, then the organization's default, then `"private"`. Account preference is set with `PATCH /api/auth/me/profile` (`default_workspace_visibility`: `"org"`, `"private"`, or `null` to inherit); organization admins use `PATCH /api/organizations/{orgId}` with `default_workspace_visibility` (`"org"` or `"private"`).
+
 ## Getting started — a workspace round-trip
 
 Create a workspace, put a file in, work on it, get the result out:
