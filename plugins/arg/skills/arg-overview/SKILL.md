@@ -62,6 +62,11 @@ Three framings of the same platform:
 
 ## Where Arg runs
 
+On web and desktop, Settings -> General -> New files -> **Create untitled files**
+skips naming when choosing a file type or preset and creates `untitled-1`,
+`untitled-2`, and so on with the chosen extension. It is off by default and saved
+per user on each device. See the [workspace guide](https://arg.ai/docs/workspaces.md).
+
 | Surface                                   | What it adds                                                                                                                                                                                                               | Go deeper                                    |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **Web app**                               | The full product in any browser                                                                                                                                                                                            | [Product docs](https://arg.ai/docs/llms.txt) |
