@@ -30,6 +30,8 @@ The `arg-file-*` skills assume these and only add format-specific notes:
 
 ## Importing cloud files
 
+Slack chat attachments are made available in the workspace before the turn starts, with their paths in the message. Repeated attachments in the same chat reuse the existing copy, including renamed files; use that workspace file rather than importing it again. Follow-up mentions reuse the chat's saved history. A note that an attachment could not be read means it is unavailable to this turn; do not infer its contents.
+
 Google Drive and Microsoft (OneDrive/SharePoint) imports reuse the user's existing OAuth connection. Use `google_drive_browse_import_files` or `microsoft_browse_import_files` to browse a folder, search, or resolve a `url`; continue with the returned cursor and unchanged parent/query. Preserve each item's `driveId` and Google `resourceKey`. `google_drive_download_import_file` / `microsoft_download_import_file` copy one file into `output_path` (50 MB maximum). Google Docs, Sheets and Slides export as `.docx`, `.xlsx` and `.pptx`; drawings export as PDF. Match the destination extension to that format. These are one-time copies, not syncs. For an entire selection or folder hierarchy, use the workspace imports API described in the API reference; it handles progress, collision checks and cleanup. SharePoint site browsing may require reconnecting the Microsoft account with site access. Never ask for access tokens or try to fetch a private sharing link without its connection.
 
 ## Formats with a dedicated skill — load before CRUD-ing
