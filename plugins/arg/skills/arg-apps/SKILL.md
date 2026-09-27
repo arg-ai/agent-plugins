@@ -495,7 +495,7 @@ None of this applies to a HyperFrames composition — those are fixed-resolution
 
 ## Motion graphics: HyperFrames compositions (`.html`)
 
-An `.html` file can also be a **[HyperFrames](https://hyperframes.heygen.com) composition** — HeyGen's "write HTML, render video" format. Arg detects one from its markup, gives its preview a video transport, and lets a `.video` project carry it as a timeline clip that seeks with the playhead and rasterises into the exported MP4.
+An `.html` file can also be a **[HyperFrames](https://hyperframes.heygen.com) composition** — HeyGen's "write HTML, render video" format. Arg detects one from its markup, gives its preview a video transport, offers a **Timeline** mode that edits its clips' timing like a video editor, and lets a `.video` project carry it as a timeline clip that seeks with the playhead and rasterises into the exported MP4.
 
 Reach for it when the user asks for a **motion graphic**: an animated title card, a kinetic-typography intro, a lower third, an animated explainer, a launch or release video. Use a plain `.html` page for anything interactive, and `.design` for a static layout.
 
@@ -534,6 +534,30 @@ A composition is an ordinary HTML document plus two things:
 ```
 
 That example loads no GSAP: **you do not need a `<script src>` for it.** When a document declares the composition attributes but no animation library, Arg supplies a pinned GSAP build. Add your own tag only to pin a different version or to use Lottie.
+
+### Scenes as timed clips
+
+Put each scene, image or media element on the timeline with HyperFrames' clip attributes rather than showing and hiding it from GSAP. Arg shows a timed element only inside its window, and the **Timeline** mode reads and writes exactly these attributes - so a user can move, trim, retrack or delete a scene there and the change lands in this file:
+
+```html
+<section id="intro" class="clip" data-start="0" data-duration="3" data-track-index="0">…</section>
+<section id="result" class="clip" data-start="intro - 0.5" data-duration="4" data-track-index="1">
+  …
+</section>
+<img
+  id="logo"
+  class="clip"
+  src="./brand/logo.png"
+  data-start="1"
+  data-duration="2"
+  data-track-index="2"
+/>
+```
+
+- `data-start` is seconds, or another clip's id meaning "when that clip ends" (`intro`, `intro + 0.5`, `intro - 0.5`). Give every timed element a unique `id`.
+- `data-duration` is its slot in seconds. An image without one lasts 3s; media without one run to the end of their source.
+- `data-track-index` is only the Timeline row it is drawn on - it does not set paint order (use `z-index`) and two clips on one track may overlap.
+- The current schema declares the composition on a root element instead of `<html>` - `<div id="root" data-composition-id="main" data-width="1920" data-height="1080" data-duration="6">` - and Arg recognises both forms.
 
 Rules that decide whether it renders at all:
 
