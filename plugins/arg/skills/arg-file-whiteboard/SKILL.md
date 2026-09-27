@@ -68,6 +68,7 @@ In the editor, right-click a generator node and choose Add next generator to qui
 
 ## Tips
 
+- Cards created by dragging text or links use the existing `sticky`, `bookmark` and `embed` node schemas. For the editor gestures, see the [whiteboard feedback guide](https://arg.ai/docs/whiteboard-feedback.md).
 - Space nodes 200–350px apart; lay flows left→right or top→bottom.
 - Use semantic colors — blue=info, green=success, red=urgent, yellow=warning, purple=feature.
 - `\n` in a `label` is a line break: on sticky / text nodes that is MDX's hard break, and on shape / section nodes a literal newline.
