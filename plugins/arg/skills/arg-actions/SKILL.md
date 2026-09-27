@@ -144,7 +144,7 @@ A sampling — there are more:
   - Resend (send one email or a batch, check what happened to it, manage contacts and broadcasts)
   - Salesforce
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
-  - Slack (channels, DMs, messages, workspace members, and message reactions)
+  - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
   - Stripe (payments - get a charge, create a refund)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
@@ -189,6 +189,10 @@ accept shared connections. No organization or bound integration user returns an 
 3. `run_action({ action_id: "slack_send_message", input: { connection: "<id>", channel: "C01ABC123", text: "..." } })`.
 
 A `not_configured` failure means the account is disconnected or the grant is missing a scope - tell the user to reconnect that service rather than retrying or trying a different account.
+
+Use a service's returned names and ordinary Markdown links when referring to its resources in a reply. Encoded IDs belong in action inputs, and a provider's mention syntax is not a portable link. For Slack, `slack_resolve_references` takes `connection` and `text` containing references such as `<#C01ABC123>` or `<@U01ABC123>` and returns `markdown` plus structured `references` (`kind`, `id`, `label`, `url`). Use that Markdown in Arg replies on every client. It looks up at most 25 distinct references with the app's access, keeps unavailable names as IDs, and leaves code literal; it sends nothing and notifies nobody. Slack-delivered agent replies use the same resolver, native channel links, and non-notifying member profile links.
+
+`slack_send_message` posts as the app; `slack_send_message_as_me` uses the connection owner's user grant. A successful post returns `message.user`, the author ID. Resolve that member with `slack_get_contact` if you need their name, and read the posted message with the history/thread actions if verification is needed. App metadata such as `bot_profile` alone is not evidence that a send-as-me action posted under the wrong identity.
 
 ### Calling an endpoint that has no dedicated action
 
