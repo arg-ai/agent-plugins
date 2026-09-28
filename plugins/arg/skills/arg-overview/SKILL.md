@@ -57,6 +57,7 @@ Three framings of the same platform:
 - **Built-in tools** (toggleable per chat): web browsing, web search, semantic workspace search, the code sandbox, media generation, and MCP connectors — plus opt-in people, stock, and weather data.
 - **Any frontier model.** Chat runs on Claude, GPT, Gemini, and more — swap per chat or per workspace; orgs can control which models are allowed. Model catalogs and pass-through prices: https://arg.ai/models/llms and https://arg.ai/models/media.
 - **Coding agents.** Claude Code and Codex plug in over MCP (and run locally in the desktop app), drawing down tokens from your own subscription — no separate billing through Arg.
+- **Cloud Code boxes.** When creating a box with GitHub access, **Clone current Arg Code repositories** is on by default and can be switched off. It clones registered GitHub repositories and registers them on the new machine; local edits and plain folders stay on the source machine. Desktop uses its Code repository list; web uses the selected host's list.
 - **ChatGPT-backed Arg chats.** A user can connect a personal ChatGPT subscription in Organization Settings -> Models. Supported OpenAI-model chats then use that subscription from Arg's cloud runtime, with no desktop process required. An organization OpenAI key takes priority when configured.
 - **Visual effort dial** — from clean prose to richly designed output.
 
