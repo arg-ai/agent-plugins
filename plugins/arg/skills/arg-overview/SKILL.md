@@ -1,6 +1,6 @@
 ---
 name: arg-overview
-version: "1.4.0"
+version: "1.4.1"
 description: Orient users and agents to Arg (arg.ai), its offerings, platforms and specialist skills. Use for product questions, onboarding, and help with UI, settings, permissions or sharing; read the current product guides at https://arg.ai/docs for usage instructions.
 ---
 
@@ -61,6 +61,8 @@ Three framings of the same platform:
 - **Visual effort dial** — from clean prose to richly designed output.
 
 ## Where Arg runs
+
+Each user can choose an assistant workspace per organization in Settings. Slack DMs use it for files; Slack mentions and iOS Marge chats load its skills and `AGENTS.md` while retaining their chat workspace for files. The default is the user's existing private workspace. Instructions accumulate: Arg system guidance, assistant workspace `AGENTS.md`, then the active workspace's local instructions. Slack and Marge replies are concise Markdown, with helpful action before explanation. See the [chat guide](https://arg.ai/docs/chat.md).
 
 On web and desktop, Settings -> General -> New files -> **Create untitled files**
 skips naming when choosing a file type or preset and creates `untitled-1`,
