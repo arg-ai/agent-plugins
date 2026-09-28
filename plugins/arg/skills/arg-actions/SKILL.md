@@ -61,7 +61,7 @@ run_action({
 - Successful runs return `{ status: "succeeded", output }` - `output.output_path` is the saved file. Open it like any workspace file.
 - Do not poll an already-succeeded sync read. Its `run_id` can be audit-only and `list_runs` may not find it; use the inline `output`.
 - **Long/provider-backed jobs** (e.g. `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `video_generate`, `three_d_generate`) stay in the `run_action` tool call and report progress until they finish.
-- If the wait limit returns a queued/running `run_id`, check that run with `list_runs`. After an interrupted call with no result, list running runs to recover the in-flight work. Do not start it again, especially for paid provider work.
+- If the wait limit returns a queued/running `run_id`, check that run with `list_runs`. Inside `run_code`, `run_action` stops waiting shortly before the script's own timeout, so a long render returns its `run_id` early: have the script return that id, then check it with `list_runs` in a later call. After an interrupted call with no result, list running runs to recover the in-flight work. Do not start it again, especially for paid provider work.
 - **Write actions need workspace write access** — a read-only session can't run them.
 
 ### 4. Inspect or recover runs - `list_runs`
