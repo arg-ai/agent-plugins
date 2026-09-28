@@ -376,6 +376,8 @@ Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `s
 
 Publish a named app from its `.app` launcher, not directly from the linked HTML/TSX/JSX file. This portable template path accepts only `kind: "file"` launchers targeting HTML, HTM, TSX, or JSX; hosted-Site and server launchers retain live external state and are not snapshot templates. Arg bundles a portable version 2 launcher, the linked entry, parsed local static imports and assets, plus any runtime data files selected in the publish flow. Explicitly select every representative file read through `fs` from `@arg-ai/sdk` or `db` from `@arg-ai/sdk`; source comments and examples are never treated as permission to publish a workspace file.
 
+An HTML, HTM, TSX, or JSX entry inside a file, folder, or workspace template also runs in the catalog's isolated preview when preview is enabled. Its `fs` access is read-only and confined to the published snapshot; it cannot read the viewer's workspace. A `.app` launcher gives that runnable entry a durable app identity and should still be used for an app template.
+
 The catalog runs the launcher in an isolated Sitearg iframe on web or the on-device `arg-preview:` renderer on desktop. Its `fs` from `@arg-ai/sdk` is always read-only and can see only bundled snapshot files. Keep runtime data paths relative to the app source when possible so the same calls work in the preview and after cloning. A clone receives the complete bundle and a launcher whose entry path points at the cloned source.
 
 ## CRUD
