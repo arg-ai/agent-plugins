@@ -661,6 +661,7 @@ An app built around one format - a CSV grid, a kanban board, a log reader - can 
 - Declare `files.access: "readwrite"` only if the app actually writes the file back. A viewer wants `read`.
 - The registration is workspace-wide: one launcher serves every file of the types it names, and nothing is written to those files.
 - Any extension works, including one Arg has no editor of its own for. A `.log` file with a registered reader gets an App switcher it would otherwise not have.
+- **Multiplayer.** Every app started from its `.app` launcher already shares a presence-only room with everyone else running it (`document.collaborate()` on the launcher). For shared state that lasts, register a type of its own (`"file_types": ["farm"]`) and have people open the same `team.farm` - that room carries Yjs state as well. The arg-sdk skill's "Multiplayer" section has the presence and persistence rules.
 
 ## Declaring permissions in a `.app` launcher
 

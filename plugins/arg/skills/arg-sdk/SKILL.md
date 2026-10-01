@@ -52,6 +52,57 @@ legacy embedded hosts reject them explicitly rather than ignoring the condition.
 dispose contract. It requires no filesystem grant. React components and the
 `useAppChrome` hook remain in `@arg/ui`.
 
+### Multiplayer: the document's room
+
+`document.collaborate()` joins the room of the app's document. Two ways in:
+
+- **Started from its `.app` launcher** (Apps, the activity rail, Files): the
+  document is the launcher itself, read-only. Everyone running the app from
+  that launcher shares the room - presence only, `session.readOnly` is true
+  and `update()` does nothing. Relative `fs` paths still resolve beside the
+  app's source.
+- **Opened on a file of a registered type** (a launcher with `file_types`; see
+  the arg-apps skill): the document is that file, and the room carries
+  presence plus shared Yjs state for anyone who may edit it.
+
+An `.html`/`.tsx` opened directly has no document (`no_active_document`); iOS,
+Android and a format with no room (pdf, docx) get `unsupported_capability` -
+keep a solo fallback. Full guide: https://developers.arg.ai/guides/sdk/multiplayer
+
+```ts
+import { document } from "@arg-ai/sdk";
+import * as Y from "yjs"; // the app's own copy; the SDK carries update bytes
+
+const session = await document.collaborate();
+const me = session.awareness.clientId;
+
+// Presence: one entry per viewer, { clientId, state }. Arg fills state.user
+// ({ userId, name, color, avatarUrl?, avatarEmoji? }); other fields are yours.
+session.awareness.setLocalStateField("player", { x, z }); // merged, never replaces user
+session.awareness.onChange((states) => {
+  for (const { clientId, state } of states) {
+    if (clientId === me || !state?.player) continue; // self, or viewing in the plain editor
+    draw(state.user?.name, state.user?.color, state.player);
+  }
+});
+
+// Shared state: wire your Y.Doc once, with the session as the origin.
+const doc = new Y.Doc();
+Y.applyUpdate(doc, session.initialState, session);
+session.onUpdate((u) => Y.applyUpdate(doc, u, session));
+doc.on("update", (u, origin) => origin !== session && session.update(u));
+```
+
+- Presence is relayed to everyone: send on change, about ten a second at most while moving.
+- Only the format's own content reaches the file. For an extension Arg has no
+  editor for, that is `doc.getText("content")` (the file's text). A type of
+  your own, such as `doc.getMap("game")`, is live-shared but never written to
+  the file and may not survive the file being written outside the room - keep
+  durable data in the file.
+- `session.readOnly` means writes are dropped while presence and updates still
+  flow. `onClose(reason)` reports `room_closed`, `room_replaced` (call
+  `collaborate()` again) or `document_changed`.
+
 ```ts
 import { agents } from "@arg-ai/sdk";
 const run = await agents.run("Summarize the notes", {
