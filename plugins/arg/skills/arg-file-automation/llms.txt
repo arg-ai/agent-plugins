@@ -62,6 +62,18 @@ Fires when a new application is created in Ashby, optionally scoped to a job or 
 | `status` | string | no | Only watch applications whose CURRENT status matches this at the moment they're polled, evaluated at creation time. Since this trigger only detects newly created applications, later stages like Hired or Archived rarely match — an application usually reaches those after this trigger's ~15 minute window. Empty = all statuses. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### Avoma (`avoma`)
+
+#### `avoma_meeting_completed` — Meeting completed
+
+Fires when an Avoma meeting has finished and its transcript and AI notes are ready - pass its transcription_uuid to avoma_get_transcription, or its uuid to avoma_get_meeting_insights. Polled - events arrive within ~15 minutes of the notes being ready.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `attendee_emails` | array | no | Only fire for meetings with ANY of these attendees - your own email for 'my meetings'. Empty = every recorded meeting in the Avoma organization. |
+| `is_internal` | boolean | no | true = only internal meetings, false = only meetings with external attendees (e.g. customer calls). Empty = both. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Bland AI (`bland`)
 
 #### `bland_call_ended` — Call ended

@@ -118,6 +118,7 @@ A sampling — there are more:
 - **integration** — calls to connected services where a connection is set up. Google products use separate connections; Google Meet is coming soon. Each action takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available. One provider per line, alphabetical - add a new one on its own line:
   - Airtable (list bases, get a base's exact table/field/view schema, query/create/update records)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
+  - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
   - Confluence
   - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages, add/remove a reaction as a completion marker)
