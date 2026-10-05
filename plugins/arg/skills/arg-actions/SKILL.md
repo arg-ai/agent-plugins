@@ -152,6 +152,7 @@ A sampling — there are more:
   - Twilio
   - Vapi
   - Zendesk (support tickets - create a ticket, add a reply/internal note, change status/priority/tags)
+  - Zoom (meetings - list and create meetings, list cloud recordings, read a meeting's transcript as text, its AI Companion summary, and who attended)
 
 ### Acting on a connected service
 

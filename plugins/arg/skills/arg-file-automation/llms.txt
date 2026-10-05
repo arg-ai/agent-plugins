@@ -515,3 +515,16 @@ Fires when a ticket is created or updated in Zendesk. Polled via the Incremental
 | `only_created` | boolean | no | Only fire when a ticket is first created, not on every later update. Off by default. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### Zoom (`zoom`)
+
+#### `zoom_recording_completed` — Recording completed
+
+Fires when one of your Zoom cloud recordings has finished processing - pass its uuid to zoom_get_meeting_transcript for the transcript text. Polled - events arrive within ~15 minutes of the recording being ready.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `require_transcript` | boolean | no | Wait for the audio transcript before firing (default true). Turn off to fire on any finished recording, including ones with transcription disabled. |
+
+Connection must hold: `cloud_recording:read:list_user_recordings`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
