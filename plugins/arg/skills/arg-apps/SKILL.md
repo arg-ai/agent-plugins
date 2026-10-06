@@ -638,6 +638,15 @@ Five rules for the file itself:
 
 A `.app` can also point at a `.server` file (`entry.kind` stays `"file"`) or at a published Site (`entry.kind` is `"site"` with a `siteId`), so a running app and a deployed one get the same tile. The same "write the launcher too" rule applies to a `.server` app you build.
 
+## The picture a shared link shows
+
+When someone pastes a link to an app (its `.html`, `.tsx`, `.jsx` or `.app`) into Slack, the card carries a screenshot. A link share is not anyone choosing to run the app, so its scripts run for that screenshot only when the source opts in:
+
+- `.html`: `<meta name="arg-live-preview" />` in the `<head>`.
+- `.tsx` / `.jsx`: the same `<meta>` element in the returned tree, or a leading `/* @arg-live-preview */` comment.
+
+Without the marker an `.html` page is photographed with scripts off - its markup and CSS only - and a `.tsx` / `.jsx` app gets no picture, since it is blank without scripts. A `.app` launcher is pictured as the file it launches, so the marker goes in that file. Add it to an app that is finished and draws something worth showing on load; leave it off a page whose first paint is a login, a spinner or a "loading data" state.
+
 ## Registering an app as a file type's editor
 
 An app built around one format - a CSV grid, a kanban board, a log reader - can say so, and every file of that format then offers it in its **App switcher** beside its own editor, under **Workspace apps**:
