@@ -63,7 +63,7 @@ arg code worktree create --repo-name arg --name spike-upload-retry --json
 - `--agent` is one of `claude`, `codex`, `cursor`, `opencode`, `grok`, `hermes`. `grok` and `hermes` cannot take a first message on their command line, so when you hand over a prompt use one of the others.
 - `--prompt <text>` or `--prompt-file <path>` (`-` reads standard input) gives the first message. Put everything the agent needs in it: the goal, constraints, and what "done" means.
 - `--start-ref <ref>` branches from that ref instead of the repository's base branch.
-- The worktree runs the repository's setup script first, then the agent starts. Until then its `lifecycle` is `provisioning`; it becomes `active` when it is ready (the other values are `archived`, `expired`, `failed` and `missing`).
+- The worktree runs the repository's setup script first, then the agent starts on its own, as a tab behind whatever the user is looking at - nobody has to open the worktree. Until then its `lifecycle` is `provisioning`; it becomes `active` when it is ready (the other values are `archived`, `expired`, `failed` and `missing`).
 
 **Projects.** Created from inside a pane, the new worktree joins the pane's worktree's Project when both are in the same repository. Created anywhere else, it joins no Project. Override with exactly one of:
 
