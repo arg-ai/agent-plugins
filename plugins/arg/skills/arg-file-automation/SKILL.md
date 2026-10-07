@@ -28,7 +28,7 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
 
   - `form-submission` `{form_path?}` (fires when a `.form` file records a new response — a public share fill or a signed-in workspace fill; `form_path` is the workspace path of the form to watch, omit it to fire for every `.form` in the workspace)
 
-  - `manual` `{}`
+  - `manual` `{parameters?}` (`parameters` is an optional list of `{key, required?, default?, description?}` rows declaring named inputs for a run that carries a payload — a user filling in a form on "Run", an agent's `run-automation`/`automation_run` call with `trigger_input`, or a plain `POST /api/automation/trigger`. A field with `default` is filled in whenever the caller omits it; a field marked `required` with no `default` fails the run with a clear "Missing required trigger input" error on the trigger node instead of a downstream template silently resolving to nothing. Omit `parameters` (or leave it empty) for the original behavior: whatever `trigger_input` was sent, passed through verbatim with no validation)
 
   - `notification` `{notification_types}`
 
@@ -54,7 +54,7 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
 
   - `delete-file`
 
-  - `download-file` (raw GET of a URL saved to a workspace file, keeping the source's content type - `{url, savePath?, contentType?, headers?}`; good for RSS feeds)
+  - `download-file` (fetch a URL and save the response into a workspace file, keeping the source's content type - `{url, savePath?, contentType?, headers?, method?, body?, requestContentType?}`; good for RSS feeds, images, and any static file at a fixed URL. `method` defaults to `GET`; a mutating method (`POST`/`PUT`/`PATCH`/`DELETE`) sends `body` as the raw request body (`requestContentType` sets its Content-Type unless a `headers` row already does) - for an endpoint that generates the file from request parameters instead of serving one at a fixed URL, like a report export or a rendered document. `body` is rejected on `GET`)
 
   - `edit-file` (`{path, edits: [{operator, value, replacement, replace_all}]}`)
 
@@ -131,7 +131,7 @@ Top-level keys:
 
   - `integration` (`{provider, trigger, connection, ...filterFields}` — e.g. `{provider: "google", trigger: "gmail_message", connection: "<existing connection id>", query: "in:inbox is:unread"}`; `connection` must already exist, never invent an id; does **not** need a top-level `service-account:` since it dispatches through `connection` instead; only one `integration:` entry per file — a workflow fanning in several provider triggers needs `.automation`)
 
-  - `manual`
+  - `manual` (`{parameters?}`, same semantics as the `.automation` trigger — `parameters` rows use the same `{key, required?, default?, description?}` shape)
 
   - `notification`
 
