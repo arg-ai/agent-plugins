@@ -13,7 +13,7 @@ Two ways to make the Arg assistant smarter inside a workspace:
 
 Both are just files in the workspace, so they're reviewed, versioned, and shared like any other document. They're **scoped to the workspace** they live in — copy the file to another workspace to reuse it.
 
-In Slack and iOS Marge chats, the user's assistant workspace also supplies its `.skills/` instructions and root `AGENTS.md`. Select that private workspace per organization in Settings. Its `AGENTS.md` follows Arg's system instructions and precedes the active workspace's local instructions; all compatible instructions apply. `load_skill` reads a skill there, while file tools still target the chat workspace; resources beside an assistant skill are available only when that workspace is also the chat workspace. If both workspaces define the same skill name, the assistant workspace's skill wins.
+In Slack and Marge chats (never in a public Slack channel), the user's assistant workspace also supplies its `.skills/` instructions, root `AGENTS.md` and the persona files beside it (`SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `BOOTSTRAP.md`) - edit those to change who the assistant is and what it remembers. Select that private workspace per organization in Settings. Its `AGENTS.md` follows Arg's system instructions and precedes the active workspace's local instructions; all compatible instructions apply. `load_skill` reads a skill there, while file tools still target the chat workspace; resources beside an assistant skill are available only when that workspace is also the chat workspace. If both workspaces define the same skill name, the assistant workspace's skill wins.
 
 ## CRUD
 

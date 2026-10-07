@@ -63,7 +63,7 @@ Three framings of the same platform:
 
 ## Where Arg runs
 
-Each user can choose an assistant workspace per organization in Settings. Slack DMs use it for files; Slack mentions and iOS Marge chats load its skills and `AGENTS.md` while retaining their chat workspace for files. The default is the user's existing private workspace. Instructions accumulate: Arg system guidance, assistant workspace `AGENTS.md`, then the active workspace's local instructions. Slack and Marge replies are concise Markdown, with helpful action before explanation. See the [chat guide](https://arg.ai/docs/chat.md).
+Each user can choose an assistant workspace per organization in Settings. Slack DMs use it for files; Slack mentions and iOS Marge chats load its skills and `AGENTS.md` while retaining their chat workspace for files; a mention in a public Slack channel, or `/arg` typed outside a DM, loads none of it. The default is the user's existing private workspace; turning on Marge sets up a new one instead, seeded with `AGENTS.md` and the persona files `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md` and a first-run `BOOTSTRAP.md`, which every Slack and Marge turn loads alongside `AGENTS.md`. Instructions accumulate: Arg system guidance, assistant workspace `AGENTS.md`, then the active workspace's local instructions. Slack and Marge replies are concise Markdown, with helpful action before explanation. See the [chat guide](https://arg.ai/docs/chat.md).
 
 On web and desktop, Settings -> General -> New files -> **Create untitled files**
 skips naming when choosing a file type or preset and creates `untitled-1`,
