@@ -111,6 +111,17 @@ Fires when a new message is posted in a Discord channel the bot can read. Requir
 | `ignore_self_events` | boolean | no | Ignore messages posted by this bot itself - prevents infinite loops when this flow posts back to the channel. On by default. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### DocuSign (`docusign`)
+
+#### `docusign_envelope_completed` — Envelope completed
+
+Fires when a DocuSign envelope has been signed by every recipient and its status changes to completed - pass envelope_id to docusign_get_envelope or docusign_list_envelope_recipients for the full detail. Polled - events arrive within a few minutes of the envelope completing.
+
+No filter fields — it fires on every matching event.
+
+Connection must hold: `signature`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Figma (`figma`)
 
 #### `figma_comment` — New comment
