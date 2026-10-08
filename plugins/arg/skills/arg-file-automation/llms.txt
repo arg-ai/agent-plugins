@@ -481,6 +481,17 @@ Fires on a Stripe event — a payment succeeded, a subscription changed, a refun
 | `event_types` | array | no | Only fire for these Stripe event types (e.g. "checkout.session.completed", "invoice.paid", "charge.refunded"). Empty = every event. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### Telegram (`telegram`)
+
+#### `telegram_message` — New message
+
+Fires when the bot receives a new message - a DM, or a message in a group/channel it belongs to. Optionally scope it to one chat. Polled - events arrive within about a minute.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `chat_id` | string | no | Only messages from this chat (numeric chat id or @channelusername). Empty = every chat the bot can see. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Twilio (`twilio`)
 
 #### `twilio_call_ended` — Call ended
