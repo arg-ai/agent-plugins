@@ -525,6 +525,17 @@ Fires when an SMS, MMS, or WhatsApp message is received by one of your Twilio nu
 | `to` | string | no | Only messages received by this Twilio number (e.g. +15551234567 or whatsapp:+14155238886). Empty = all numbers. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### Vapi (`vapi`)
+
+#### `vapi_call_ended` — Call ended
+
+Fires when a Vapi phone call finishes (hung up, transferred away, or failed to connect). Optionally scope it to one assistant. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `assistant_id` | string | no | Only calls handled by this assistant (see vapi_list_assistants). Empty = every call. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Zendesk (`zendesk`)
 
 #### `zendesk_ticket` — New or updated ticket
