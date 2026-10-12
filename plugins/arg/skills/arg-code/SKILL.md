@@ -1,6 +1,6 @@
 ---
 name: arg-code
-version: "1.0.0"
+version: "1.1.0"
 description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, or a plain shell), file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
@@ -49,16 +49,22 @@ A `[worktree-id]` left out means the pane's own worktree (`ARG_CODE_WORKTREE_ID`
 
 ### Creating a worktree
 
-Start it either with an agent and its first message, or with a name and a plain shell - not both:
+Start it either with an agent and its first message, or with a name and a plain shell:
 
 ```bash
 # An agent working on its own branch from the start
 arg code worktree create --repo-name arg --agent claude \
   --prompt "Add retry to the upload client, with tests" --json
 
+# The same, with the name it shows in the sidebar
+arg code worktree create --repo-name arg --name "Upload retry" --agent claude \
+  --prompt "Add retry to the upload client, with tests" --json
+
 # A shell, named
 arg code worktree create --repo-name arg --name spike-upload-retry --json
 ```
+
+- `--name` is the worktree's title in the sidebar, and its branch is `arg/` plus that name slugged and given a short random suffix. Without `--name`, an agent's worktree is named from the first line of its prompt.
 
 - `--agent` is one of `claude`, `codex`, `cursor`, `opencode`, `grok`, `hermes`. `grok` and `hermes` cannot take a first message on their command line, so when you hand over a prompt use one of the others.
 - `--prompt <text>` or `--prompt-file <path>` (`-` reads standard input) gives the first message. Put everything the agent needs in it: the goal, constraints, and what "done" means.
@@ -118,7 +124,7 @@ There are two kinds of failure, and both exit with status 1 - branch on the JSON
 - "nothing on this machine acts on orchestration requests right now" - the Arg app is closed. Ask the user to open it; do not retry in a loop.
 - "this Arg is too old to be orchestrated" - the app or code server needs updating.
 - "no Arg daemon is running here", or "more than one Arg install is running here" - no daemon was found, or several were and you need `--install`.
-- A mistake in the command's own flags, such as `--name` together with `--agent`, is reported before anything is sent.
+- A mistake in the command's own flags, such as `--agent` without a prompt, is reported before anything is sent. An Arg app older than this skill refuses `--name` together with `--agent` with a `failed` outcome; update the app.
 
 ## A worked example
 
