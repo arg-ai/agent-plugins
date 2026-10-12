@@ -1,7 +1,7 @@
 ---
 name: arg-code
-version: "1.1.0"
-description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, or a plain shell), file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
+version: "1.2.0"
+description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, or a plain shell), rename them, file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
 # Arg Code: orchestrating worktrees with `arg code`
@@ -38,6 +38,7 @@ Every command accepts `--json` (and `--ndjson` for lists), and prints JSON whene
 | `arg code worktree list [repo flag]`                                         | This machine's worktrees, all or one repository's                   | `id`, `repositoryId`, `projectId`, `title`, `path`, `branch`, `lifecycle`, `agent` per row                |
 | `arg code worktree create ...`                                               | Creates a worktree (see below)                                      | `worktree` (the row above), `newProjectId` when it made a Project, and `project` (`id`, `from`, `reason`) |
 | `arg code worktree set-project [worktree-id] --project <id> \| --no-project` | Moves a worktree into a Project, or out of any                      | the worktree                                                                                              |
+| `arg code worktree rename [worktree-id] --name <title>`                      | Retitles a worktree in the sidebar                                  | the worktree                                                                                              |
 | `arg code worktree pr [worktree-id]`                                         | The worktree's pull request as Arg Code last polled it              | `worktreeId`, `pullRequest` (or `null`)                                                                   |
 | `arg code project list [repo flag]`                                          | This machine's Projects                                             | `id`, `repositoryId`, `name` per row                                                                      |
 | `arg code project create --name <name> [repo flag]`                          | Creates a Project in a repository                                   | `id`, `repositoryId`, `name`                                                                              |
@@ -65,6 +66,7 @@ arg code worktree create --repo-name arg --name spike-upload-retry --json
 ```
 
 - `--name` is the worktree's title in the sidebar, and its branch is `arg/` plus that name slugged and given a short random suffix. Without `--name`, an agent's worktree is named from the first line of its prompt.
+- **Rename a worktree whose title came from a long prompt.** If your own worktree's `title` is the first line of your brief, give it a short name with `arg code worktree rename --name "<title>"`; an orchestrator should do the same for worktrees it created without `--name`. Renaming changes only the sidebar title, never the branch.
 
 - `--agent` is one of `claude`, `codex`, `cursor`, `opencode`, `grok`, `hermes`. `grok` and `hermes` cannot take a first message on their command line, so when you hand over a prompt use one of the others.
 - `--prompt <text>` or `--prompt-file <path>` (`-` reads standard input) gives the first message. Put everything the agent needs in it: the goal, constraints, and what "done" means.
