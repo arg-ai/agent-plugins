@@ -140,6 +140,10 @@ A sampling — there are more:
 
   For Gemini, pass verbatim `text`, optional `voice` (defaults to Kore) and optional `style`; do not pass an ElevenLabs voice id or output format. Use a `.wav` output path.
 
+- **file** — One action per line, alphabetical - add a new one on its own line:
+  - `unzip_file` (`{source_path, output_folder?}` extracts a workspace `.zip` into a folder, returning `files: [{path, size}]` for a `loop` to fan out over - rejects a malicious entry that tries to write outside the output folder)
+  - `zip_files` (`{source_paths, output_path}` bundles several workspace files into one `.zip`; two sources with the same filename are rejected rather than one silently overwriting the other)
+
 - **web / data / document** — One action per line, alphabetical - add a new one on its own line:
   - `ad_search` / `advertiser_search` / `ad_creatives` (the public Meta, TikTok and Google ad libraries - what ads a brand is running, and saving an ad's image/video creatives into the workspace; public ad transparency data, not your own ad accounts)
   - `aeo_mentions` / `aeo_answers` (how often a brand or domain is mentioned in AI assistant answers and which sources they cite, and what ChatGPT, Perplexity, Gemini and Claude actually answer for a prompt - public search and answer-engine data, not your own Search Console or Analytics)
