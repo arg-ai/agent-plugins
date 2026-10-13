@@ -454,6 +454,17 @@ Fires when a Salesforce record of a configured sObject is created or updated. Po
 Connection must hold: `api`.
 
 Delivery: polled, so events arrive within roughly 15 minutes.
+### SendGrid (`sendgrid`)
+
+#### `sendgrid_bounce` — Bounce
+
+Fires when an email sent through this SendGrid account bounces. Optionally scope it to one address. Polled - events arrive within ~15 minutes.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `email` | string | no | Only bounces for this address. Empty = every bounce on the account. |
+
+Delivery: polled, so events arrive within roughly 15 minutes.
 ### Slack (`slack`)
 
 #### `slack_message` — Message
