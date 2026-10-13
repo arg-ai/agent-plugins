@@ -71,11 +71,22 @@ Static files in the same output dir are served first; every request that doesn't
 
 **What a worker site does not have:**
 
-- no database and no file storage - keep state in the page, or call an external API
-- no WebSocket support
+- no database or storage binding of its own - shared state goes through the Arg API (below)
+- no WebSocket support, and no raw TCP sockets (`connect()`) - only `fetch()`
 - `env.ASSETS` exists **only** when the build also produced static files; a pure-SSR bundle has no assets binding
 
 If `deploy_site` returns a `degraded` note, the build produced no `_worker.js` and the site went live as plain static files. Tell the user that - do not claim the server-side routes work.
+
+### Shared data between visitors
+
+A static site has nowhere to put what visitors submit: `localStorage` stays in each visitor's own browser, so a poll, sign-up, RSVP or group scheduler built that way never shows the organizer anyone else's answers. When visitors must see each other's data, build a `worker` site whose routes read and write workspace files through the Arg API:
+
+- Authenticate with a service-account API key stored as a `runtime` secret (`ARG_API_KEY`) - never ship a key in page JavaScript. The user sets it (see below); `request_service_account` creates the account.
+- Call `{ARG_API_URL}/api/workspaces/{workspaceId}/files/...` with header `x-api-key`. Read the base URL from the request's `X-Arg-Api-Url` header when present, else from a plain runtime variable `ARG_API_URL` (`https://api.arg.ai`) - never hard-code the host. The workspace id can be a plain runtime variable too.
+- Give each submission its own file and create it with `PUT /files/content?path=/data/<group>/<id>.json` body `{ "content": "...", "encoding": "utf-8", "createOnly": true }`, then read the group back with `GET /files?path=/data/<group>` plus `GET /files/content?path=…`. One file per submission means two visitors saving at the same moment can never overwrite each other. Each request to a worker site may make at most 50 subrequests, so past a few dozen files keep a rolled-up summary file instead of reading every entry.
+- Validate and size-limit every visitor payload in the worker before writing it; the key can write anywhere its service account can.
+- Call the site's own routes in-process (a function call in the worker). A worker site cannot `fetch()` any Site URL, its own or another's - that returns 508. To share data with another Site, read it from the workspace through the Arg API.
+- Rate limits on Arg API calls apply to the site as a whole, not per visitor, so batch reads (one summary file) rather than calling the API once per visitor per page view.
 
 ## Environment variables and secrets
 

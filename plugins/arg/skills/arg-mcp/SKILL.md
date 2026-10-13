@@ -8,16 +8,17 @@ description: Access method for Arg over the MCP server - file CRUD (read_file, w
 
 Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.ai/mcp`. (Use `arg-cli` instead when MCP isn't connected and the `arg` command-line tool is installed.)
 
-| Operation           | Tool(s)                                                                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Create**          | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)       |
-| **Read**            | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                               |
-| **Update**          | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                                |
-| **Move / rename**   | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                    |
-| **Delete**          | `run_bash` (`rm`) — no dedicated tool                                                                                                                               |
-| **List / search**   | `run_bash` `ls`/`ls -1` (fastest names at mount root) · `list_files` (full tree, not cheap) · `grep` (exact text/regex, not cheap) · `semantic_search` (by meaning) |
-| **Run a generator** | `run_bash` — executes in the **remote Arg workspace sandbox**; the file it writes lands directly in the workspace (e.g. `sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`)  |
-| **Share publicly**  | `create_share_link` (public, sign-in-free URL for a file or folder) · `list_share_links` · `delete_share_link`                                                      |
+| Operation              | Tool(s)                                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Create**             | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)       |
+| **Read**               | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                               |
+| **Update**             | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                                |
+| **Move / rename**      | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                    |
+| **Delete**             | `run_bash` (`rm`) — no dedicated tool                                                                                                                               |
+| **List / search**      | `run_bash` `ls`/`ls -1` (fastest names at mount root) · `list_files` (full tree, not cheap) · `grep` (exact text/regex, not cheap) · `semantic_search` (by meaning) |
+| **Run a generator**    | `run_bash` — executes in the **remote Arg workspace sandbox**; the file it writes lands directly in the workspace (e.g. `sqlite3`, `ffmpeg`, Pillow, `xlsxwriter`)  |
+| **Share publicly**     | `create_share_link` (public, sign-in-free URL for a file or folder) · `list_share_links` · `delete_share_link`                                                      |
+| **Publish a template** | `publish_template` (snapshot workspace files into the template catalog for others to clone; pick `visibility` with the user)                                        |
 
 ## Notes
 
