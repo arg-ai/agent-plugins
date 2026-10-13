@@ -1,7 +1,7 @@
 ---
 name: arg-code
-version: "1.2.0"
-description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, or a plain shell), rename them, file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
+version: "1.3.0"
+description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
 # Arg Code: orchestrating worktrees with `arg code`
@@ -43,6 +43,7 @@ Every command accepts `--json` (and `--ndjson` for lists), and prints JSON whene
 | `arg code project list [repo flag]`                                          | This machine's Projects                                             | `id`, `repositoryId`, `name` per row                                                                      |
 | `arg code project create --name <name> [repo flag]`                          | Creates a Project in a repository                                   | `id`, `repositoryId`, `name`                                                                              |
 | `arg code agent start [worktree-id] --agent <agent> --prompt <text>`         | Starts an agent in an existing worktree                             | `worktreeId`, `sessionId`                                                                                 |
+| `arg code models [--agent <agent>]`                                          | What `--model` takes for each agent                                 | per agent: `agent`, `selection`, `source`, `classes`, `models`                                            |
 | `arg code ping`                                                              | Checks the daemon this machine's commands reach                     | `install`, `address`, `protocol`, `environmentId`, `orchestration`, `sessions`                            |
 | `arg code daemons`                                                           | Lists the Arg installs on this machine and whether each daemon runs | one row per install                                                                                       |
 
@@ -70,6 +71,7 @@ arg code worktree create --repo-name arg --name spike-upload-retry --json
 
 - `--agent` is one of `claude`, `codex`, `cursor`, `opencode`, `grok`, `hermes`. `grok` and `hermes` cannot take a first message on their command line, so when you hand over a prompt use one of the others.
 - `--prompt <text>` or `--prompt-file <path>` (`-` reads standard input) gives the first message. Put everything the agent needs in it: the goal, constraints, and what "done" means.
+- `--model <model>` runs the agent on a model of your choosing; without it the agent runs on its own default. See [Choosing a model](#choosing-a-model).
 - `--start-ref <ref>` branches from that ref instead of the repository's base branch.
 - The worktree runs the repository's setup script first, then the agent starts on its own, as a tab behind whatever the user is looking at - nobody has to open the worktree. Until then its `lifecycle` is `provisioning`; it becomes `active` when it is ready (the other values are `archived`, `expired`, `failed` and `missing`).
 
@@ -88,6 +90,22 @@ arg code agent start --agent codex --prompt-file brief.md --json
 ```
 
 The agent runs interactively, exactly as if a person had launched it, and opens as a tab in that worktree behind whatever the user is looking at - it never takes their focus. The output gives its `sessionId`. `--agent` is one of `claude`, `codex`, `cursor` or `opencode`: `grok` and `hermes` cannot take a first message on their command line, so the command refuses them before sending anything. The worktree must be `active` and the agent installed on this machine; otherwise the answer is `failed`.
+
+### Choosing a model
+
+`--model` on `worktree create` and `agent start` takes either a **class** or a **specific model**:
+
+```bash
+arg code worktree create --repo-name arg --agent claude --model sonnet --prompt "..." --json
+arg code agent start --agent claude --model opus-5-5 --prompt-file brief.md --json
+arg code agent start --agent codex --model luna --prompt "Review the diff" --json
+```
+
+- A class names a family: `opus`, `sonnet`, `haiku`, `fable` for Claude Code; `astra`, `sol`, `terra`, `luna` for Codex. Claude Code is handed the class itself and keeps resolving it to its newest model. Codex takes only full ids, so a Codex class is pinned to the newest model of that family when the agent starts.
+- A specific model is the harness's full id (`claude-opus-5-5`, `gpt-5.6-sol`) or its short spelling (`opus-5-5`, `sol-5-6`).
+- `arg code models` lists what each agent takes, read from the agent's own model list on this machine. `selection: "unsupported"` means the agent cannot be started with `--model` (today `cursor`, `opencode`, `grok` and `hermes`). `source: "built-in"` means the agent could not be asked and the app's own copy answered, which can name a model the signed-in account cannot use.
+- A model the agent does not take is refused before anything is created or started, with outcome `unknown-model` and every valid name in `data.choices`. An agent never starts on its default in place of the model you asked for.
+- The model applies to the launch that delivers the first message. An agent started later in the same worktree from a pane runs on its own default.
 
 ### Pull request state
 
@@ -117,6 +135,7 @@ There are two kinds of failure, and both exit with status 1 - branch on the JSON
 | `unknown-repository`   | Nothing on this machine matches                                                                     | Check `arg code worktree list`, or ask the user which repository they mean |
 | `unknown-worktree`     | No such worktree here                                                                               | List worktrees; the id may be from another machine                         |
 | `unknown-project`      | No such Project in that repository                                                                  | List Projects, or use `--new-project`                                      |
+| `unknown-model`        | The agent takes no model by that name; `data.choices` lists the ones it does                        | Pick one of `data.choices`, or leave out `--model`                         |
 | `unavailable`          | Arg Code cannot act on it right now, for example while it is starting                               | Wait a moment and try once more; tell the user if it persists              |
 | `wrong-destination`    | The daemon reached is not the machine the request names                                             | Re-run `arg code ping`; you may have reached a different install           |
 | `failed`               | Arg Code tried and could not, for example an inactive worktree or a Project from another repository | Read `message`, fix the cause, and try once more                           |
@@ -125,6 +144,7 @@ There are two kinds of failure, and both exit with status 1 - branch on the JSON
 
 - "nothing on this machine acts on orchestration requests right now" - the Arg app is closed. Ask the user to open it; do not retry in a loop.
 - "this Arg is too old to be orchestrated" - the app or code server needs updating.
+- "this Arg app is too old to choose the model an agent runs on" - the app predates `--model`. Ask the user to update it, or start without `--model`; nothing was created.
 - "no Arg daemon is running here", or "more than one Arg install is running here" - no daemon was found, or several were and you need `--install`.
 - A mistake in the command's own flags, such as `--agent` without a prompt, is reported before anything is sent. An Arg app older than this skill refuses `--name` together with `--agent` with a `failed` outcome; update the app.
 
