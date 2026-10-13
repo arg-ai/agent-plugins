@@ -177,7 +177,7 @@ A sampling — there are more:
   - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners and property definitions - and write it: create/update contacts, companies, deals and tickets, associate records, add notes and create tasks)
   - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
   - Jira (create/get/search issues, add a comment, update an issue's summary/description/priority/assignee/due date/labels)
-  - Linear (issues and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
+  - Linear (issues, a full single-issue read with description, labels and comments, and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
   - Microsoft
   - Microsoft Teams (chat messages/search and Outlook Contacts)
   - Monday.com
@@ -188,7 +188,7 @@ A sampling — there are more:
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
-  - Stripe (payments - get a charge, create a refund)
+  - Stripe (payments - get a charge, list charges with a cursor, create a refund)
   - Telegram (send a bot message to a chat, group, or channel)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio

@@ -10,7 +10,7 @@ In a `.automation` file, one trigger node:
 
 ```json
 { "id": "trigger", "data": { "category": "trigger", "kind": "integration-trigger", "label": "New email",
-  "config": { "providerId": "google", "triggerName": "gmail_message", "connectionId": "<existing connection id>", "query": "in:inbox is:unread" },
+  "config": { "providerId": "google_gmail", "triggerName": "gmail_message", "connectionId": "<existing connection id>", "query": "in:inbox is:unread" },
   "enabled": true } }
 ```
 
@@ -19,7 +19,7 @@ In a `.arg/workflows/*.yml` workflow, the same three binding fields without the 
 ```yaml
 on:
   integration:
-    provider: google
+    provider: google_gmail
     trigger: gmail_message
     connection: "<existing connection id>"
     query: "in:inbox is:unread"
@@ -253,18 +253,7 @@ Fires when a GitLab CI/CD pipeline's status changes (pending, running, success, 
 | `ref` | string | no | Only watch pipelines for this branch or tag. Empty = every ref. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
-### Gong (`gong`)
-
-#### `gong_call` — New call
-
-Fires when a new call is recorded in Gong. Polled - events arrive within ~15 minutes. Read-only (Gong exposes no call-events webhook), and calls have no later 'updated' state through this API, so every event is a new call.
-
-| Field | Type | Required | Meaning |
-| --- | --- | --- | --- |
-| `workspace_id` | string | no | Restrict to one Gong workspace. Empty = all workspaces. |
-
-Delivery: polled, so events arrive within roughly 15 minutes.
-### Google (`google`)
+### Gmail (`google_gmail`)
 
 #### `gmail_message` — New email
 
@@ -275,6 +264,17 @@ Fires when a new message arrives in the connected Gmail account, optionally narr
 | `query` | string | no | Gmail search query to narrow matched mail (e.g. 'in:inbox is:unread', 'label:support'). Empty = every new message in the mailbox. |
 
 Connection must hold: `https://www.googleapis.com/auth/gmail.readonly`.
+
+Delivery: polled, so events arrive within roughly 15 minutes.
+### Gong (`gong`)
+
+#### `gong_call` — New call
+
+Fires when a new call is recorded in Gong. Polled - events arrive within ~15 minutes. Read-only (Gong exposes no call-events webhook), and calls have no later 'updated' state through this API, so every event is a new call.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `workspace_id` | string | no | Restrict to one Gong workspace. Empty = all workspaces. |
 
 Delivery: polled, so events arrive within roughly 15 minutes.
 ### Google Calendar (`google_calendar`)
