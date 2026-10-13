@@ -400,6 +400,8 @@ Use named imports from `@arg-ai/sdk` in HTML modules and React apps. Arg resolve
 </script>
 ```
 
+When many people add to one file - an order log, survey responses, a guest list - use `fs.append(path, text)` (for example one JSON line per entry in a `.jsonl`), never `read` then `write`: append never loses a row written at the same moment by someone else. In an app opened from a share link, a file is writable only if the link grants write access to it.
+
 An app may need a static state or sign-in message when the host denies access. Handle the SDK's `SdkError` codes from the developer reference. Keep an HTML app in one document and use in-page state for navigation.
 
 ## Layout: mobile web, iOS, and Android
