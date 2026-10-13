@@ -152,6 +152,7 @@ A sampling — there are more:
   - `get_stock_data`
   - `html_to_pdf`
   - `jev_decide` asks Jev, a calibrated decision model, typed questions about text or JSON in one fast pass - pick one of a set of options, rate against ordered levels, or answer yes/no - each with a probability per option and a `confidence` to gate on. It writes no text, needs no connection and bills AI credits; the `jev_*` integration actions are the same model on a connected TypeSafe key.
+  - `pdf_split` (split a workspace PDF into separate PDF files by page — one per page by default, grouped by `pages_per_file`, or by explicit `ranges` — returning a `files` array a `loop` node or a `run_action` fan-out can process one at a time)
   - `screenshot_webpage`
   - `seo_serp` / `seo_keywords` / `seo_backlinks` (what ranks for a keyword on Google, Bing and Yahoo; search volume, CPC and competition for keywords; the public backlink graph and authority of a domain)
   - `social_search` / `social_profile` (public posts, accounts and engagement across Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Reddit and Threads - by keyword, hashtag, or the account whose posts you want; public social data, not your own accounts, feeds or inboxes)
