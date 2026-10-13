@@ -1,6 +1,6 @@
 ---
 name: arg-code
-version: "1.4.0"
+version: "1.4.1"
 description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, in a terminal or an Arg chat, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
@@ -106,7 +106,7 @@ arg code agent start --agent codex --model luna --prompt "Review the diff" --jso
 - A specific model is the harness's full id (`claude-opus-5-5`, `gpt-5.6-sol`) or its short spelling (`opus-5-5`, `sol-5-6`).
 - `arg code models` lists what each agent takes, read from the agent's own model list on this machine. `selection: "unsupported"` means the agent cannot be started with `--model` (today `cursor`, `opencode`, `grok` and `hermes`). `source: "built-in"` means the agent could not be asked and the app's own copy answered, which can name a model the signed-in account cannot use.
 - A model the agent does not take is refused before anything is created or started, with outcome `unknown-model` and every valid name in `data.choices`. An agent never starts on its default in place of the model you asked for.
-- A chat picks its model in the chat, so `--model` needs `--open-in terminal`; together with `--open-in chat` it is refused before anything is sent.
+- `--model` works with `--open-in chat` too: the chat opens on that model and its composer's picker shows it.
 - The model applies to the launch that delivers the first message. An agent started later in the same worktree from a pane runs on its own default.
 
 ### Pull request state
