@@ -785,6 +785,8 @@ const FILL_PLACEHOLDER_COLOR = {
   design: "#e5e5e5",
   kml: "#e5e5e5",
   cad: "#e5e5e5",
+  // A spreadsheet table is drawn on white paper, so its placeholder is too.
+  sheet: "#ffffff",
 };
 function solidLayer(color) {
   return { ...PLACEHOLDER_LAYER, image: `linear-gradient(${color}, ${color})` };

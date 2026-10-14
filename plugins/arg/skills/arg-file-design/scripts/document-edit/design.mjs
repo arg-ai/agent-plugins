@@ -40,6 +40,7 @@ const DESIGN_FILE_FILL_TYPES = new Set([
   "design",
   "kml",
   "cad",
+  "sheet",
   "shader",
 ]);
 export const BUILTIN_DESIGN_SHADER_IDS = [
