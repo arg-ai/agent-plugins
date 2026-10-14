@@ -62,6 +62,7 @@ run_action({
 - Do not poll an already-succeeded sync read. Its `run_id` can be audit-only and `list_runs` may not find it; use the inline `output`.
 - **Long/provider-backed jobs** (e.g. `image_generate`, `image_edit`, `image_upscale`, `vectorize_image`, `video_generate`, `three_d_generate`) stay in the `run_action` tool call and report progress until they finish.
 - If the wait limit returns a queued/running `run_id`, check that run with `list_runs`. Inside `run_code`, `run_action` stops waiting shortly before the script's own timeout, so a long render returns its `run_id` early: have the script return that id, then check it with `list_runs` in a later call. After an interrupted call with no result, list running runs to recover the in-flight work. Do not start it again, especially for paid provider work.
+- Inside `run_code`, `await tools.run_action(...)` returns the parsed result, so read `r.output` directly. `tools.list_runs({})` returns an array of runs and `tools.list_runs({ run_id })` one run object (a failed run is an object with `status: "failed"` and `error`). A refusal or unknown id comes back as an `Error: ...` string. Passed back into another tool, a result travels as its JSON text.
 - **Write actions need workspace write access** — a read-only session can't run them.
 
 ### 4. Inspect or recover runs - `list_runs`
