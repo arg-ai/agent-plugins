@@ -188,6 +188,7 @@ A sampling — there are more:
   - Monday.com
   - Notion
   - Parallel (objective-driven web search and extraction, plus async research/enrichment task runs)
+  - PostHog (run a HogQL analytics query, list feature flags, turn a flag on/off or change its rollout percentage)
   - Resend (send one email or a batch, check what happened to it, manage contacts and broadcasts)
   - Salesforce
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
