@@ -48,7 +48,7 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
 
   - `automation-run-status` (`{jobId}`: checks on a sub-run a fire-and-forget `run-automation` call started - takes the `job_id` from its output and returns `{status, job_id, file_path, node_results?, error_message?, started_at?, updated_at?}` without blocking. `status` is `"pending"` / `"running"` while it is still going (no `node_results` yet), its terminal `"completed"` / `"error"` / `"stopped"` once it finishes, or `"not_found"` for an unknown, cross-workspace, or aged-out job id. This is what lets a graph fan out many sub-runs at once - one `run-automation` per item with `waitForCompletion` left off - and come back for every result later instead of blocking on each one in turn: check from a later step in the same run after a `delay`, from a separate scheduled automation, or by calling `automation_run_status` directly with `run_action`)
 
-  - `code`
+  - `code` (one code step has about 280 seconds; past that it fails with a `timeout` error and its stdout is lost, so a step that walks a growing folder - validating every record, re-indexing everything - should process a bounded batch per step or only the files changed since the last run)
 
   - `copy-file` / `move-file` (`{sourcePath, destinationPath, onConflict}`; `onConflict` is `"append"` (default - keep both, suffixing `(1)`, `(2)`, … on collision) or `"overwrite"` - replace the existing destination file)
 
