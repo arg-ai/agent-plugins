@@ -182,7 +182,7 @@ A sampling — there are more:
   - Google Keep
   - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners and property definitions - and write it: create/update contacts, companies, deals and tickets, associate records, add notes and create tasks)
   - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
-  - Jira (create/get/search issues, add a comment, update an issue's summary/description/priority/assignee/due date/labels)
+  - Jira (create/get/search issues, add a comment, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
   - Linear (issues, a full single-issue read with description, labels and comments, and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
   - Microsoft
   - Microsoft Teams (chat messages/search and Outlook Contacts)
