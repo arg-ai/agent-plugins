@@ -88,11 +88,13 @@ Writes are versioned and attributed to the key's principal, and show up in the w
 | Tool         | Body                                                                                                                   |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `run-bash`   | `{ "command": "…", "sandbox_id"?: "…" }` — shell in the sandbox, workspace mounted; file changes are tracked + audited |
-| `read-file`  | `{ "path": "…", "offset"?: 0, "limit"?: 100 }` (line-based)                                                            |
+| `read-file`  | `{ "path": "…", "offset"?: 0, "limit"?: 100 }` — `offset` is zero-based                                                |
 | `write-file` | `{ "path": "…", "content": "…" }` — create or overwrite                                                                |
 | `edit-file`  | `{ "path", "old_string", "new_string", "replace_all"?: false }`                                                        |
 | `multi-edit` | `{ "path", "edits": [{ "old_string", "new_string" }, …] }`                                                             |
 | `grep`       | `{ "pattern", "path"?: ".", "include"?: "*.ts" }`                                                                      |
+
+`read-file` output numbers lines from 1, so printed line N is `offset: N-1`. The MCP and chat `read_file` tool is different: its `offset` is the printed N itself.
 
 `run-bash` (and any write tool) needs workspace **write** access on the key's principal. It returns `{ status: "completed"|"failed", stdout, stderr, duration_ms }`. Optional `sandbox_id` runs in a **named** workspace-scoped container (parallel named runs don't collide). **Omit** it for the default container for that call path - do not pass the string `"default"` as a name. The container is ephemeral: after ~10 minutes of inactivity (or a cold start), local installs, `/tmp`, and shell state are gone; only workspace-mounted files persist. Reinstall on cold start is expected; keep venvs/`node_modules` off the workspace tree (use `/tmp` or `$HOME` for the session).
 

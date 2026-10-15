@@ -11,7 +11,7 @@ Use when Arg is connected as an MCP server — remote, OAuth, `https://api.arg.a
 | Operation              | Tool(s)                                                                                                                                                             |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Create**             | `write_file` (UTF‑8 text/JSON) · `create_upload_session` (binary/large files — returns part/complete URLs; PUT the raw byte chunks, then POST the parts list)       |
-| **Read**               | `read_file` (line `offset`/`limit`) · `download_file` (binary → base64 blob) · `grep`                                                                               |
+| **Read**               | `read_file` (`offset` = 1-based line number, as printed; `limit` = line count) · `download_file` (binary → base64 blob) · `grep`                                    |
 | **Update**             | `edit_file` / `multi_edit` (targeted string replacements — preferred on large files) · `write_file` (full overwrite)                                                |
 | **Move / rename**      | `move_files` (single rename or bulk-move; end `destination_path` with `/` to move into a folder)                                                                    |
 | **Delete**             | `run_bash` (`rm`) — no dedicated tool                                                                                                                               |
