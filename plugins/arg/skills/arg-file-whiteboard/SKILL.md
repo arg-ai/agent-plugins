@@ -1,6 +1,6 @@
 ---
 name: arg-file-whiteboard
-version: "1.4.0"
+version: "1.5.0"
 description: Create, read, update, and delete Arg whiteboard files (.whiteboard) — the native infinite-canvas / visual-canvas format with shapes, sticky notes, text, tables, sections, images, icons, emoji, 3D models, live embeds/bookmarks/stock/weather cards, generator nodes, and connectors/arrows. Load when authoring or editing diagrams, flowcharts, architecture maps, mind maps, or any node-and-edge visual board.
 ---
 
@@ -11,6 +11,8 @@ A freeform 2D canvas of nodes (shapes, sticky notes, text, tables, sections, ima
 ## CRUD
 
 Use your active Arg access method (`arg-mcp` / `arg-cli` — see `arg-files`) and the shared rules in `arg-files`. Whiteboard-specific: read the board first to learn existing nodes and their coordinates; to remove a node, edit the JSON and drop it plus any edges that reference it.
+
+To SEE a board, use `preview_file` where it is available: it returns a picture of the board plus a short outline of its text, not the JSON. To read the JSON itself, page with `read_file` offset/limit or `grep` for a label - a large board is hundreds of thousands of characters, and pulling it whole into the conversation costs every later step.
 
 If a board fails to parse or appears empty while loading, retain the original bytes and check the saved file or version history before editing. Never replace unreadable content with an empty board as a repair. Live editors wait for the collaboration room before enabling edits, and refuse malformed replacements rather than saving an empty fallback.
 
