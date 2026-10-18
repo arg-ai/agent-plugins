@@ -1,6 +1,6 @@
 ---
 name: arg-file-document
-version: "1.2.0"
+version: "1.2.1"
 description: Create, read, update, and delete Arg documents — .md/.mdx/.txt text docs with Arg's custom JSX components (callouts, toggles, embeds, columns, tabs, math, mentions, …), .diary dated journals, and .form shareable forms/surveys. Load when authoring or editing any Arg document, note, journal/daily log, or form.
 ---
 
@@ -62,8 +62,8 @@ be saved as `<code>` with numeric character references to preserve the exact tex
   - `fit` — `contain` (default) or `cover` (how an image/video sits in the box).
   - `autoplay` / `muted` / `loop` — booleans for video embeds (default `false`).
   - `widgetHeader` — boolean, show the embed's header bar (path + refresh/open/settings); default `true`.
-  - `chromeTop` / `chromeLeft` / `chromeRight` — booleans, show the embedded editor's top toolbar / left sidebar / right inspector; default `true`.
-  - `interactive` — boolean, let pan/zoom/play/scroll reach the embedded editor; default `false`.
+  - `chromeTop` / `chromeLeft` / `chromeRight` — booleans, show the embedded editor's top toolbar / left sidebar / right inspector; default `false` (the embed shows the content alone).
+  - `interactive` — boolean, let pan/zoom/play/scroll reach the embedded editor; default `true` - set `interactive={false}` for a static picture that scrolls with the page.
   - `editable` — boolean, render the embed read-write and persist edits; default `false`.
   - `pathDisplay` — `full` (default) or `name`.
   - `mediaMode` — `zoom` or `playback` (default) for image/video embeds.
