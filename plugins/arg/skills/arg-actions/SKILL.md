@@ -157,12 +157,13 @@ A sampling — there are more:
   - `screenshot_webpage`
   - `seo_serp` / `seo_keywords` / `seo_backlinks` (what ranks for a keyword on Google, Bing and Yahoo; search volume, CPC and competition for keywords; the public backlink graph and authority of a domain)
   - `social_search` / `social_profile` (public posts, accounts and engagement across Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Reddit and Threads - by keyword, hashtag, or the account whose posts you want; public social data, not your own accounts, feeds or inboxes)
+  - `text_chunk` (split a long string into ordered `chunks` of at most `max_chars`, breaking at paragraph, line, sentence or word boundaries with optional `overlap_chars` — wire a `loop` over `{{ node.output.chunks }}` to summarize or extract from a transcript or document too long for one `run-llm` call, with no `code` node)
   - `validate_json_schema` (check a value against a JSON Schema and get back `valid` plus a `path`-qualified error list — branch an `if` on `{{ node.output.valid }}` before an irreversible write off a webhook payload, an HTTP response, or an LLM's JSON instead of discovering the shape is wrong three nodes downstream; supports `type`/`enum`/`const`/`required`/`properties`/`items`/`minItems`/`maxItems`/`uniqueItems`/`minLength`/`maxLength`/`pattern`/`minimum`/`maximum`/`multipleOf`/`format`/`anyOf`; set `fail_on_invalid: true` to throw instead of branching)
   - `web_fetch` (the full browser surface: `format` of `markdown` / `html` / `links` / `scrape` / `pdf` / `crawl`)
   - `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …)
   - `web_to_markdown` (one-shot page → Markdown)
 - **integration** — calls to connected services where a connection is set up. Google products use separate connections; Google Meet is coming soon. Each action takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available. One provider per line, alphabetical - add a new one on its own line:
-  - Airtable (list bases, get a base's exact table/field/view schema, query/create/update records)
+  - Airtable (list bases, get a base's exact table/field/view schema, query/create/update records, upsert a record on merge fields so a sync never duplicates)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
   - Confluence
@@ -174,7 +175,7 @@ A sampling — there are more:
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
   - Firmable (ANZ company/people data)
   - GitHub
-  - GitLab (create/update/list issues, comment on an issue or merge request - GitLab.com only)
+  - GitLab (create/update/list issues, list merge requests, comment on an issue or merge request - GitLab.com only)
   - Gmail (messages, threads, and Google Contacts)
   - Gong (what was said on sales calls - briefs, key points, trackers, transcripts)
   - Google Calendar
@@ -182,7 +183,7 @@ A sampling — there are more:
   - Google Keep
   - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners and property definitions - and write it: create/update contacts, companies, deals and tickets, associate records, add notes and create tasks)
   - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
-  - Jira (create/get/search issues, add a comment, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
+  - Jira (create/get/search issues, add a comment, read an issue's comments with `jira_list_comments`, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
   - Linear (issues, a full single-issue read with description, labels and comments, and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
   - Microsoft
   - Microsoft Teams (chat messages/search and Outlook Contacts)
@@ -195,12 +196,12 @@ A sampling — there are more:
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
-  - Stripe (payments - get a charge, list charges with a cursor, create a refund)
+  - Stripe (payments - get a charge, get a customer, list charges with a cursor, create a refund)
   - Telegram (send a bot message to a chat, group, or channel)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
   - Vapi
-  - Zendesk (support tickets - create a ticket, add a reply/internal note, change status/priority/tags)
+  - Zendesk (support tickets - create a ticket, read one back with its comment thread, add a reply/internal note, change status/priority/tags)
   - Zoom (meetings - list and create meetings, list cloud recordings, read a meeting's transcript as text, its AI Companion summary, and who attended)
 
 ### Acting on a connected service
