@@ -25,7 +25,7 @@ arg templates publish ./deck --type folder --thumbnail-pages-from ./exports/page
 arg templates publish ./my-skill/SKILL.md --type skill --visibility org
 ```
 
-The command packages one or more local files into a ZIP and publishes it without first creating a workspace. `--type` accepts `workspace`, `folder`, `file`, `skill`, or `subagent`. One directory contributes its contents at the template root, while multiple inputs retain their basenames. `file`, `skill`, and `subagent` each require one file; skill and subagent files are placed at the API's required `.skills/<name>/SKILL.md` and `.agents/<name>.md` path.
+The command packages one or more local files into a ZIP and publishes it without first creating a workspace. `--type` accepts `workspace`, `folder`, `file`, `skill`, `subagent`, or `prompt`. One directory contributes its contents at the template root, while multiple inputs retain their basenames. `file`, `skill`, `subagent`, and `prompt` each require one file; skill, subagent and prompt files are placed at the API's required `.skills/<name>/SKILL.md`, `.agents/<name>.md` and `.prompts/<name>.md` path. A prompt template is run in a new chat from the catalog, so its file preview is always on.
 
 `workspace` is the default type: publishing a local folder creates a workspace template with the same clone behavior as publishing an existing workspace. Cloning places the folder's files at the new workspace root. No source or selected workspace is required. Local templates have no workspace source to sync from; publish again when their files change.
 
