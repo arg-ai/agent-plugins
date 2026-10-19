@@ -197,7 +197,7 @@ A sampling — there are more:
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
   - Stripe (payments - get a charge, get a customer, list charges with a cursor, create a refund)
-  - Telegram (send a bot message to a chat, group, or channel)
+  - Telegram (send a bot message to a chat, group, or channel, and edit one it already sent to keep a status message current)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
   - Vapi
