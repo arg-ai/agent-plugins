@@ -206,6 +206,8 @@ An HTML, TSX, or JSX app can describe controls that Arg renders outside the sand
 - `inspector` for the currently selected object's properties in the floating right panel
 - `bottomToolbar` for compact canvas actions in the floating bottom bar
 
+Lay tools out the way Arg's own editors do. `leftToolbar` renders as the floating tool dock, which the user can pin to the left, right or bottom of the canvas. Start it with a `pointer` group (Select, Pan), then one group per family of tools that add to or edit the document (shapes, drawing, inserts). A group of three or more tools folds into a single dock entry that opens the family as a flyout and shows the active tool, so group by family rather than putting every tool in one group. Zoom is Arg's own control, in the canvas's bottom-right corner. Keep `bottomToolbar` for canvas actions such as undo and redo.
+
 Declarations are data, not React nodes or authored HTML. Keep the app's own state authoritative: when a tool or property event changes state, register an updated declaration so active tools and displayed values stay current. The host coalesces rapid updates to the latest declaration per registration on its next frame. Set `inspector: null` when nothing is selected. IDs must be stable ASCII identifiers; labels are user-facing strings.
 
 One document may keep up to 16 simultaneous registrations. Prefer one registration per app or independently mounted feature, update its handle as state changes, and dispose it when the owning feature unmounts.
@@ -234,13 +236,18 @@ export default function Diagram() {
     () => ({
       leftToolbar: {
         title: "Diagram tools",
-        searchable: true,
         groups: [
+          {
+            id: "pointer",
+            label: "Pointer",
+            tools: [
+              { id: "select", label: "Select", icon: "mouse-pointer", active: tool === "select" },
+            ],
+          },
           {
             id: "draw",
             label: "Draw",
             tools: [
-              { id: "select", label: "Select", icon: "mouse-pointer", active: tool === "select" },
               {
                 id: "rectangle",
                 label: "Rectangle",
