@@ -196,7 +196,7 @@ A sampling — there are more:
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
-  - Stripe (payments - get a charge, get a customer, list charges with a cursor, create a refund, list refunds to check a charge was not already refunded)
+  - Stripe (payments - get a charge, get a customer, list charges with a cursor, list invoices to sweep open or uncollectible ones, create a refund, list refunds to check a charge was not already refunded)
   - Telegram (send a bot message to a chat, group, or channel, and edit one it already sent to keep a status message current)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
