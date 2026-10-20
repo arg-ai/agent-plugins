@@ -132,12 +132,15 @@ A sampling — there are more:
   - `gemini_flash_lite_tts_generate` (fast Gemini 3.8 Flash-Lite speech, WAV)
   - `gemini_flash_tts_generate` (expressive Gemini 3.8 Flash speech, WAV)
   - `music_generate`
+  - `podcast_generate` (NotebookLM-style audio overview: `{topic?, source_paths?, source_text?, format?: conversation|monologue, length?: short|default|long, instructions?, language?}` - an Arg model writes a two-host script grounded in the sources and ElevenLabs Eleven v4 voices it; saves an mp3 under `/podcasts/` and returns the `transcript`)
   - `sound_effect_generate` (text→sound effect)
   - `three_d_generate`
   - `transcribe_audio`
   - `tts_generate` (general text→speech: defaults to ElevenLabs MP3; set `model_id` to `gemini-3.8-flash-tts` or `gemini-3.8-flash-lite-tts` for Gemini WAV)
   - `video_generate` (text/image/video→video; also drives audio-driven avatar / lip-sync models like Kling AI Avatar - pass the portrait as `source_path` and the voice track as `audio_path`)
   - `video_to_audio`
+
+  For "make me a podcast / audio overview" requests, call `podcast_generate` with the relevant workspace files as `source_paths` (convert PDFs and other binaries to markdown first) and the user's angle as `topic` - do not hand-write a dialogue script and voice it yourself. Offer to save the returned `transcript` next to the episode.
 
   For Gemini, pass verbatim `text`, optional `voice` (defaults to Kore) and optional `style`; do not pass an ElevenLabs voice id or output format. Use a `.wav` output path.
 
