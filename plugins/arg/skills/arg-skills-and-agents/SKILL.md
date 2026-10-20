@@ -49,6 +49,19 @@ When asked for release notes:
 
 > Write skill instructions to `.skills/<name>/SKILL.md` — **not** to an `.mdx` note, and not as an `.agents/*.md` file.
 
+### Importing skills from Claude and ChatGPT
+
+Claude, Claude Code and Codex (ChatGPT's coding agent) use the same Agent Skills folder shape (`<name>/SKILL.md` plus resources), so their skills work in a workspace unchanged once copied to `.skills/<name>/`. When a user asks to bring them over, point them at the desktop app rather than recreating them by hand:
+
+- **Desktop app:** file browser toolbar **⋯ → Import skills** (also listed as **Claude & ChatGPT skills** under **⋯ → Import**, and offered once during desktop onboarding). It lists what it finds, ticked, and copies each folder whole; a name the workspace already has is left untouched. In a desktop local folder it writes to that folder's `.skills/` on disk. The web app cannot read the user's disk, so it has no such entry.
+- **Where they live on the user's machine** (what the desktop app reads):
+  - Claude (claude.ai custom skills): the Claude desktop app's copy under `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/<account>/<org>/skills/<name>/` (`%APPDATA%\Claude\...` on Windows); `manifest.json` beside it marks the user's own with `"creatorType": "user"` — Anthropic's built-ins (`pdf`, `docx`, ...) are not imported.
+  - Claude Code: `~/.claude/skills/<name>/` (and a project's `.claude/skills/`).
+  - Codex / ChatGPT: `~/.codex/skills/<name>/` (not its `.system/` folder) and `~/.agents/skills/<name>/`.
+- **From a terminal:** `arg onboard --apply` copies Claude Code skills (plus subagents, commands and `CLAUDE.md`) into the active workspace; see the `arg-cli` skill.
+
+If none of these are available (you are on the web, or the files are elsewhere), ask the user to paste or upload the `SKILL.md` and write it to `.skills/<name>/SKILL.md` yourself.
+
 ## Subagents — `.agents/<name>.md`
 
 A subagent is a specialist with its own instructions, tools, and (optionally) model. The main assistant hands off a focused task with `run_agent(name, prompt)` and gets back a clean result; the agent works in its own context, so subtasks don't pollute the main conversation. An agent can use the workspace's skills the same way the main assistant does.

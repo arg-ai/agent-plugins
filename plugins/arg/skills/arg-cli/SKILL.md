@@ -27,7 +27,7 @@ arg templates publish ./my-skill/SKILL.md --type skill --visibility org
 
 The command packages one or more local files into a ZIP and publishes it without first creating a workspace. `--type` accepts `workspace`, `folder`, `file`, `skill`, `subagent`, or `prompt`. One directory contributes its contents at the template root, while multiple inputs retain their basenames. `file`, `skill`, `subagent`, and `prompt` each require one file; skill, subagent and prompt files are placed at the API's required `.skills/<name>/SKILL.md`, `.agents/<name>.md` and `.prompts/<name>.md` path. A prompt template is run in a new chat from the catalog, so its file preview is always on.
 
-`workspace` is the default type: publishing a local folder creates a workspace template with the same clone behavior as publishing an existing workspace. Cloning places the folder's files at the new workspace root. No source or selected workspace is required. Local templates have no workspace source to sync from; publish again when their files change.
+`workspace` is the default type: publishing a local folder creates a workspace template with the same clone behavior as publishing an existing workspace. Cloning places the folder's files at the new workspace root. No source or selected workspace is required. To update a local template, sync it with its new files - `arg templates sync <slug> ./starter` - never publish again: a second publish leaves two copies in the catalog.
 
 Choose `--generate-thumbnail` to render the template's entry file (its app launcher, its README, the first path you chose, else a folder's shallowest page) after staging, or `--thumbnail <path>` to attach image or short-video catalog media. These flags are mutually exclusive, and thumbnails never become cloned files. An automatic thumbnail is a short muted video when the template has motion (a `.video`, or a `.design` with video or shader fills) and a PNG otherwise; add `--thumbnail-still` (only with `--generate-thumbnail`) to force the PNG. A video `--thumbnail` is fitted for fast catalog playback: with `ffmpeg` on PATH (or `ARG_FFMPEG`) it is transcoded to a muted H.264 MP4 of at most 6 s, within 1280x720 and 4 MiB, with its index at the front; without ffmpeg an MP4/MOV only has its index moved to the front and a WebM goes up unchanged. `--thumbnail-raw` skips all of this. With ffmpeg a video thumbnail also gets a still poster (its first frame as a JPEG) that the card shows before playback and when the video cannot play; without ffmpeg there is none. `--thumbnail-poster <png|jpg|webp>` (at most 5 MiB, only with a video `--thumbnail`) supplies your own. Use `--org <id>` or `ARG_ACTIVE_ORG` to select the publishing organization in a headless run. The archive limits are 25 MiB compressed, 50 MiB expanded, and 1,000 files.
 
@@ -51,7 +51,25 @@ arg templates update 22222222-2222-4222-8222-222222222222 --description ""
 
 Changes the catalog listing of a template that is already published - `--title`, `--description`, `--icon`, `--category`, and repeatable `--tag`, the same metadata publish takes. Only the flags you pass are changed; an empty value clears a field (`--description ""`, `--tag ""` for every tag).
 
-It edits the listing only: the published files and their version history are untouched, no new version is created, and the slug never changes - it is the permalink, so use `arg templates publish` to publish new bytes. A slug is resolved against the templates you published; pass the template id to edit one your organization owns but you did not publish.
+It edits the listing only: the published files and their version history are untouched, no new version is created, and the slug never changes - it is the permalink. To change the files use `arg templates sync` (below), not `arg templates publish`, which mints a second listing. A slug is resolved against the templates you published; pass the template id to edit one your organization owns but you did not publish.
+
+## Change, take down, or roll back a published template
+
+```bash
+arg templates sync life-goals                         # rebuild from its source workspace as a new version
+arg templates sync life-goals --source-path plan.mdx --source-path notes.mdx --include-references
+arg templates sync starter ./starter                  # published from local files: send the new files
+arg templates sync starter ./starter --thumbnail ./cover.png
+arg templates unpublish life-goals                    # out of the catalog; reversible
+arg templates republish life-goals                    # back in (from unpublished or draft)
+arg templates archive life-goals --yes                # final - no way back
+arg templates versions life-goals                     # VERSION, ID, FILES, BYTES, CREATED
+arg templates promote life-goals <version-id>         # serve an earlier (or later) version
+```
+
+**To change a published template's files, sync it - never publish again.** `arg templates publish` always mints a NEW listing, so a second publish leaves two copies in the catalog. For a template published from a workspace, `sync` re-snapshots the source workspace into a new version of the same listing (same slug and permalink); with no flags it keeps the recorded selection and thumbnail mode, and only the flags you pass are sent (`--source-path` repeatable, `--include-references`, `--thumbnail-source-path`, `--generate-thumbnail`, `--thumbnail-still`). A template published from local files has no source workspace, so sync it by passing its files again (`arg templates sync <slug> ./folder`): they are packaged exactly as `publish` packages them, under the template's own type, and `--thumbnail`, `--thumbnail-raw`, `--thumbnail-poster`, `--thumbnail-pages`, `--thumbnail-pages-from`, `--generate-thumbnail` and `--thumbnail-still` work as on publish; with none of them the current cover is kept. The workspace-only flags (`--source-path`, `--include-references`, `--thumbnail-source-path`) cannot be combined with local paths. A result of `no_changes` means nothing moved.
+
+**To take a template down, unpublish it (reversible) or archive it (final) - never retitle it.** A listing renamed "DUPLICATE - ignore" is still public and still clonable. `archive` needs `--yes` when no terminal can confirm. `versions` and `promote` roll a listing back or forward to a version it already has. Every command takes a slug (resolved against the templates you published) or a template id.
 
 **Notify a person:** `arg notify [recipient...] <target-url>` sends a notification that opens an Arg file, folder, chat, or Action run. Recipients accept `me`, user ids, and emails; omit them to send to yourself. Add repeatable `--channel ios|email|in-app` to narrow delivery, or omit it for all channels. Recipient preferences still apply. `--title` overrides the inferred title and `--body` adds detail.
 
