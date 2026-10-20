@@ -121,7 +121,7 @@ HTML uses the same call through `actions`. See `arg-actions` for the full contra
 
 ### Arg UI components
 
-`@arg/ui` exports Arg's exact shared `Button`, `IconButton`, `Card`, `FormInput` (`Input` is an alias), `FormTextarea` (`Textarea` is an alias), `KeyboardShortcut`, `Dropdown`, and `ContextMenu` primitives. The preview supplies the active Arg theme as `light`, `focus`, or `dark`; `focus` is the fallback when no explicit theme is present.
+`@arg/ui` exports Arg's exact shared `Button`, `IconButton`, `Card`, `FormInput` (`Input` is an alias), `FormTextarea` (`Textarea` is an alias), `KeyboardShortcut`, `Dropdown`, and `ContextMenu` primitives. The preview supplies the active Arg theme as `light`, `focus`, or `dark`; `focus` is the fallback when no explicit theme is present. `Button` and `IconButton` shrink slightly while pressed; pass `static` to one that should stay still, such as a button inside a dense toolbar row.
 
 Existing previews may also import the legacy `Badge`, `Heading`, `Text`, `Stack`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, and `CardFooter` layout helpers. They remain available for compatibility, but new previews should prefer semantic HTML composed with the exact shared primitives above.
 
