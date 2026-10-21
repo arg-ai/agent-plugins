@@ -188,7 +188,8 @@ A sampling — there are more:
   - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
   - Jira (create/get/search issues, add a comment, read an issue's comments with `jira_list_comments`, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
   - Linear (issues, a full single-issue read with description, labels and comments, and comments, plus lookups for workflow states and users to resolve state_id/assignee_id)
-  - Microsoft
+  - Microsoft (mail, calendar, OneDrive, and `microsoft_search_users` to find people in a work or school organization by name or email)
+  - Microsoft Entra Directory (users with job title/department/manager, groups, group members, and a user's group memberships - a separate connection that needs a Microsoft admin's consent)
   - Microsoft Teams (chat messages/search and Outlook Contacts)
   - Monday.com
   - Notion
