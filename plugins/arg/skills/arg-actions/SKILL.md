@@ -178,7 +178,7 @@ A sampling — there are more:
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
   - Firmable (ANZ company/people data)
   - GitHub
-  - GitLab (create/update/list issues, list merge requests, comment on an issue or merge request - GitLab.com only)
+  - GitLab (create/update/list issues, list merge requests, comment on or list comments of an issue or merge request - GitLab.com only)
   - Gmail (messages, threads, and Google Contacts)
   - Gong (what was said on sales calls - briefs, key points, trackers, transcripts)
   - Google Calendar
