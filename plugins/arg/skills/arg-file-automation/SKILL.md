@@ -1,6 +1,6 @@
 ---
 name: arg-file-automation
-version: "1.19.4"
+version: "1.19.5"
 description: Create, read, update, delete, and deploy Arg automation files (.automation) and YAML workflows (.arg/workflows/*.yml) for scheduled jobs, webhooks, file-change reactions, provider events (new email, new Slack message, new issue, calendar event, CRM record) and multi-step pipelines. Load when building, editing, or deploying workflow automations, or when deciding what should trigger one.
 ---
 
@@ -51,6 +51,8 @@ Top-level: `version` (use `1`), `name`, `service_account_id` (the account persis
   - `code` (one code step has about 280 seconds; past that it fails with a `timeout` error and its stdout is lost, so a step that walks a growing folder - validating every record, re-indexing everything - should process a bounded batch per step or only the files changed since the last run)
 
   - `copy-file` / `move-file` (`{sourcePath, destinationPath, onConflict}`; `onConflict` is `"append"` (default - keep both, suffixing `(1)`, `(2)`, … on collision) or `"overwrite"` - replace the existing destination file)
+
+  - `csv-append-row` (`{path, row, columns?, delimiter?}`: appends one row to a workspace CSV file, creating the file and writing its header from `columns` or the row's own keys on the first call. `row` is `{columnName: value}` - leave it unset to append the upstream node's own output object verbatim (e.g. a `loop` item), which round-trips cleanly with a future CSV-reading node. Once the file has a header, every later row is aligned to it by column NAME, not argument order - a row naming a column the header doesn't have fails the node rather than silently shifting columns, and a row missing a column writes an empty cell for it. Values are quoted per RFC4180 (comma/quote/newline-safe). This is a durable log across runs - the file persists between deploys and restarts - but each call is a read-modify-write, not a transaction: two runs appending to the same path at the same moment can interleave, so use it for one append per iteration/run rather than as a counter several branches update concurrently)
 
   - `delete-file`
 
