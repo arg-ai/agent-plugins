@@ -119,6 +119,11 @@ or save it as a shared app default. Add `owned_only: true` for generic `<provide
 actions, which currently refuse shared accounts; dedicated integration actions accept them.
 HTML uses the same call through `actions`. See `arg-actions` for the full contract.
 
+The viewer's MCP connectors are Actions too, so a dashboard can read live data straight from
+them: `actions.run("mcp__<connector>__<tool>", input)` runs that tool as the viewer, and
+`run.output.data` is its JSON. `actions.list({ backend: "mcp" })` lists the tools the viewer
+has switched on for this workspace. See "MCP connector tools" in `arg-actions`.
+
 ### Arg UI components
 
 `@arg/ui` exports Arg's exact shared `Button`, `IconButton`, `Card`, `FormInput` (`Input` is an alias), `FormTextarea` (`Textarea` is an alias), `KeyboardShortcut`, `Dropdown`, and `ContextMenu` primitives. The preview supplies the active Arg theme as `light`, `focus`, or `dark`; `focus` is the fallback when no explicit theme is present. `Button` and `IconButton` shrink slightly while pressed; pass `static` to one that should stay still, such as a button inside a dense toolbar row.

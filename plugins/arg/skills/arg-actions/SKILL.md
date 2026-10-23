@@ -240,6 +240,43 @@ When several accounts are available, let the viewer choose. `owned_only: true` s
 usable by generic API request actions under their ownership rule; dedicated actions also
 accept shared connections. No organization or bound integration user returns an empty list.
 
+### MCP connector tools in apps
+
+A user's MCP connectors (the "External tools" in your prompt) are Actions inside an app. Each
+tool's Action id is the same key you call it by, `mcp__<connector>__<tool>`, so an HTML or React
+dashboard can pull live data from any connector the viewer has switched on for the workspace:
+
+```ts
+import { actions } from "@arg-ai/sdk";
+
+await actions.ready;
+// Only the viewer's own (or shared-with-them) connectors switched on here are listed.
+const tools = await actions.list({ backend: "mcp", includeSchema: true });
+
+const run = await actions.run("mcp__linear__list_issues", { assignee: "me", limit: 20 });
+// output: { data, text, content }. data is structuredContent, else the text parsed as JSON, else null.
+const issues = run.output.data;
+```
+
+- It runs as the person viewing the app, through their account - not the author's. Someone
+  without that connector gets a `not_found` error, so render an empty state that says which
+  connector to connect rather than failing silently.
+- Each call needs workspace write access and the **Allow Actions** grant, because MCP has no
+  reliable read/write marking and every tool is treated as able to change something.
+- A tool that reports an error, or a connector that needs reconnecting, rejects the call
+  (`upstream_failed`) instead of returning it as data.
+- `runBatch` mixes connector tools with other Actions and loads the connector list once, so use
+  it for a dashboard's first paint.
+- A `.app` declaring `permissions.actions` names connector tools like any Action. Declarations
+  are lowercase, so use a connector wildcard (`mcp__jira__*`) for a server whose tool names
+  have capitals.
+- Tool input schemas come from the connector and can change; read them with `schema(id)` or
+  `list({ includeSchema: true })` rather than guessing.
+- Connector tools are for previews and `.app`s opened in Arg. A deployed Site or `.server`
+  calls Actions with its own token, which owns no connectors.
+
+### Running an integration action from chat
+
 1. `search_actions({ provider: "slack" })` for that service's actions and their input schemas.
 2. Pass the `connection` id. Your system prompt names the connected services and their connection ids; otherwise `describe_action(action_id, "connection")` lists them. **Never invent one.**
 3. `run_action({ action_id: "slack_send_message", input: { connection: "<id>", channel: "C01ABC123", text: "..." } })`.
