@@ -179,7 +179,7 @@ A sampling — there are more:
   - Firmable (ANZ company/people data)
   - GitHub
   - GitLab (create/update/list issues, list merge requests, comment on or list comments of an issue or merge request - GitLab.com only)
-  - Gmail (messages, threads, and Google Contacts)
+  - Gmail (messages, threads, drafts, labels - mark a message read or archive it with `gmail_modify_message` so a triage loop never sees it twice - and Google Contacts)
   - Gong (what was said on sales calls - briefs, key points, trackers, transcripts)
   - Google Calendar
   - Google Drive (the complete Docs, Sheets, Slides, and Drive REST catalogs, plus convenience actions such as `google_append_sheet_row` and `google_update_sheet_range`)
