@@ -169,9 +169,9 @@ A sampling — there are more:
   - Airtable (list bases, get a base's exact table/field/view schema, query/get/create/update records, upsert a record on merge fields so a sync never duplicates)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
-  - Confluence
+  - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number)
   - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
-  - Discord (bot token - send a channel message, list recent messages, add/remove a reaction as a completion marker)
+  - Discord (bot token - send a channel message, list recent messages, list servers and channels to discover ids, add/remove a reaction as a completion marker)
   - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change)
   - Exa (web search plus clean page extraction, and async agent runs for deep research)
   - Figma (read a file's document tree and comments, post a comment - as a reply or pinned to a node - and render nodes to PNG/JPG/SVG/PDF)
