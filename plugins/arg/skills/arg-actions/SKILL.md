@@ -191,7 +191,7 @@ A sampling — there are more:
   - Microsoft (mail, calendar, OneDrive, and `microsoft_search_users` to find people in a work or school organization by name or email)
   - Microsoft Entra Directory (users with job title/department/manager, groups, group members, and a user's group memberships - a separate connection that needs a Microsoft admin's consent)
   - Microsoft Teams (chat messages/search and Outlook Contacts)
-  - Monday.com
+  - Monday.com (boards, items and column values, posting an update with `monday_create_update`, and reading an item's updates and replies with `monday_list_updates`, with a `since` timestamp to answer each comment once)
   - Notion
   - Parallel (objective-driven web search and extraction, plus async research/enrichment task runs)
   - PostHog (run a HogQL analytics query, list feature flags, turn a flag on/off or change its rollout percentage)
