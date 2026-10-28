@@ -118,7 +118,7 @@ A couple of editor features round-trip as raw HTML rather than JSX:
 
 - Component names are case-sensitive PascalCase.
 - **An attribute value must stay on one line.** A quoted value is part of its tag and the tag is part of one markdown block, so a raw line break inside `summary="…"`, `quote="…"`, `title="…"` — any of them — ends that block and the parser then fails on the whole file, which opens showing its own source. Write the break as `&#10;` (and `&` `"` `<` `>` as `&amp;` `&quot;` `&lt;` `&gt;`); the editor decodes them back. This is how a multi-paragraph `summary` or a `quote` copied from two lines of notes is stored.
-- **Frontmatter:** a YAML block at the very top of the file (`---` lines around `key: value` entries) is kept byte for byte on save and shown in the editor as a read-only Properties row. Change it by editing the file's text. A `---` anywhere else is a horizontal rule.
+- **Frontmatter:** a YAML block at the very top of the file (`---` lines around `key: value` entries) is shown in the editor as an editable YAML **Properties** block pinned to the top; the `/properties` slash command adds one. Unedited properties are kept byte for byte on save. A `---` anywhere else is a horizontal rule.
 - `import` / `export` statements and `{js expressions}` outside attribute values are not interpreted — they round-trip as literal text.
 - Unknown JSX components are preserved but render as a placeholder; prefer the components above.
 
