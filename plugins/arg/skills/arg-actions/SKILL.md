@@ -200,13 +200,13 @@ A sampling — there are more:
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
-  - Stripe (payments - get a charge, get a customer, find customers by email, list charges with a cursor, list invoices to sweep open or uncollectible ones, create a refund, list refunds to check a charge was not already refunded, list subscriptions to sweep past_due, trialing or cancelling ones)
+  - Stripe (payments - get a charge, get a customer, find customers by email, update a customer's metadata as a per-customer note that survives between runs, list charges with a cursor, list invoices to sweep open or uncollectible ones, create a refund, list refunds to check a charge was not already refunded, list subscriptions to sweep past_due, trialing or cancelling ones)
   - Telegram (send a bot message to a chat, group, or channel, and edit one it already sent to keep a status message current)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
   - Vapi
   - Zendesk (support tickets - create a ticket, read one back with its comment thread, add a reply/internal note, change status/priority/tags)
-  - Zoom (meetings - list and create meetings, list cloud recordings, read a meeting's transcript as text, its AI Companion summary, and who attended)
+  - Zoom (meetings - list, create, reschedule and delete meetings, list cloud recordings, read a meeting's transcript as text, its AI Companion summary, and who attended)
 
 ### Acting on a connected service
 
