@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.18.0"
+version: "2.19.0"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg-ai/sdk, versioned npm imports, plus self-contained .html apps using @arg-ai/sdk for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps, be pinned, and register as the editor of a file type, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -130,7 +130,7 @@ has switched on for this workspace. See "MCP connector tools" in `arg-actions`.
 
 Existing previews may also import the legacy `Badge`, `Heading`, `Text`, `Stack`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, and `CardFooter` layout helpers. They remain available for compatibility, but new previews should prefer semantic HTML composed with the exact shared primitives above.
 
-Use `Dropdown` for a controlled select. Its API matches Arg's picker: `options` contain `value`, `label`, and optional `description` or `icon`; `triggerVariant` accepts `"default"`, `"field"`, or `"ghost"`; and `searchable` adds a filter input.
+Use `Dropdown` for a controlled select. Its API matches Arg's picker: `options` contain `value`, `label`, and optional `description`, `icon` or `pinned`; `triggerVariant` accepts `"default"`, `"field"`, or `"ghost"`; and `order` accepts `"as-given"` (the default) or `"alphabetical"`. Pass `order="alphabetical"` for a list of names such as people, projects or files, and mark a leading "All" or "None" option `pinned: true` to keep it first; keep `"as-given"` for a designed sequence such as sizes or steps. A menu with more than 8 options gets a filter input automatically; `searchable` forces one on or off. `compareLabels(a, b)` from `@arg/ui` is the same comparison for sorting your own lists.
 
 ```tsx
 import { useState } from "react";
