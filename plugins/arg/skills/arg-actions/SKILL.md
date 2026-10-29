@@ -172,7 +172,7 @@ A sampling — there are more:
   - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number)
   - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages, list servers and channels to discover ids, add/remove a reaction as a completion marker)
-  - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change)
+  - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change, void an unsigned envelope)
   - Exa (web search plus clean page extraction, and async agent runs for deep research)
   - Figma (read a file's document tree and comments, post a comment - as a reply or pinned to a node - and render nodes to PNG/JPG/SVG/PDF)
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
