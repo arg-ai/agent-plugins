@@ -23,7 +23,7 @@ Keep detailed UI instructions in those guides. API contracts live at https://dev
 Three framings of the same platform:
 
 1. **Arg Workspace** (for teams) — files, editors, chat, real-time collaboration.
-2. **Arg Filesystem API** (for agents) — the same versioned, attributed filesystem over REST, MCP, and CLI, plus sandboxes, search, artifacts, comments, and notifications.
+2. **Arg Workspace API** (for agents) — the same versioned, attributed workspace over REST, MCP, and CLI, plus sandboxes, search, artifacts, comments, and notifications.
 3. **Arg Loops** (for scale) — work that runs itself: automation workflows fire the workspace on triggers and schedules, and each run builds on the last.
 
 ## Core model
