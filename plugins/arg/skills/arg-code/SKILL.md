@@ -1,6 +1,6 @@
 ---
 name: arg-code
-version: "1.4.1"
+version: "1.4.2"
 description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, in a terminal or an Arg chat, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
@@ -141,11 +141,13 @@ There are two kinds of failure, and both exit with status 1 - branch on the JSON
 | `unavailable`          | Arg Code cannot act on it right now, for example while it is starting                               | Wait a moment and try once more; tell the user if it persists              |
 | `wrong-destination`    | The daemon reached is not the machine the request names                                             | Re-run `arg code ping`; you may have reached a different install           |
 | `failed`               | Arg Code tried and could not, for example an inactive worktree or a Project from another repository | Read `message`, fix the cause, and try once more                           |
+| `unsupported-verb`     | The Arg app is older than this command; `data.type` is the request it did not know                  | Ask the user to update the Arg app; do not retry                           |
 
 **The request never reached Arg Code.** These have no `data.outcome`; read `message`:
 
 - "nothing on this machine acts on orchestration requests right now" - the Arg app is closed. Ask the user to open it; do not retry in a loop.
 - "this Arg is too old to be orchestrated" - the app or code server needs updating.
+- "the Arg Code terminal daemon running here predates ..." - the app may already be up to date, but a terminal daemon it started before the update may still be running and refuses a command it does not know. It exits when Arg quits with no Arg Code terminal open and "Reach this machine's terminals from Arg web and your other devices" off in Settings, and the next launch starts a current one; on a code server, update it and rerun `arg code connect`. Tell the user rather than retrying.
 - "this Arg app cannot open an agent in Chat" - the app predates `--open-in chat`. Update it, or start the agent with `--open-in terminal`. Nothing was created or started.
 - "this Arg app is too old to choose the model an agent runs on" - the app predates `--model`. Ask the user to update it, or start without `--model`; nothing was created.
 - "no Arg daemon is running here", or "more than one Arg install is running here" - no daemon was found, or several were and you need `--install`.
