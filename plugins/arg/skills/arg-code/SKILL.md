@@ -1,12 +1,14 @@
 ---
 name: arg-code
-version: "1.4.2"
-description: Drive Arg Code from inside it with the `arg code` CLI - create worktrees (with an agent and a first message, in a terminal or an Arg chat, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, start an agent in an existing worktree, and read back worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
+version: "1.5.0"
+description: Drive Arg Code from inside it with the `arg code` CLI - add a repository already on this machine, create worktrees (with an agent and a first message, in a terminal or an Arg chat, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, start an agent in an existing worktree, and read back repositories, worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
 # Arg Code: orchestrating worktrees with `arg code`
 
 Arg Code is the coding workspace in the Arg desktop app: repositories, their worktrees, Projects that group worktrees, and terminal panes running coding agents. The `arg code` commands let an agent (or a script) do from a terminal what a person does in the Code sidebar, on the same machine.
+
+- **A repository Arg Code does not list yet is one command away.** When `--repo-name` answers `unknown-repository` for a checkout you know is on this machine, run `arg code repo add <path>` and use what it prints, rather than asking the user to add it in the sidebar.
 
 ## The rules
 
@@ -35,6 +37,9 @@ Every command accepts `--json` (and `--ndjson` for lists), and prints JSON whene
 
 | Command                                                                      | What it does                                                        | Prints                                                                                                    |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `arg code repo add <path>`                                                   | Adds a git checkout on this machine to Arg Code (see below)         | `repository` (`id`, `name`, `path`, `origin`) and `added`                                                 |
+| `arg code repo list`                                                         | This machine's repositories                                         | `id`, `name`, `path`, `origin`, `worktrees` (a count) per row                                             |
+| `arg code repo remove <id\|name> [--include-imported]`                       | Stops listing a repository; nothing on disk changes                 | `repository`, `removedWorktrees`                                                                          |
 | `arg code worktree list [repo flag]`                                         | This machine's worktrees, all or one repository's                   | `id`, `repositoryId`, `projectId`, `title`, `path`, `branch`, `lifecycle`, `agent` per row                |
 | `arg code worktree create ...`                                               | Creates a worktree (see below)                                      | `worktree` (the row above), `newProjectId` when it made a Project, and `project` (`id`, `from`, `reason`) |
 | `arg code worktree set-project [worktree-id] --project <id> \| --no-project` | Moves a worktree into a Project, or out of any                      | the worktree                                                                                              |
@@ -48,6 +53,18 @@ Every command accepts `--json` (and `--ndjson` for lists), and prints JSON whene
 | `arg code daemons`                                                           | Lists the Arg installs on this machine and whether each daemon runs | one row per install                                                                                       |
 
 A `[worktree-id]` left out means the pane's own worktree (`ARG_CODE_WORKTREE_ID`).
+
+### Adding a repository
+
+```bash
+arg code repo add ~/Development/record-demo --json
+arg code worktree create --repo-name record-demo --agent claude --prompt "..." --json
+```
+
+- The path must be the root of a git checkout that is already on this machine. A relative path is read from your working directory. It appears in the Code sidebar at once, under the folder's name, which is what `--repo-name` then takes.
+- Adding a repository that is already listed changes nothing and prints it again with `added: false`, so it is safe to run before every `worktree create`.
+- `repo add` does not clone or `git init`. To start a new project, run `git init` (and make a first commit, so there is a branch to start worktrees from) in the folder first; to work on a remote one, `git clone` it first. Then add it.
+- `arg code repo remove` stops listing a repository and never deletes anything. It is refused while the repository has worktrees Arg created (`data.managed`); those are deleted in the sidebar, by the user. Worktrees Arg only imported (`data.imported`) go with `--include-imported`, which closes any terminal open in them - do not pass it without checking nobody is working there.
 
 ### Creating a worktree
 
@@ -131,17 +148,20 @@ There are two kinds of failure, and both exit with status 1 - branch on the JSON
 
 **Arg Code refused the request.** Arg Code on this machine understood it and said no. `data.outcome` says why:
 
-| `data.outcome`         | Meaning                                                                                             | What to do                                                                 |
-| ---------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `ambiguous-repository` | More than one repository matches                                                                    | Pass `--repo-id` with one of `data.candidates`                             |
-| `unknown-repository`   | Nothing on this machine matches                                                                     | Check `arg code worktree list`, or ask the user which repository they mean |
-| `unknown-worktree`     | No such worktree here                                                                               | List worktrees; the id may be from another machine                         |
-| `unknown-project`      | No such Project in that repository                                                                  | List Projects, or use `--new-project`                                      |
-| `unknown-model`        | The agent takes no model by that name; `data.choices` lists the ones it does                        | Pick one of `data.choices`, or leave out `--model`                         |
-| `unavailable`          | Arg Code cannot act on it right now, for example while it is starting                               | Wait a moment and try once more; tell the user if it persists              |
-| `wrong-destination`    | The daemon reached is not the machine the request names                                             | Re-run `arg code ping`; you may have reached a different install           |
-| `failed`               | Arg Code tried and could not, for example an inactive worktree or a Project from another repository | Read `message`, fix the cause, and try once more                           |
-| `unsupported-verb`     | The Arg app is older than this command; `data.type` is the request it did not know                  | Ask the user to update the Arg app; do not retry                           |
+| `data.outcome`         | Meaning                                                                                             | What to do                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `ambiguous-repository` | More than one repository matches                                                                    | Pass `--repo-id` with one of `data.candidates`                                 |
+| `unknown-repository`   | Nothing on this machine matches                                                                     | Check `arg code worktree list`, or ask the user which repository they mean     |
+| `unknown-worktree`     | No such worktree here                                                                               | List worktrees; the id may be from another machine                             |
+| `unknown-project`      | No such Project in that repository                                                                  | List Projects, or use `--new-project`                                          |
+| `unknown-model`        | The agent takes no model by that name; `data.choices` lists the ones it does                        | Pick one of `data.choices`, or leave out `--model`                             |
+| `path-not-found`       | `repo add` named a path with nothing at it                                                          | Check the path; clone or create the repository first                           |
+| `not-a-repository`     | `repo add` named a folder that is not a checkout's root; `data.root` is the checkout it is inside   | Add `data.root` instead, or `git init` the folder when there is no `data.root` |
+| `repository-in-use`    | `repo remove` would drop worktrees; `data.managed` and `data.imported` list them                    | Leave it, or ask the user; `--include-imported` covers only `imported`         |
+| `unavailable`          | Arg Code cannot act on it right now, for example while it is starting                               | Wait a moment and try once more; tell the user if it persists                  |
+| `wrong-destination`    | The daemon reached is not the machine the request names                                             | Re-run `arg code ping`; you may have reached a different install               |
+| `failed`               | Arg Code tried and could not, for example an inactive worktree or a Project from another repository | Read `message`, fix the cause, and try once more                               |
+| `unsupported-verb`     | The Arg app is older than this command; `data.type` is the request it did not know                  | Ask the user to update the Arg app; do not retry                               |
 
 **The request never reached Arg Code.** These have no `data.outcome`; read `message`:
 
