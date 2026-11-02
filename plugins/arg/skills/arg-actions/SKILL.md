@@ -196,11 +196,11 @@ A sampling — there are more:
   - Parallel (objective-driven web search and extraction, plus async research/enrichment task runs)
   - PostHog (run a HogQL analytics query, list feature flags, turn a flag on/off or change its rollout percentage)
   - Resend (send one email or a batch, check what happened to it, manage contacts and broadcasts)
-  - Salesforce (SOQL query with a cursor, get/create/update a record, and `salesforce_upsert_record` to create-or-update by an External ID field without duplicates)
+  - Salesforce (SOQL query with a cursor, get/create/update a record, and `salesforce_upsert_record` to create-or-update by an External ID field without duplicates, and `salesforce_get_deleted_records` to read Recycle Bin deletions since a cursor)
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
-  - Stripe (payments - get a charge, get a customer, find customers by email, update a customer's metadata as a per-customer note that survives between runs, list charges with a cursor, list invoices to sweep open or uncollectible ones, create a refund, list refunds to check a charge was not already refunded, list subscriptions to sweep past_due, trialing or cancelling ones)
+  - Stripe (payments - get a charge, get a customer, find customers by email, update a customer's metadata as a per-customer note that survives between runs, list charges with a cursor, list invoices to sweep open or uncollectible ones, create a refund, list refunds to check a charge was not already refunded, list subscriptions to sweep past_due, trialing or cancelling ones, update a subscription to schedule or take back a cancel-at-period-end and stamp metadata)
   - Telegram (send a bot message to a chat, group, or channel, and edit one it already sent to keep a status message current)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
