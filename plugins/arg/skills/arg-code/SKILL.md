@@ -15,6 +15,7 @@ Arg Code is the coding workspace in the Arg desktop app: repositories, their wor
 - **If the user asks for a worktree in Arg Code, create it with `arg code worktree create`.** Never run `git worktree add` yourself: Arg Code only tracks worktrees it created or imported, so a raw git worktree never appears in the sidebar, gets no setup script, and cannot be targeted by the other commands.
 - **Split separate threads of work into separate worktrees.** When a task has parts that should land as independent pull requests or merge requests, give each its own worktree (and usually its own agent) rather than doing them one after another in one checkout. Local worktrees are cheap and easy to throw away, so you do not need to ask permission to create them.
 - **This is local only.** Every command acts on the machine you are running on. Remote boxes cost money and will come with their own rules; nothing here reaches them.
+- **Hand the user a link to every agent you start.** `worktree create` and `agent start` print a `url` (`arg://code/worktree/<id>`); put it in your message when you say you started an agent. Clicked in an Arg Code pane, or in any terminal that opens links through the system, it selects that worktree in the Code sidebar and focuses the pane its agent runs in. `arg code worktree link [worktree-id]` prints one for a worktree you started earlier.
 - **Agents cannot message each other yet.** There is no command to send a message to a running agent or to wait on one. Start an agent with everything it needs in its first message, and check on its work by reading its worktree or its pull request.
 
 ## Am I in an Arg Code pane?
@@ -35,22 +36,23 @@ Inside a pane the commands reach the pane's own daemon through `ARG_CODE_DAEMON_
 
 Every command accepts `--json` (and `--ndjson` for lists), and prints JSON whenever its output is piped. Each command prints the ids it created or touched, so one command's output can feed the next.
 
-| Command                                                                      | What it does                                                        | Prints                                                                                                    |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `arg code repo add <path>`                                                   | Adds a git checkout on this machine to Arg Code (see below)         | `repository` (`id`, `name`, `path`, `origin`) and `added`                                                 |
-| `arg code repo list`                                                         | This machine's repositories                                         | `id`, `name`, `path`, `origin`, `worktrees` (a count) per row                                             |
-| `arg code repo remove <id\|name> [--include-imported]`                       | Stops listing a repository; nothing on disk changes                 | `repository`, `removedWorktrees`                                                                          |
-| `arg code worktree list [repo flag]`                                         | This machine's worktrees, all or one repository's                   | `id`, `repositoryId`, `projectId`, `title`, `path`, `branch`, `lifecycle`, `agent` per row                |
-| `arg code worktree create ...`                                               | Creates a worktree (see below)                                      | `worktree` (the row above), `newProjectId` when it made a Project, and `project` (`id`, `from`, `reason`) |
-| `arg code worktree set-project [worktree-id] --project <id> \| --no-project` | Moves a worktree into a Project, or out of any                      | the worktree                                                                                              |
-| `arg code worktree rename [worktree-id] --name <title>`                      | Retitles a worktree in the sidebar                                  | the worktree                                                                                              |
-| `arg code worktree pr [worktree-id]`                                         | The worktree's pull request as Arg Code last polled it              | `worktreeId`, `pullRequest` (or `null`)                                                                   |
-| `arg code project list [repo flag]`                                          | This machine's Projects                                             | `id`, `repositoryId`, `name` per row                                                                      |
-| `arg code project create --name <name> [repo flag]`                          | Creates a Project in a repository                                   | `id`, `repositoryId`, `name`                                                                              |
-| `arg code agent start [worktree-id] --agent <agent> --prompt <text>`         | Starts an agent in an existing worktree                             | `worktreeId`, `openIn`, and `sessionId` for a terminal                                                    |
-| `arg code models [--agent <agent>]`                                          | What `--model` takes for each agent                                 | per agent: `agent`, `selection`, `source`, `classes`, `models`                                            |
-| `arg code ping`                                                              | Checks the daemon this machine's commands reach                     | `install`, `address`, `protocol`, `environmentId`, `orchestration`, `sessions`                            |
-| `arg code daemons`                                                           | Lists the Arg installs on this machine and whether each daemon runs | one row per install                                                                                       |
+| Command                                                                      | What it does                                                        | Prints                                                                                                           |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `arg code repo add <path>`                                                   | Adds a git checkout on this machine to Arg Code (see below)         | `repository` (`id`, `name`, `path`, `origin`) and `added`                                                        |
+| `arg code repo list`                                                         | This machine's repositories                                         | `id`, `name`, `path`, `origin`, `worktrees` (a count) per row                                                    |
+| `arg code repo remove <id\|name> [--include-imported]`                       | Stops listing a repository; nothing on disk changes                 | `repository`, `removedWorktrees`                                                                                 |
+| `arg code worktree list [repo flag]`                                         | This machine's worktrees, all or one repository's                   | `id`, `repositoryId`, `projectId`, `title`, `path`, `branch`, `lifecycle`, `agent` per row                       |
+| `arg code worktree create ...`                                               | Creates a worktree (see below)                                      | `worktree` (the row above), `newProjectId` when it made a Project, `project` (`id`, `from`, `reason`), and `url` |
+| `arg code worktree set-project [worktree-id] --project <id> \| --no-project` | Moves a worktree into a Project, or out of any                      | the worktree                                                                                                     |
+| `arg code worktree rename [worktree-id] --name <title>`                      | Retitles a worktree in the sidebar                                  | the worktree                                                                                                     |
+| `arg code worktree pr [worktree-id]`                                         | The worktree's pull request as Arg Code last polled it              | `worktreeId`, `pullRequest` (or `null`)                                                                          |
+| `arg code worktree link [worktree-id]`                                       | A link that opens the worktree in Arg Code                          | the bare link; with `--json`, `worktreeId` and `url`                                                             |
+| `arg code project list [repo flag]`                                          | This machine's Projects                                             | `id`, `repositoryId`, `name` per row                                                                             |
+| `arg code project create --name <name> [repo flag]`                          | Creates a Project in a repository                                   | `id`, `repositoryId`, `name`                                                                                     |
+| `arg code agent start [worktree-id] --agent <agent> --prompt <text>`         | Starts an agent in an existing worktree                             | `worktreeId`, `openIn`, `sessionId` for a terminal, and `url`                                                    |
+| `arg code models [--agent <agent>]`                                          | What `--model` takes for each agent                                 | per agent: `agent`, `selection`, `source`, `classes`, `models`                                                   |
+| `arg code ping`                                                              | Checks the daemon this machine's commands reach                     | `install`, `address`, `protocol`, `environmentId`, `orchestration`, `sessions`                                   |
+| `arg code daemons`                                                           | Lists the Arg installs on this machine and whether each daemon runs | one row per install                                                                                              |
 
 A `[worktree-id]` left out means the pane's own worktree (`ARG_CODE_WORKTREE_ID`).
 
@@ -181,10 +183,11 @@ Split a task into two independent pull requests, each with its own agent, in a n
 project=$(arg code project create --repo-name arg --name "Upload hardening" --json | jq -r .id)
 
 arg code worktree create --repo-name arg --project "$project" --agent claude \
-  --prompt "Add retry with backoff to the upload client. Open a PR when the tests pass." --json
+  --prompt "Add retry with backoff to the upload client. Open a PR when the tests pass." --json | jq -r .url
 
 arg code worktree create --repo-name arg --project "$project" --agent codex \
-  --prompt "Add a size limit to uploads, with a clear error. Open a PR when the tests pass." --json
+  --prompt "Add a size limit to uploads, with a clear error. Open a PR when the tests pass." --json | jq -r .url
+# Tell the user both agents are running, with the two links.
 
 # Later: has either landed?
 arg code worktree list --repo-name arg --json | jq -r '.[] | select(.projectId == "'"$project"'") | .id' \
