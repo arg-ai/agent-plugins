@@ -34,7 +34,7 @@ be saved as `<code>` with numeric character references to preserve the exact tex
   - `src` — workspace-relative path (`/uploads/cover.png`) or absolute URL.
   - `gradient` — predefined key instead of `src` (mutually exclusive): `coral` `amber` `sky` `blush` `mint` `bubblegum` `ember` `haze` `twilight` `orchid` `forest` `plum` `dusk` `slate`.
   - `position` — number `0`–`100`, vertical focal point of the cropped image. Omit to center.
-- **`<FileIcon />`** — void. Page icon above the title; place right after `<CoverImage>`.
+- **`<FileIcon />`** — void. Page icon above the title; place right after `<CoverImage>`. It also becomes the file's icon in file lists and the tree, unless someone set a custom icon on the file.
   - `icon` — an emoji character (`😎`) or an `icon:Name` Lucide reference.
 
 ### Blocks
