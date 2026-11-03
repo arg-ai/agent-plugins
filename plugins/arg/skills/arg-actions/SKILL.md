@@ -166,7 +166,7 @@ A sampling — there are more:
   - `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …)
   - `web_to_markdown` (one-shot page → Markdown)
 - **integration** — calls to connected services where a connection is set up. Google products use separate connections; Google Meet is coming soon. Each action takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available. One provider per line, alphabetical - add a new one on its own line:
-  - Airtable (list bases, get a base's exact table/field/view schema, query/get/create/update records, upsert a record on merge fields so a sync never duplicates)
+  - Airtable (list bases, get a base's exact table/field/view schema, query records with filter, sort and field selection, get/create/update records, upsert a record on merge fields so a sync never duplicates)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
   - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number)
@@ -178,7 +178,7 @@ A sampling — there are more:
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
   - Firmable (ANZ company/people data)
   - GitHub
-  - GitLab (create/update/list issues, list merge requests, list and retry pipelines, comment on or list comments of an issue or merge request - GitLab.com only)
+  - GitLab (create/update/list issues, list merge requests or read one with its merge readiness, list and retry pipelines, comment on or list comments of an issue or merge request - GitLab.com only)
   - Gmail (messages, threads, drafts, labels - mark a message read or archive it with `gmail_modify_message` so a triage loop never sees it twice - and Google Contacts)
   - Gong (what was said on sales calls - briefs, key points, trackers, transcripts)
   - Google Calendar
@@ -186,7 +186,7 @@ A sampling — there are more:
   - Google Keep
   - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners, deal and ticket pipelines with their stage ids, and property definitions - and write it: create/update contacts, companies, deals and tickets, associate records, add notes and create tasks)
   - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
-  - Jira (create/get/search issues, add a comment, read an issue's comments with `jira_list_comments`, look up a user's accountId by name or email with `jira_find_users`, list project keys with `jira_list_projects`, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
+  - Jira (create/get/search issues, add a comment, rewrite one in place with `jira_update_comment`, read an issue's comments with `jira_list_comments`, look up a user's accountId by name or email with `jira_find_users`, list project keys with `jira_list_projects`, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
   - Linear (issues, a full single-issue read with description, labels and comments, and comments, plus lookups for workflow states, users and labels to resolve state_id/assignee_id/label ids; update_issue adds or removes labels and sets project and due date)
   - Microsoft (mail, calendar, OneDrive, and `microsoft_search_users` to find people in a work or school organization by name or email)
   - Microsoft Entra Directory (users with job title/department/manager, groups, group members, and a user's group memberships - a separate connection that needs a Microsoft admin's consent)
