@@ -1,7 +1,7 @@
 ---
 name: arg-design
-version: "1.4.0"
-description: How to make a `.design` document look like a designer made it - choosing (or researching and inventing) a named design language instead of the default AI look, committing to a mood before picking colour, letting one oversized element carry the piece, building a type ramp with real contrast, sizing text for the format it is read in (feed, slide, print, banner), keeping decks and carousels one system, composing around a shader or 3D hero, and putting every repeated value in the document's design tokens. Load alongside arg-file-design whenever you are creating or restyling a visual `.design` (poster, social graphic, landing page, deck, mockup) rather than only editing its data.
+version: "1.5.0"
+description: How to make a `.design` document look like a designer made it - choosing (or researching and inventing) a named design language instead of the default AI look, committing to a mood before picking colour, letting one oversized element carry the piece, building a type ramp with real contrast, sizing text for the format it is read in (feed, slide, print, banner), keeping decks and carousels one system, composing around a shader or 3D hero, putting every repeated value in the document's design tokens, and recreating a screenshot, mockup or flattened image as a faithful editable `.design` by measuring it rather than redesigning it. Load alongside arg-file-design whenever you are creating, restyling or recreating a visual `.design` (poster, social graphic, landing page, deck, mockup) rather than only editing its data.
 ---
 
 # Designing in `.design`
@@ -11,6 +11,57 @@ description: How to make a `.design` document look like a designer made it - cho
 The one-line summary: **name the design language, decide the mood, take the tokens from them, let one element be enormous, then spend your effort on type, space and contrast rather than on decoration.**
 
 The numbers below are measured from a library of several hundred hand-art-directed Arg templates (posters, decks, social, print, office documents, shader and 3D pieces), comparing the strongest against the weakest. Where a rule gives a ratio, it is the range the strong pieces actually used.
+
+**Recreating an image the user gave you is a different job** - skip the brief and the language below, and follow [Recreating a reference image](#recreating-a-reference-image-as-an-editable-design).
+
+## Recreating a reference image as an editable design
+
+"Turn this into a `.design`", "recreate the text and background", "make this editable" over a screenshot, mockup or flattened post: **the reference is the brief, and success is a copy you can lay over it.** Do not restyle it, do not reinterpret it, and do not pick a design language - every choice was already made, and your job is to measure them. A version whose layout was guessed reads as a knock-off at a glance, even when every word and colour is right: a one-line lockup wrapped onto two, an inline date stacked into a column, a photo shrunk into a corner, a cropped word that stops at a different letter.
+
+Do it in this order.
+
+**1. Find the content rectangle.** A reference is often a presentation sheet rather than the piece: a white margin, a device frame, a caption like "LinkedIn post 1080x1350" under it. Strip all of that; the caption is not content, though it usually tells you the canvas size. Measure the rectangle in pixels and take one scale, `canvas width / content width`. Every measurement below is `(pixel - content origin) x scale`.
+
+**2. Measure with code, never by eye.** Load the image in Python (`run_code`, or `run_bash` with Pillow + numpy) and read the numbers off the pixels: panel edges from runs of one colour, colours from the median of a region, and each text line's ink box from the rows and columns that differ from the panel behind it:
+
+```python
+from PIL import Image; import numpy as np
+im = np.asarray(Image.open(src).convert("RGB")).astype(int)
+def ink_bands(x0, y0, x1, y1, panel_rgb, scale, origin):
+    """Print each line of ink in a region as design-space y range, height, colour and x runs."""
+    reg = im[y0:y1, x0:x1]; ink = np.abs(reg - panel_rgb).sum(2) > 60
+    rows = np.flatnonzero(ink.any(1)); bands = np.split(rows, np.flatnonzero(np.diff(rows) > 1) + 1)
+    for b in bands:
+        cols = np.flatnonzero(ink[b[0]:b[-1] + 1].any(0))
+        runs = np.split(cols, np.flatnonzero(np.diff(cols) > 14) + 1)   # word / element gaps
+        d = lambda v, o: round((v - o) * scale)
+        print(d(y0 + b[0], origin[1]), d(y0 + b[-1], origin[1]), "ink", np.median(reg[b[0]:b[-1] + 1][ink[b[0]:b[-1] + 1]], 0),
+              [(d(x0 + r[0], origin[0]), d(x0 + r[-1], origin[0])) for r in runs])
+```
+
+Write those numbers down as the spec before you write any JSON.
+
+**3. Turn the measurements into type.** A line with no ascenders or descenders ("Let more", "COMMUNITY", "12") gives the cap height directly; `fontSize ≈ cap height / 0.72` for a grotesque. Successive line tops give the pitch, and `lineHeight = pitch / fontSize`. Then honour the structure you measured:
+
+- **One line stays one line.** A logo lockup or caption that sits on one line in the reference is a point text (or two runs side by side when the weights differ - "**Relevance** Community"), never an area box that wraps it.
+- **Elements that share a baseline share it in the file.** "TUE **12** JAN" is three runs on one baseline, not a big number with two labels stacked beside it.
+- **Match the weight and the tracking, not just the family.** Heavy, tightly set display type needs weight 800-900 and negative `letterSpacing` (document pixels, about -3% to -5% of the size); a default-tracked Inter at 800 looks like a different, blander poster.
+- **A word cropped by the edge stays cropped at the same letter.** Size it so the edge cuts where it cut, and clip the artboard.
+
+**4. Place photos and cut-outs by their pixels.** A cut-out made from the reference (background removal through `image_edit` with a background-removal model - `describe_action("image_edit", "model")` lists them) is registered to its source image, so it already knows where it goes. Crop it to its alpha bounding box, map that box through the same scale and origin, and use it as the frame with `fit: "fill"`. Never drop a full-canvas cut-out into a guessed frame with `fit: "contain"` - that is how a subject who filled half the post ends up shrunk into a corner and running off the bottom. **Erase from the cut-out anything you are rebuilding as live layers** (a name tag, a caption, a sticker on top of the photo): otherwise the flattened copy is still in the photo, and appears the moment a user moves or edits the live one.
+
+**5. Keep the stacking order.** Note what sits in front of what - a subject's head in front of the giant word, the name tag in front of the subject - and match it in `order`.
+
+**6. Accept it by overlay, not by parsing.** "The JSON is valid and every object is placed once" means the file opens; it says nothing about whether it matches. Render at the canvas size, crop and resize the reference's content rectangle to the same size, and look at them side by side and as a 50% blend:
+
+```python
+from PIL import Image, ImageChops
+ref = Image.open(src).convert("RGB").crop(content_rect).resize(render.size)
+Image.blend(ref, render.convert("RGB"), 0.5).save("/tmp/overlay.png")   # doubled edges = misplaced layers
+print(sum(ImageChops.difference(ref, render.convert("RGB")).convert("L").getdata()) / (render.width * render.height))
+```
+
+Read the overlay back and fix every layer that shows a doubled edge, then render again; two or three rounds is normal, and the mean difference should fall each time. What is left after that is usually glyph width from a substituted face - an offline render substitutes webfonts, so judge position and size there and the typeface in the workspace render. Tell the user what still differs (the font you substituted, anything you baked) rather than calling it a pixel match.
 
 ## Before you write anything: the brief
 
