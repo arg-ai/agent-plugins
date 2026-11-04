@@ -30,6 +30,7 @@ export default function Welcome() {
 React previews support:
 
 - Relative imports from workspace `.tsx`, `.ts`, `.jsx`, `.js`, `.json`, and `.css` files. Resolution is relative to the importing file and supports extension and `index.*` fallback.
+- Workspace fonts and images referenced from an imported stylesheet's `url()`, such as `@font-face { src: url(fonts/Inter.woff2) }` or `background: url("../img/hero.png")`. As in any stylesheet, a `url()` without a scheme is relative to the `.css` file (a leading `/` means the workspace root), so `fonts/x.ttf` and `./fonts/x.ttf` are the same file. The preview inlines each one as a data: URL (up to 4 MB per file, 16 MB in total); `https:`, `data:`, and `#fragment` URLs are left for the browser to load.
 - `@arg/ui`, the same component package Arg uses internally, bundled with standalone theme styles for the isolated preview.
 - `@arg-ai/sdk`, the typed SDK for Action discovery, schema reflection, execution, and run history.
 - Bare npm imports when the package has an exact version in the nearest workspace `package.json`. React and React DOM are pinned by the editor. A versioned `https://esm.sh/package@version` import is also accepted.
