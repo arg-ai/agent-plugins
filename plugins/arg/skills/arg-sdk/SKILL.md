@@ -189,7 +189,10 @@ needs Actions, chats, workspace discovery or the normalized API contracts.
 Agent runtimes expose every backend resource their transport can enforce. Host
 navigation (`fs.open` / `host`), embedded SQLite, app chrome and raw integration
 proxying require their dedicated host/capability and return
-`unsupported_capability` here. `fs.watch` uses sequential metadata polling while
+`unsupported_capability` here. The user's notification inbox spans every
+workspace, so `notifications.list`, `markRead` and `markAllRead` are refused here
+too; `notifications.send` / `sendToMe` / `sendToUser` still work under a write
+token. `fs.watch` uses sequential metadata polling while
 the JavaScript process remains alive. The Code and Servers turn switches also
 gate `code.run` and `servers.*` calls made from `run_code`. From `run_bash` and `run_code`,
 `chat.start` / `chat.continue` / `chat.create` / `chat.send` and `code.run` are
