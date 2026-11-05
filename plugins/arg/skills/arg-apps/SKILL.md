@@ -58,16 +58,12 @@ export default function LiveRunCount() {
 
   useEffect(() => {
     let active = true;
-    let stop = () => {};
     const refresh = async () => {
       const next = await fs.readJSON("./data/runs.json", { fresh: true });
       if (active) setRuns(next);
     };
-    void (async () => {
-      if (!active) return;
-      await refresh();
-      if (active) stop = fs.watch("./data/runs.json", refresh);
-    })();
+    // emitInitial runs the first read from the watcher itself, after its baseline stat.
+    const stop = fs.watch("./data/runs.json", refresh, { emitInitial: true });
     return () => {
       active = false;
       stop();
@@ -78,7 +74,7 @@ export default function LiveRunCount() {
 }
 ```
 
-The watcher is format-agnostic. Re-read JSON with `readJSON`, CSV/YAML/XML/text with `read`, Excel and other binary data with `readBytes`, or rerun `arg.db.query` for SQLite. Always request `{ fresh: true }` in the callback and return the watcher's stop function from the effect. This updates only React state; it does not reload the document or reset unrelated component state.
+The watcher is format-agnostic. Re-read JSON with `readJSON`, CSV/YAML/XML/text with `read`, Excel and other binary data with `readBytes`, or rerun `arg.db.query` for SQLite. Always request `{ fresh: true }` in the callback and return the watcher's stop function from the effect. Pass `{ emitInitial: true }` and do the first read in the callback rather than reading first and starting the watch afterwards: the watcher takes its first stat as the baseline, so a write that lands between a separate read and that stat (an automation, an agent, a teammate) is never reported and the app stays stale until the next write. In app previews a watch polls a fresh stat every 2500 ms by default; `intervalMs` can lower that to 1000 ms, and smaller values are raised to 1000 ms rather than rejected. This updates only React state; it does not reload the document or reset unrelated component state.
 
 On web and desktop, after a workspace `.tsx`/`.jsx` or `.html`/`.htm` app has been shown, switching to another tab or the Files browser keeps that app runtime mounted and backgrounded; returning reveals the same component/DOM state and watcher session. Closing the tab still tears it down, so persist durable state in workspace files rather than relying on the retained runtime.
 

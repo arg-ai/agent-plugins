@@ -16,10 +16,15 @@ The API inventory below is a quick reference. The developer documentation is aut
 import { actions, auth, fs } from "@arg-ai/sdk";
 
 const principal = await auth.principal();
-const settings = await fs.readJSON<{ title: string }>("./settings.json");
-const stop = fs.watch("./settings.json", async () => {
-  console.log(await fs.readJSON("./settings.json", { fresh: true }));
-});
+// emitInitial makes the first read come from the watcher, after its baseline
+// stat, so a write between a separate read and the watch cannot be missed.
+const stop = fs.watch(
+  "./settings.json",
+  async () => {
+    console.log(await fs.readJSON<{ title: string }>("./settings.json", { fresh: true }));
+  },
+  { emitInitial: true },
+);
 // Call stop() when the component or page no longer needs the subscription.
 ```
 
@@ -581,7 +586,7 @@ bound to its chosen transport until `dispose()`.
 | `fs`            | `write(path, content, options?)`, `writeJSON(path, value, condition?)`                                                                                                                | `{ path, revision }`; `encoding: "utf-8"                                                                                                                                                                                  | "base64"`; HTTP supports `baseRevision`or`createOnly: true`       |
 | `fs`            | `append(path, content)`                                                                                                                                                               | `{ path, revision }`; utf-8 only; creates the file if missing; never loses a concurrent append - use it for logs, JSONL and CSV rows many visitors add to. On a share link only for files the link grants write access to |
 | `fs`            | `mkdir(path)`, `move(from, to)`, `copy(from, to)`, `remove(path)` / `delete(path)`                                                                                                    | Mutations require write authority; move/copy targets are literal file paths                                                                                                                                               |
-| `fs`            | `watch(path, callback, options?)`, `watchById(id, callback, options?)`                                                                                                                | Returns synchronous stop function; `{ emitInitial, intervalMs }`; minimum 250 ms for polling transports; stop on unmount                                                                                                  |
+| `fs`            | `watch(path, callback, options?)`, `watchById(id, callback, options?)`                                                                                                                | Returns synchronous stop function; `{ emitInitial, intervalMs }`; at least 250 ms over HTTP (smaller is rejected), raised to 1000 ms in app previews; stop on unmount                                                     |
 | `host` / `fs`   | `open(path)`, `openById(id)`                                                                                                                                                          | Open in the Arg UI; unsupported without an application host                                                                                                                                                               |
 | `db`            | `query(path, sql, params?)`, `exec(path, sql, params?)`, `tables(path)`, `schema(path, table)`                                                                                        | File-backed SQLite inside supported embedded hosts; no managed row service or HTTP SQL                                                                                                                                    |
 | `actions`       | `list(options?)`, `schema(id)`, `describe(id, options?)`                                                                                                                              | Discover actual Action IDs and input contracts before executing                                                                                                                                                           |
