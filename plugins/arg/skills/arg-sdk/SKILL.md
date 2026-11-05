@@ -48,6 +48,20 @@ The `db` namespace still operates on workspace SQLite files; it is not a managed
 multiuser database. Conditional file writes are supported by the HTTP transport;
 legacy embedded hosts reject them explicitly rather than ignoring the condition.
 
+### Who is signed in: `auth.principal()`
+
+`auth.principal()` names the signed-in viewer (`{ kind: "user", id, name,
+email }`) whenever a workspace member runs the app with Workspace access on -
+opened directly in Files, from its `.app` launcher (Files, Apps, the activity
+rail), as a registered file-type editor, on web, desktop, iOS and Android. It
+rejects with `unsupported_capability` only when the host must not say: Workspace
+access is off, nobody is signed in, or the app runs from a public share link or
+template preview (their viewers are never revealed to the app's author). Call
+it once at startup and treat a rejection as a signed-out UI. Never reconstruct
+identity indirectly - for example by writing a file and reading
+`file_list_versions` to see who wrote it - since that is slow, leaves stray
+writes, and bypasses the privacy rule above.
+
 `ui` from `@arg-ai/sdk` exposes the existing app chrome registration, update, event and
 dispose contract. It requires no filesystem grant. React components and the
 `useAppChrome` hook remain in `@arg/ui`.
@@ -124,7 +138,7 @@ Use `actions.list` and `actions.schema` to discover their current contracts.
 
 Authenticated HTTP runtimes expose explicit helpers for notifying the current
 user or one teammate, and for sharing cloud files or folder hierarchies with an
-Arg user:
+Arg user, then listing, changing and revoking those grants:
 
 ```ts
 const me = await arg.auth.principal();
@@ -146,6 +160,54 @@ and folder grants flow to descendants. `admin` remains a workspace-only level.
 The backend applies the same checks to server clients, authenticated `arg serve`
 sessions and agent scripts. Embedded apps report `unsupported_capability` for
 this namespace until their host has a dedicated delegation grant.
+
+`permissions.list(path)` returns the direct grants on one file or folder: `id`,
+`nodeId`, `path`, `permission` and a `grantee` that is a user (`name`, `email`,
+`avatarUrl`), a role or a service account (`name`). Display fields are
+best-effort and may be `null`, so match on `grantee.id`. A grant made on a
+folder is listed on that folder only, not on each descendant, and a path that
+was never shared returns `[]`. `permissions.update(id, { permission })` changes
+the level and returns the grant under a new `id` (the id encodes the level).
+`permissions.revoke(id)` is idempotent and returns `{ outcome }`: `"revoked"`
+when the path exists and no longer carries the grant (whether this call removed
+it or it was already gone), or `"path-missing"` when the file or folder no
+longer exists. Grant ids are a branded `PermissionGrantId`, so a `nodeId` or a
+user id cannot be passed by mistake; brand an id you stored earlier with
+`asPermissionGrantId` from `@arg/sdk/permissions`.
+All three need `manage` on the path and a user principal: a browser session or a
+user-owned API key. Service-account callers get `403`.
+
+To sync an external role list to folder grants, diff against `list` and change
+only what differs. Default to a dry run:
+
+```ts
+type Row = { folder: string; userId: string; permission: "read" | "write" | "manage" };
+const apply = process.argv.includes("--apply");
+
+async function syncFolder(folder: string, rows: Row[]) {
+  const wanted = new Map(rows.map((row) => [row.userId, row.permission]));
+  for (const grant of await arg.permissions.list(folder)) {
+    // Role and service-account grants are not this list's to manage.
+    if (grant.grantee.type !== "user") continue;
+    const level = wanted.get(grant.grantee.id);
+    if (!level) {
+      console.log("revoke", folder, grant.grantee.email ?? grant.grantee.id);
+      if (apply) await arg.permissions.revoke(grant.id);
+    } else if (level !== grant.permission) {
+      console.log("update", folder, grant.grantee.id, grant.permission, "->", level);
+      if (apply) await arg.permissions.update(grant.id, { permission: level });
+    }
+    wanted.delete(grant.grantee.id);
+  }
+  for (const [userId, permission] of wanted) {
+    console.log("share", folder, userId, permission);
+    if (apply) await arg.permissions.shareFolder(folder, { userId, permission });
+  }
+}
+```
+
+A folder grant reaches every descendant, so sync folders rather than each file
+under them, and keep the dry-run output for review before passing `--apply`.
 
 ## Agent-authored JavaScript
 
