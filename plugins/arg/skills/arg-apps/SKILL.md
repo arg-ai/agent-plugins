@@ -1,7 +1,7 @@
 ---
 name: arg-apps
 version: "2.19.0"
-description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg-ai/sdk, versioned npm imports, plus self-contained .html apps using @arg-ai/sdk for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps, be pinned, and register as the editor of a file type, responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
+description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg-ai/sdk, versioned npm imports, plus self-contained .html apps using @arg-ai/sdk for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps, be pinned, and register as the editor of a file type, apps several people use where some edit and others only view (roles as Arg folder access, not a request gate), responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
 # React previews and arg-apps (`.tsx`, `.jsx`, `.html`, `.htm`)
@@ -712,6 +712,48 @@ Unknown ids and names are dropped. A hosted Site or `.server` target uses only `
 A declaration that asks for nothing beyond reading the app's own folder - `"permissions": {}`, `files` of `read` / `folder` alone, or a Site launcher that declares only `files` or `actions` (which no Site can use) - shows no sheet and grants nothing: the app behaves exactly as if it had no `permissions` object, with per-file prompts and toggles.
 
 If the user answers **Don't allow**, the app gets **no Actions at all** - not even ones the user once allowed for the file - and otherwise runs with ordinary preview access, so keep degrading gracefully (check `arg.canWrite`, catch a refused Action or device). **Save as .app** on web, desktop, iOS and Android fills `permissions` from source-detected file mode and scope, literal Action ids and device APIs; folder-scoped read needs no declaration. It follows the app's workspace imports (`import`/`export … from`, `import()`, `require()`, and an HTML `<script src>`) so an Action called from a module rather than the entry file is declared too, up to 64 files. A dependency it cannot resolve - a dynamic `import(expr)`, a module fetched over https, an id assembled at run time - is still invisible, so check the launcher's Permissions after saving. On web and desktop, the open launcher's Settings cog shows **Restore permissions** after a denial; every client can also reopen the same consent sheet from its app permissions menu.
+
+## Apps several people use: who can edit what
+
+When an app has roles - admins and editors change things, everyone else looks - **put the roles in Arg access, not in app logic.** Arg checks every read and write against the person's access, from the app and from anyone opening the file directly, so the app has nothing to enforce. Do not build a "permission gate" where the app writes a request file and an automation checks a roles list and applies the change: every edit waits 30-60 s or more, a file-change automation runs one at a time and folds whatever queued meanwhile into one follow-up run, the app has to poll for the result, and the data is still writable by anyone with workspace write access.
+
+- **Roles are grants.** Everyone gets read access to the workspace. Each editor gets `write` on the folder they own (`/brands/acme/`); admins get `manage` on the parent (`/brands/`). Folder grants flow to everything inside and only ever add to the workspace role - there is no deny - so anyone who should only view must have read-only workspace access.
+- **Grant from a manager's script, not from the app.** Embedded apps get `unsupported_capability` for `permissions.*`. Someone with `manage` on the folder grants from the Share dialog, or from an agent script or server client with `arg.permissions.shareFolder(path, { userId, permission })` (`read`, `write` or `manage`; user principals only - a service account is refused). List and revoke with `GET /api/workspaces/:workspaceId/permissions?path=...` and `DELETE /api/workspaces/:workspaceId/permissions/:permId`, both needing `manage` on the path. If the app keeps its own roles list (`roles.json`), it is a display mirror that script syncs to the grants; it never decides anything.
+- **Write directly and show the refusal.** The app calls `fs.write` / `fs.writeJSON` itself. When Arg refuses, the call rejects with an `SdkError` whose `code` is `access_denied` or `permission_denied` (or `read_only` when the whole preview is read-only): say "You can view this brand but not edit it" and disable that item's edit controls from then on. Do not pre-check against the app's own roles list.
+- **Shape data so writers don't collide.** One file per item (`/brands/acme/products/<sku>.json`) rather than one big file, so two editors never overwrite each other and a folder grant covers exactly what its owner edits. `fs.write` is last-write-wins by design; use `fs.append` for logs and activity feeds, and `document.write(content, { expectRevision })` for the file the app was opened on.
+- **Who did what comes from Arg.** Every save is a file version with its author (Version history; `actor_email` from the automation `list-file-versions` step), and a file-change run carries `trigger.output.actor`. Do not hand-roll an audit log written through a gate.
+- **Long or agent work runs per item.** Declare `automation_run` in the `.app` and start one run per item from the app: each call starts a fresh run as the person who clicked, so it can touch only what they can. Have each run write its own status file (`/jobs/<id>.json`) for the app to show; never funnel work through one queue file. Keep file-change automations for after-the-fact bookkeeping (notify, index, summarise), not for an action someone is waiting on.
+- **Keep a gate only for what people cannot do themselves.** A request file picked up by a deployed automation (running as its service account) suits a rare privileged step - create a brand, run an export - and protects something only if the people filing requests cannot write the data it guards.
+- **Watching costs a round trip per file per tick.** `fs.watch` polls each path every 2.5 s by default. Watch one manifest or stamp file that writers bump rather than every item, stop watchers you no longer need, and treat a missing file as empty instead of re-reading it in a loop.
+- **Identity is `auth.principal()`.** Use it to label and default views. Never work out who the viewer is by writing a file and reading back its version author.
+
+```json
+"permissions": {
+  "files": { "access": "readwrite", "scope": "workspace" },
+  "actions": ["automation_run"]
+}
+```
+
+```ts
+import { actions, fs } from "@arg-ai/sdk";
+
+async function saveProduct(brand: string, sku: string, product: Product) {
+  try {
+    await fs.writeJSON(`/brands/${brand}/products/${sku}.json`, product);
+  } catch (error) {
+    if (["access_denied", "permission_denied", "read_only"].includes(error?.code)) {
+      return markReadOnly(brand); // show the refusal, disable this brand's editing
+    }
+    throw error;
+  }
+}
+
+// One run per item, as the clicker; the automation writes /jobs/<id>.json as it goes.
+await actions.run("automation_run", {
+  file_path: "/automations/write-copy.automation",
+  trigger_input: { brand, sku },
+});
+```
 
 ## Guidance
 

@@ -214,6 +214,10 @@ async function syncFolder(folder: string, rows: Row[]) {
 A folder grant reaches every descendant, so sync folders rather than each file
 under them, and keep the dry-run output for review before passing `--apply`.
 
+For an app where some people edit and others only view, grant those roles as
+folder access from a manager's script and let the app write directly - see
+"Apps several people use: who can edit what" in the arg-apps skill.
+
 ## Agent-authored JavaScript
 
 `run_code` accepts leading static imports from `@arg/sdk` and its browser-safe
