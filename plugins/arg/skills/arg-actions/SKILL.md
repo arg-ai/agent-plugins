@@ -169,7 +169,7 @@ A sampling — there are more:
   - Airtable (list bases, get a base's exact table/field/view schema, query records with filter, sort and field selection, get/create/update records, upsert a record on merge fields so a sync never duplicates)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
-  - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number)
+  - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number, `confluence_list_page_children` to walk a page tree one level at a time)
   - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages, list servers and channels to discover ids, add/remove a reaction as a completion marker)
   - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change, void an unsigned envelope)
@@ -200,7 +200,7 @@ A sampling — there are more:
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
   - Smartlead (cold outreach - campaign analytics, leads, lead conversations, and replying on the thread)
-  - Stripe (payments - get a charge, get a customer, find customers by email, update a customer's metadata as a per-customer note that survives between runs, list charges with a cursor, list invoices to sweep open or uncollectible ones, create a refund, list refunds to check a charge was not already refunded, list subscriptions to sweep past_due, trialing or cancelling ones, update a subscription to schedule or take back a cancel-at-period-end and stamp metadata)
+  - Stripe (payments - get a charge, get a customer, find customers by email, update a customer's metadata as a per-customer note that survives between runs, list charges with a cursor, list invoices to sweep open or uncollectible ones, get one invoice to check whether it is now paid, create a refund, list refunds to check a charge was not already refunded, list subscriptions to sweep past_due, trialing or cancelling ones, update a subscription to schedule or take back a cancel-at-period-end and stamp metadata)
   - Telegram (send a bot message to a chat, group, or channel, and edit one it already sent to keep a status message current)
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio

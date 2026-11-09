@@ -268,6 +268,44 @@ export function moveVideoClip(project, clipId, targetTrackId, start, options = {
   place(next.tracks[trackIndex(next, targetTrackId)], clip, options.placement ?? "reject");
   return finish(next);
 }
+function easeFraction(t, ease) {
+  if (ease === "ease-in") return t * t;
+  if (ease === "ease-out") return t * (2 - t);
+  if (ease === "ease-in-out") return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  return t;
+}
+/**
+ * Keyframes for the part of a clip that begins `offset` seconds in. Times are
+ * clip-relative, so copying them verbatim would replay the animation from its
+ * first key on the right half. Keys before the cut collapse into one key at 0
+ * holding the value sampled at the cut, mirroring the editor's split.
+ */
+function rebaseKeyframes(keys, offset) {
+  const epsilon = 1e-3;
+  const byProp = new Map();
+  for (const key of keys) byProp.set(key.prop, [...(byProp.get(key.prop) ?? []), key]);
+  const out = [];
+  for (const [prop, list] of byProp) {
+    const before = list.filter((key) => key.time < offset - epsilon);
+    const after = list.filter((key) => key.time >= offset - epsilon);
+    if (before.length && !(after.length > 0 && after[0].time - offset <= epsilon)) {
+      const a = before[before.length - 1];
+      const b = after[0];
+      let value = a.value;
+      if (b && a.ease !== "hold") {
+        const span = b.time - a.time;
+        const fraction = span <= 0 ? 0 : (offset - a.time) / span;
+        value = a.value + (b.value - a.value) * easeFraction(fraction, a.ease);
+      }
+      const key = { id: id("keyframe"), prop, time: 0, value };
+      if (a.ease !== undefined) key.ease = a.ease;
+      out.push(key);
+    }
+    for (const key of after)
+      out.push({ ...cloneJson(key), id: id("keyframe"), time: Math.max(0, key.time - offset) });
+  }
+  return out.sort((a, b) => a.time - b.time || a.id.localeCompare(b.id));
+}
 export function splitVideoClip(project, clipId, time, rightId = id("clip")) {
   const next = copy(project);
   const where = location(next, clipId);
@@ -289,6 +327,7 @@ export function splitVideoClip(project, clipId, time, rightId = id("clip")) {
   delete left.transitionOut;
   delete left.transition;
   delete right.transitionIn;
+  if (clip.keyframes?.length) right.keyframes = rebaseKeyframes(clip.keyframes, leftDuration);
   track.clips.splice(where.clipIndex, 1, left, right);
   return finish(next);
 }
