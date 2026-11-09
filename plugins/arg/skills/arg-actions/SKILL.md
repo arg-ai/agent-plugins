@@ -184,7 +184,7 @@ A sampling — there are more:
   - Google Calendar
   - Google Drive (the complete Docs, Sheets, Slides, and Drive REST catalogs, plus convenience actions such as `google_append_sheet_row` and `google_update_sheet_range`)
   - Google Keep
-  - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners, deal and ticket pipelines with their stage ids, and property definitions - and write it: create/update contacts, companies, deals and tickets, associate records, add notes and create tasks)
+  - HubSpot (read across the CRM - contacts, companies, deals, tickets, the associations between them, record owners, deal and ticket pipelines with their stage ids, and property definitions - and write it: create/update contacts, companies, deals and tickets, associate records, archive records, add notes and create tasks)
   - Jev (TypeSafe AI's decision model - pick one option, rate against a rubric, or answer yes/no as a probability, with a confidence to gate on; ask many questions about one piece of content in a single call)
   - Jira (create/get/search issues, add a comment, rewrite one in place with `jira_update_comment`, read an issue's comments with `jira_list_comments`, look up a user's accountId by name or email with `jira_find_users`, list project keys with `jira_list_projects`, update an issue's summary/description/priority/assignee/due date/labels, move an issue to another status by name with `jira_transition_issue`)
   - Linear (issues, a full single-issue read with description, labels and comments, and comments, plus lookups for workflow states, users and labels to resolve state_id/assignee_id/label ids; update_issue adds or removes labels and sets project and due date)
@@ -195,7 +195,7 @@ A sampling — there are more:
   - Notion
   - Parallel (objective-driven web search and extraction, plus async research/enrichment task runs)
   - PostHog (run a HogQL analytics query, list feature flags, turn a flag on/off or change its rollout percentage)
-  - Resend (send one email or a batch, check what happened to it, manage contacts and broadcasts)
+  - Resend (send one email or a batch, check what happened to it, `resend_list_emails` to sweep sent emails by `last_event` such as bounced, manage contacts and broadcasts)
   - Salesforce (SOQL query with a cursor, get/create/update a record, and `salesforce_upsert_record` to create-or-update by an External ID field without duplicates, and `salesforce_get_deleted_records` to read Recycle Bin deletions since a cursor)
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
@@ -205,7 +205,7 @@ A sampling — there are more:
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
   - Vapi
-  - Zendesk (support tickets - create a ticket, read one back with its comment thread, add a reply/internal note, change status/priority/tags)
+  - Zendesk (support tickets - create a ticket, find tickets by search query, read one back with its comment thread, add a reply/internal note, change status/priority/tags)
   - Zoom (meetings - list, create, reschedule and delete meetings, list cloud recordings, read a meeting's transcript as text, its AI Companion summary, and who attended)
 
 ### Acting on a connected service
