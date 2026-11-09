@@ -170,7 +170,7 @@ A sampling — there are more:
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
   - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number, `confluence_list_page_children` to walk a page tree one level at a time)
-  - Databricks (run SQL on a warehouse, browse Unity Catalog, run and check jobs)
+  - Databricks (ask a curated Genie space a question in plain English and get its answer, the SQL it ran and the rows - prefer it to raw SQL when a space covers the question; run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages, list servers and channels to discover ids, add/remove a reaction as a completion marker)
   - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change, void an unsigned envelope)
   - Exa (web search plus clean page extraction, and async agent runs for deep research)
