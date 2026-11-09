@@ -174,7 +174,7 @@ Step keys:
 - `continue-on-error` — optional boolean (default `false`). Tolerates this step's own failure — see "Tolerating a node's own failure" above. Not valid on `uses: loop`.
 - `retry` — optional boolean or `{ max_attempts, delay_seconds, backoff, retry_on_status, respect_retry_after }`. Re-attempts this step's own failure — see "Retrying a flaky node" and "Retrying `http-request` specifically" above. Not valid on `uses: loop`, `uses: delay`, or `uses: wait-for-action`.
 
-Loops use `uses: loop` with nested `steps` and `with: { over: "{{ ... }}" }`; inside the body, `{{ <loop-id>.item }}` is the current element. Nested loops are not supported.
+Loops use `uses: loop` with nested `steps` and `with: { over: "{{ ... }}" }`; inside the body, `{{ <loop-id>.output.item }}` is the current element and `{{ <loop-id>.output.index }}` its position (the `.output` is required: `{{ <loop-id>.item }}` is not a reference and stays as literal text). Pass a whole item to a sub-run with `triggerInput: "{{ <loop-id>.output.item }}"`. Nested loops are not supported.
 
 ### Expressions and templates
 
