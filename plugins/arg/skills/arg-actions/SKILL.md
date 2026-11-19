@@ -166,10 +166,10 @@ A sampling — there are more:
   - `web_scrape` (curated Apify scrapers — Instagram, LinkedIn, X, YouTube, G2, Trustpilot, …)
   - `web_to_markdown` (one-shot page → Markdown)
 - **integration** — calls to connected services where a connection is set up. Google products use separate connections; Google Meet is coming soon. Each action takes a `connection` input - use `describe_action(action_id, "connection")` to list the ones available. One provider per line, alphabetical - add a new one on its own line:
-  - Airtable (list bases, get a base's exact table/field/view schema, query records with filter, sort and field selection, get/create/update records, upsert a record on merge fields so a sync never duplicates)
+  - Airtable (list bases, get a base's exact table/field/view schema, query records with filter, sort and field selection, get/create/update records, upsert a record on merge fields so a sync never duplicates, delete a record idempotently)
   - Ashby (recruiting - read the hiring pipeline, search candidates, move an application to another interview stage, note a candidate)
   - Avoma (meeting intelligence - list recorded meetings by date/attendee/CRM record, read a transcript, the AI notes, and per-meeting insights)
-  - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number, `confluence_list_page_children` to walk a page tree one level at a time)
+  - Confluence (list pages in a space, get/create/update a page, and `confluence_list_page_versions` to detect that a page was edited since a stored version number, `confluence_list_page_children` to walk a page tree one level at a time, `confluence_delete_page` to trash a page, safe to re-run)
   - Databricks (ask a curated Genie space a question in plain English and get its answer, the SQL it ran and the rows - prefer it to raw SQL when a space covers the question; run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages, list servers and channels to discover ids, add/remove a reaction as a completion marker)
   - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change, resend a reminder to unsigned recipients, void an unsigned envelope)
