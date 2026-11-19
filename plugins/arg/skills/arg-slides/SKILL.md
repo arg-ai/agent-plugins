@@ -213,8 +213,8 @@ Keep animation subtle enough that text remains readable. Use uniform definitions
 
 ### Build and verify
 
-1. Read the current deck and every referenced source before editing.
-2. Outline the sections and slides, then establish shared type, color, margins, and grid.
+1. Read the current deck and every referenced source before editing. The file on disk is the deck: someone may have changed it by hand since you last wrote it, so edit that file in place (the bundled `design.mjs` helpers or `edit_file`) and never rebuild it from a script, template or earlier copy - regenerating overwrites their changes. A generator script is acceptable only for the very first build of a new file.
+2. Outline the sections and slides, then establish shared type, color, margins, and grid. Lay each slide's text out as `autoHeight` text inside a `flex` column group, so wrapping is measured for you and nothing needs computed heights.
 3. Create the artboards and section order before adding detailed objects.
 4. Link existing workspace assets and reusable `.design` components before drawing replacements.
 5. Add shader or video motion only where it supports comprehension.
@@ -228,7 +228,7 @@ Deliver the `.design` deck as the primary artifact.
 
 In Slides view, **Download as .pptx** (the Export pill, or the More menu) writes the deck as an editable PowerPoint file - real shapes, text runs, pictures and notes pages, not one flat image per slide. Author for `.design` first and treat `.pptx` as the hand-off format; there is no need to build a second deck by hand. **Download as .pdf** sits beside it and is a page-per-artboard render, so it is the right choice when exact visual fidelity matters more than editability.
 
-From the agent, discover and run `design_to_pptx` with the deck's `source_path` (and an optional `output_path`). It calls the same exporter as the Slides view, saves the `.pptx` back into the workspace, and keeps skipped artboards as hidden slides by default. Set `include_skipped_slides: false` only when the user wants them omitted from the hand-off entirely.
+From the agent, discover and run `design_to_pptx` with the deck's `source_path` (and an optional `output_path`). It calls the same exporter as the Slides view, saves the `.pptx` back into the workspace, and keeps skipped artboards as hidden slides by default. Set `include_skipped_slides: false` only when the user wants them omitted from the hand-off entirely. Re-exporting replaces the `.pptx` at that path, so if the user has edited the PowerPoint itself since the last export, write to a new `output_path` or ask first - their changes live only in that file.
 
 What carries over:
 

@@ -743,6 +743,12 @@ function serializeObject(id, source, origin, zIndex, context, laidOutByParent) {
       build.declarations["white-space"] = source.textMode === "point" ? "pre" : "pre-wrap";
       consumed.add("textMode");
     }
+    // The fitted height still rides `height:` like every frame, so a reader
+    // that does not know the flag draws the box at the size it was last fitted.
+    if (source.autoHeight === true) {
+      build.attributes["data-arg-auto-height"] = "";
+      consumed.add("autoHeight");
+    }
     if (isJsonObject(source.style)) {
       const encoded = css.toTextStyle(source.style);
       Object.assign(build.declarations, encoded.declarations);
@@ -1569,6 +1575,7 @@ function parseObjectElement(node, origin, into, styles, laidOutByParent, allocat
     const whiteSpace = declarations["white-space"];
     if (whiteSpace === "pre") object.textMode = "point";
     else if (whiteSpace === "pre-wrap") object.textMode = "area";
+    if (hasAttribute(node, "data-arg-auto-height")) object.autoHeight = true;
     const style = css.fromTextStyle(declarations);
     if (Object.keys(style).length > 0) object.style = style;
     // Only a marked `color` is the legacy field; an unmarked one is glyph paint
