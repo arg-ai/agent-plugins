@@ -150,7 +150,7 @@ A sampling — there are more:
 
 - **web / data / document** — One action per line, alphabetical - add a new one on its own line:
   - `ad_search` / `advertiser_search` / `ad_creatives` (the public Meta, TikTok and Google ad libraries - what ads a brand is running, and saving an ad's image/video creatives into the workspace; public ad transparency data, not your own ad accounts)
-  - `aeo_mentions` / `aeo_answers` (how often a brand or domain is mentioned in AI assistant answers and which sources they cite, and what ChatGPT, Perplexity, Gemini and Claude actually answer for a prompt - public search and answer-engine data, not your own Search Console or Analytics)
+  - `aeo_mentions` / `aeo_answers` / `aeo_live_answers` (how often a brand or domain is mentioned in AI assistant answers and which sources they cite, what ChatGPT, Perplexity, Gemini and Claude answer when asked directly, and the answer a person actually sees in the ChatGPT, Gemini and Google AI Mode apps with its cited pages, named brands and searches - public search and answer-engine data, not your own Search Console or Analytics)
   - `date_time` (date arithmetic with no network or file access — `add` offsets an ISO-8601 instant by a signed amount/unit including calendar-correct months/years, `diff` compares two instants across seconds through days, `format` breaks an instant into timezone-local date/time/weekday fields; there is no `{{ now }}` or date math in template expressions, so use this instead of a `code` node to compute a `delay` node's `until` value or how long a record has been open)
   - `extract_webpage_data`
   - `get_stock_data`
@@ -158,7 +158,7 @@ A sampling — there are more:
   - `jev_decide` asks Jev, a calibrated decision model, typed questions about text or JSON in one fast pass - pick one of a set of options, rate against ordered levels, or answer yes/no - each with a probability per option and a `confidence` to gate on. It writes no text, needs no connection and bills AI credits; the `jev_*` integration actions are the same model on a connected TypeSafe key.
   - `pdf_split` (split a workspace PDF into separate PDF files by page — one per page by default, grouped by `pages_per_file`, or by explicit `ranges` — returning a `files` array a `loop` node or a `run_action` fan-out can process one at a time)
   - `screenshot_webpage`
-  - `seo_serp` / `seo_keywords` / `seo_backlinks` (what ranks for a keyword on Google, Bing and Yahoo; search volume, CPC and competition for keywords; the public backlink graph and authority of a domain)
+  - `seo_serp` / `seo_keywords` / `seo_backlinks` / `seo_domain` (what ranks for a keyword on Google, Bing and Yahoo; search volume, CPC, competition and up to four years of history for keywords; the public backlink graph and authority of a domain; a domain's estimated search traffic, ranked keywords, top pages, competitors and the keywords a competitor ranks for that it does not)
   - `social_search` / `social_profile` (public posts, accounts and engagement across Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Reddit and Threads - by keyword, hashtag, or the account whose posts you want; public social data, not your own accounts, feeds or inboxes)
   - `text_chunk` (split a long string into ordered `chunks` of at most `max_chars`, breaking at paragraph, line, sentence or word boundaries with optional `overlap_chars` — wire a `loop` over `{{ node.output.chunks }}` to summarize or extract from a transcript or document too long for one `run-llm` call, with no `code` node)
   - `validate_json_schema` (check a value against a JSON Schema and get back `valid` plus a `path`-qualified error list — branch an `if` on `{{ node.output.valid }}` before an irreversible write off a webhook payload, an HTTP response, or an LLM's JSON instead of discovering the shape is wrong three nodes downstream; supports `type`/`enum`/`const`/`required`/`properties`/`items`/`minItems`/`maxItems`/`uniqueItems`/`minLength`/`maxLength`/`pattern`/`minimum`/`maximum`/`multipleOf`/`format`/`anyOf`; set `fail_on_invalid: true` to throw instead of branching)
@@ -178,7 +178,7 @@ A sampling — there are more:
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
   - Firmable (ANZ company/people data)
   - GitHub
-  - GitLab (create/update/list issues, list merge requests, read one with its merge readiness or update one (close, label, mark ready), list, create, read, retry and cancel pipelines, comment on or list comments of an issue or merge request - GitLab.com only)
+  - GitLab (create/update/list issues, list merge requests, read one with its merge readiness, update one (close, label, mark ready) or merge one, list, create, read, retry and cancel pipelines, comment on or list comments of an issue or merge request - GitLab.com only)
   - Gmail (messages, threads, drafts, labels - mark a message read or archive it with `gmail_modify_message` so a triage loop never sees it twice - and Google Contacts)
   - Gong (what was said on sales calls - briefs, key points, trackers, transcripts)
   - Google Calendar
@@ -195,7 +195,7 @@ A sampling — there are more:
   - Notion
   - Parallel (objective-driven web search and extraction, plus async research/enrichment task runs)
   - PostHog (run a HogQL analytics query, get or list feature flags, turn a flag on/off or change its rollout percentage)
-  - Resend (send one email or a batch, check what happened to it, `resend_cancel_email` / `resend_reschedule_email` to withdraw or snooze a scheduled send, `resend_list_emails` to sweep sent emails by `last_event` such as bounced, manage contacts and broadcasts)
+  - Resend (send one email or a batch, check what happened to it, `resend_cancel_email` / `resend_reschedule_email` to withdraw or snooze a scheduled send, `resend_list_emails` to sweep sent emails by `last_event` such as bounced, `resend_get_contact` to read one contact's `unsubscribed` status, manage contacts and broadcasts)
   - Salesforce (SOQL query with a cursor, get/create/update a record, and `salesforce_upsert_record` to create-or-update by an External ID field without duplicates, and `salesforce_get_deleted_records` to read Recycle Bin deletions since a cursor, and `salesforce_delete_record` to delete by id, safe to re-run)
   - SendGrid (send transactional email, manage marketing contacts, read delivery statistics)
   - Slack (channels, DMs, messages, workspace members, message reactions, and resolving channel/member references to names and links)
