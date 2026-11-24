@@ -173,6 +173,7 @@ A sampling — there are more:
   - Databricks (ask a curated Genie space a question in plain English and get its answer, the SQL it ran and the rows - prefer it to raw SQL when a space covers the question; run SQL on a warehouse, browse Unity Catalog, run and check jobs)
   - Discord (bot token - send a channel message, list recent messages, list servers and channels to discover ids, add/remove a reaction as a completion marker, start a thread on a message)
   - DocuSign (e-signature - get an envelope's status, list its recipients' signing status, list envelopes by status change, resend a reminder to unsigned recipients, void an unsigned envelope)
+  - Employment Hero (HR - list organisations, list or search employees and read one's record, list leave requests and leave balances, leave categories, teams and timesheet entries)
   - Exa (web search plus clean page extraction, and async agent runs for deep research)
   - Figma (read a file's document tree, comments and version history - a new version id is the change signal - post a comment - as a reply or pinned to a node - delete one, and render nodes to PNG/JPG/SVG/PDF)
   - Firecrawl (scrape a page, map a site, search with the hits scraped, crawl a domain)
