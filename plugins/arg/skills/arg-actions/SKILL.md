@@ -206,7 +206,7 @@ A sampling — there are more:
   - treg (a gateway to thousands of third-party API endpoints - search its catalogue, then call an endpoint by id)
   - Twilio
   - Vapi
-  - Zendesk (support tickets - create a ticket, find tickets by search query, look up a user's id by email or name with `zendesk_search_users`, upsert a customer by email with `zendesk_create_or_update_user`, read one back with its comment thread, add a reply/internal note, change status/priority/tags)
+  - Zendesk (support tickets - create a ticket, find tickets by search query, look up a user's id by email or name with `zendesk_search_users`, upsert a customer by email with `zendesk_create_or_update_user`, read one back with its comment thread, add a reply/internal note, change status/priority/assignee/group, add or remove individual tags)
   - Zoom (meetings - list, create, reschedule and delete meetings, list cloud recordings, read a meeting's transcript as text, its AI Companion summary, and who attended)
 
 ### Acting on a connected service

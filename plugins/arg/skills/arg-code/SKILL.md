@@ -1,7 +1,7 @@
 ---
 name: arg-code
-version: "1.5.0"
-description: Drive Arg Code from inside it with the `arg code` CLI - add a repository already on this machine, create worktrees (with an agent and a first message, in a terminal or an Arg chat, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, start an agent in an existing worktree, and read back repositories, worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
+version: "1.6.0"
+description: Drive Arg Code from inside it with the `arg code` CLI - add a repository already on this machine, create worktrees (with an agent and a first message, in a terminal or an Arg chat, or a plain shell), choose the model an agent runs on, rename them, file them into Projects, delete them when the user allows it, start an agent in an existing worktree, and read back repositories, worktrees, Projects and pull request state. Load when working in an Arg Code terminal pane, when the user asks for a new worktree, or when a task splits into separate threads of work that should each become their own pull request. Covers this machine's local worktrees only.
 ---
 
 # Arg Code: orchestrating worktrees with `arg code`
@@ -45,6 +45,7 @@ Every command accepts `--json` (and `--ndjson` for lists), and prints JSON whene
 | `arg code worktree create ...`                                               | Creates a worktree (see below)                                      | `worktree` (the row above), `newProjectId` when it made a Project, `project` (`id`, `from`, `reason`), and `url` |
 | `arg code worktree set-project [worktree-id] --project <id> \| --no-project` | Moves a worktree into a Project, or out of any                      | the worktree                                                                                                     |
 | `arg code worktree rename [worktree-id] --name <title>`                      | Retitles a worktree in the sidebar                                  | the worktree                                                                                                     |
+| `arg code worktree delete <worktree-id> [--discard-work] [--stop-sessions]`  | Deletes a worktree; needs a setting the user turns on (see below)   | `worktree` (the row as it was), `filesKept`                                                                      |
 | `arg code worktree pr [worktree-id]`                                         | The worktree's pull request as Arg Code last polled it              | `worktreeId`, `pullRequest` (or `null`)                                                                          |
 | `arg code worktree link [worktree-id]`                                       | A link that opens the worktree in Arg Code                          | the bare link; with `--json`, `worktreeId` and `url`                                                             |
 | `arg code project list [repo flag]`                                          | This machine's Projects                                             | `id`, `repositoryId`, `name` per row                                                                             |
@@ -66,7 +67,7 @@ arg code worktree create --repo-name record-demo --agent claude --prompt "..." -
 - The path must be the root of a git checkout that is already on this machine. A relative path is read from your working directory. It appears in the Code sidebar at once, under the folder's name, which is what `--repo-name` then takes.
 - Adding a repository that is already listed changes nothing and prints it again with `added: false`, so it is safe to run before every `worktree create`.
 - `repo add` does not clone or `git init`. To start a new project, run `git init` (and make a first commit, so there is a branch to start worktrees from) in the folder first; to work on a remote one, `git clone` it first. Then add it.
-- `arg code repo remove` stops listing a repository and never deletes anything. It is refused while the repository has worktrees Arg created (`data.managed`); those are deleted in the sidebar, by the user. Worktrees Arg only imported (`data.imported`) go with `--include-imported`, which closes any terminal open in them - do not pass it without checking nobody is working there.
+- `arg code repo remove` stops listing a repository and never deletes anything. It is refused while the repository has worktrees Arg created (`data.managed`); delete those first, with `arg code worktree delete` or by the user in the sidebar. Worktrees Arg only imported (`data.imported`) go with `--include-imported`, which closes any terminal open in them - do not pass it without checking nobody is working there.
 
 ### Creating a worktree
 
@@ -102,6 +103,21 @@ arg code worktree create --repo-name arg --name spike-upload-retry --json
 - `--no-project` - no Project, even inside a pane whose worktree has one.
 
 The `project.from` field in the output says which happened: `named`, `created`, `inherited` or `none`, with a `reason` when inheriting was not possible.
+
+### Deleting a worktree
+
+```bash
+arg code worktree delete <worktree-id> --json
+```
+
+- **It only works while a setting is on.** Deleting is off until **Settings > Code > Allow destructive arg code commands** is turned on in the Arg app, on this machine. Until then every delete is refused with `data.outcome` `destructive-commands-off` and nothing is deleted. The setting is turned on in the app, never by editing its files: if you need the delete, say which setting it needs (`data.setting`).
+- It does what the sidebar's Delete worktree does: the worktree's terminals and agents stop, a worktree Arg created loses its checkout and its `arg/` branch, and its row leaves the sidebar and its Project. An imported worktree is only taken off the list; its files and branch stay (`filesKept: true`).
+- **It refuses to lose work.** While the worktree has uncommitted or untracked changes, or commits that are in neither its base, its upstream nor a merged pull request, the answer is `work-at-risk` naming each, and nothing is deleted. `--discard-work` lets it through and **permanently deletes** those changes and commits. To see exactly what that is, run `git status` and `git log` in the worktree's `path` (from `arg code worktree list --json`).
+- **It refuses to stop what is running.** A terminal, agent, run script or setup step running in the worktree, or a worktree still being created, also answers `work-at-risk` (`data.busySessions`). A finished agent still sitting at its prompt counts, and so does an idle shell. `--stop-sessions` lets it through and **kills** them, losing anything they had not written to disk; it does not let any committed or on-disk work go, so a finished agent with uncommitted changes needs both flags.
+- **Deciding whether to pass a flag is yours.** Weigh what the refusal says the flag gives up against the task you were given. If that loss is clearly part of the task (cleaning up a worktree whose branch you know merged, a scratch worktree you made), pass it. If the work could matter and nothing in your task says it can go, commit and push it, or let what is running finish, and retry. Ask only when you cannot tell.
+- Name the worktree: it never defaults to your pane's own, and deleting your own pane's worktree is refused, since it would end your terminal mid-command. Run it from another pane, or delete it from the Code sidebar.
+- A delete that Arg Code's own safety checks stop (for example, a branch that moved since Arg last looked) comes back `failed` with the reason. **Force delete** in the sidebar overrides it.
+- `delete` is always listed in `arg code worktree --help`, whether or not the setting is on: the CLI cannot see the setting, only the app can.
 
 ### Starting an agent in an existing worktree
 
@@ -150,20 +166,22 @@ There are two kinds of failure, and both exit with status 1 - branch on the JSON
 
 **Arg Code refused the request.** Arg Code on this machine understood it and said no. `data.outcome` says why:
 
-| `data.outcome`         | Meaning                                                                                             | What to do                                                                     |
-| ---------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `ambiguous-repository` | More than one repository matches                                                                    | Pass `--repo-id` with one of `data.candidates`                                 |
-| `unknown-repository`   | Nothing on this machine matches                                                                     | Check `arg code worktree list`, or ask the user which repository they mean     |
-| `unknown-worktree`     | No such worktree here                                                                               | List worktrees; the id may be from another machine                             |
-| `unknown-project`      | No such Project in that repository                                                                  | List Projects, or use `--new-project`                                          |
-| `unknown-model`        | The agent takes no model by that name; `data.choices` lists the ones it does                        | Pick one of `data.choices`, or leave out `--model`                             |
-| `path-not-found`       | `repo add` named a path with nothing at it                                                          | Check the path; clone or create the repository first                           |
-| `not-a-repository`     | `repo add` named a folder that is not a checkout's root; `data.root` is the checkout it is inside   | Add `data.root` instead, or `git init` the folder when there is no `data.root` |
-| `repository-in-use`    | `repo remove` would drop worktrees; `data.managed` and `data.imported` list them                    | Leave it, or ask the user; `--include-imported` covers only `imported`         |
-| `unavailable`          | Arg Code cannot act on it right now, for example while it is starting                               | Wait a moment and try once more; tell the user if it persists                  |
-| `wrong-destination`    | The daemon reached is not the machine the request names                                             | Re-run `arg code ping`; you may have reached a different install               |
-| `failed`               | Arg Code tried and could not, for example an inactive worktree or a Project from another repository | Read `message`, fix the cause, and try once more                               |
-| `unsupported-verb`     | The Arg app is older than this command; `data.type` is the request it did not know                  | Ask the user to update the Arg app; do not retry                               |
+| `data.outcome`             | Meaning                                                                                                                                    | What to do                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `ambiguous-repository`     | More than one repository matches                                                                                                           | Pass `--repo-id` with one of `data.candidates`                                                          |
+| `unknown-repository`       | Nothing on this machine matches                                                                                                            | Check `arg code worktree list`, or ask the user which repository they mean                              |
+| `unknown-worktree`         | No such worktree here                                                                                                                      | List worktrees; the id may be from another machine                                                      |
+| `unknown-project`          | No such Project in that repository                                                                                                         | List Projects, or use `--new-project`                                                                   |
+| `unknown-model`            | The agent takes no model by that name; `data.choices` lists the ones it does                                                               | Pick one of `data.choices`, or leave out `--model`                                                      |
+| `path-not-found`           | `repo add` named a path with nothing at it                                                                                                 | Check the path; clone or create the repository first                                                    |
+| `not-a-repository`         | `repo add` named a folder that is not a checkout's root; `data.root` is the checkout it is inside                                          | Add `data.root` instead, or `git init` the folder when there is no `data.root`                          |
+| `repository-in-use`        | `repo remove` would drop worktrees; `data.managed` and `data.imported` list them                                                           | Leave it, or ask the user; `--include-imported` covers only `imported`                                  |
+| `destructive-commands-off` | Destructive commands are turned off; `data.setting` is the Settings > Code row that turns them on                                          | Nothing was changed. Say which setting the delete needs; it is turned on in the app                     |
+| `work-at-risk`             | `worktree delete` would lose `data.uncommittedChanges` or `data.unmergedCommits`, or stop `data.busySessions`; only what blocked it is set | Decide whether what each flag gives up is acceptable for your task: pass it, or keep the work and retry |
+| `unavailable`              | Arg Code cannot act on it right now, for example while it is starting                                                                      | Wait a moment and try once more; tell the user if it persists                                           |
+| `wrong-destination`        | The daemon reached is not the machine the request names                                                                                    | Re-run `arg code ping`; you may have reached a different install                                        |
+| `failed`                   | Arg Code tried and could not, for example an inactive worktree or a Project from another repository                                        | Read `message`, fix the cause, and try once more                                                        |
+| `unsupported-verb`         | The Arg app is older than this command; `data.type` is the request it did not know                                                         | Ask the user to update the Arg app; do not retry                                                        |
 
 **The request never reached Arg Code.** These have no `data.outcome`; read `message`:
 
