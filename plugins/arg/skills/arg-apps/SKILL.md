@@ -1,6 +1,6 @@
 ---
 name: arg-apps
-version: "2.19.0"
+version: "2.19.1"
 description: Build React previews and arg-apps in Arg. Covers live .tsx/.jsx apps with relative workspace modules, @arg/ui, native app chrome, @arg-ai/sdk, versioned npm imports, plus self-contained .html apps using @arg-ai/sdk for files, identity, and Actions, the .app launcher every finished app needs to appear in Apps, be pinned, and register as the editor of a file type, apps several people use where some edit and others only view (roles as Arg folder access, not a request gate), responsive layout and safe areas for the full-screen iOS and Android web views, HyperFrames .html motion-graphic compositions that play in the editor and render into .video timelines, and .server files that call third-party APIs through the integration broker.
 ---
 
@@ -386,6 +386,8 @@ Arg renders `.html` in a live-preview editor. Cloud workspaces use a per-file `s
 ## Publishing an app template
 
 Publish a named app from its `.app` launcher, not directly from the linked HTML/TSX/JSX file. This portable template path accepts only `kind: "file"` launchers targeting HTML, HTM, TSX, or JSX; hosted-Site and server launchers retain live external state and are not snapshot templates. Arg bundles a portable version 2 launcher, the linked entry, parsed local static imports and assets, plus any runtime data files selected in the publish flow. Explicitly select every representative file read through `fs` from `@arg-ai/sdk` or `db` from `@arg-ai/sdk`; source comments and examples are never treated as permission to publish a workspace file.
+
+While an `.html` app is open in the editor (on its isolated preview origin, without Actions access), an edit that leaves every `<script>`, inline `on*` handler, `javascript:` URL and `<iframe srcdoc>` as it was is applied to the running page in place: the page keeps its scroll positions, form input, focus and script state, and its scripts do not run again. An edit to any script reloads the page, and so does an edit to text or an attribute the page's own script has rewritten. So a script that reads markup once at startup sees an element added by a later markup edit only after a reload; query the DOM when you need it rather than caching it at startup when the page should follow live edits.
 
 An HTML, HTM, TSX, or JSX entry inside a file, folder, or workspace template also runs in the catalog's isolated preview when preview is enabled. Its `fs` access is read-only and confined to the published snapshot; it cannot read the viewer's workspace. A `.app` launcher gives that runnable entry a durable app identity and should still be used for an app template.
 

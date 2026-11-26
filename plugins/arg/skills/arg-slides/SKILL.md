@@ -1,6 +1,6 @@
 ---
 name: arg-slides
-version: "2.1.1"
+version: "2.1.2"
 description: Create, edit, and present Arg slide decks. Load for presentations, pitch decks, keynote-style talks, slide redesigns, or deck generation. Default to a single self-contained .html deck; build a multi-artboard .design deck when the user wants an editable design canvas or a PowerPoint / PDF deliverable.
 ---
 
@@ -75,7 +75,8 @@ Write one document. Every slide is a section inside a deck root, and the whole d
 ### Presenting
 
 - Bind `ArrowRight` / `ArrowLeft`, `Space`, `PageDown` / `PageUp`, and `Home` / `End`, plus click-to-advance. Bind one key (`f`) to `requestFullscreen()` on the deck root.
-- Reflect the current slide in `location.hash` and listen for `hashchange`, so a link opens on a specific slide and a reload keeps the place.
+- Reflect the current slide in `location.hash`, read it when the deck starts, and listen for `hashchange`, so a link opens on a specific slide and a reload keeps the place. An edit to the deck's markup or CSS - yours, or a collaborator's - is applied to the open preview in place and keeps the current slide. An edit to any script reloads the page and brings back only the hash and scroll positions, so a slide index kept only in a script variable sends everyone watching back to the first slide.
+- Find the slides when you navigate (`querySelectorAll(".slide")` inside the step function), not once at startup, so a slide added while the deck is open can be reached without a reload.
 - Do not auto-advance on a timer unless the user asked for an unattended loop.
 - Keep presenter notes in the document as hidden elements (an `<aside class="notes" hidden>` per slide) and toggle them from a key. There is no separate presenter console for an HTML deck - a `.design` deck is the format that has one.
 
