@@ -11,8 +11,8 @@ Use `.tsx` or `.jsx` for a React component, UI prototype, or small app that bene
 Every React preview must export one component as its default export:
 
 ```tsx
-import { useState } from "react";
 import { Button, Card } from "@arg/ui";
+import { useState } from "react";
 
 export default function Welcome() {
   const [welcomed, setWelcomed] = useState(false);
@@ -50,8 +50,8 @@ Named and namespace imports work too, and an imported module may be up to 100 MB
 Use `fs.readJSON()` plus `fs.watch()` when data changes must update the mounted app without rebuilding it. A static workspace import is part of the bundle, so changing that imported file rebuilds and restarts the preview.
 
 ```tsx
-import { useEffect, useState } from "react";
 import { fs } from "@arg-ai/sdk";
+import { useEffect, useState } from "react";
 
 export default function LiveRunCount() {
   const [runs, setRuns] = useState([]);
@@ -130,8 +130,8 @@ Existing previews may also import the legacy `Badge`, `Heading`, `Text`, `Stack`
 Use `Dropdown` for a controlled select. Its API matches Arg's picker: `options` contain `value`, `label`, and optional `description`, `icon` or `pinned`; `triggerVariant` accepts `"default"`, `"field"`, or `"ghost"`; and `order` accepts `"as-given"` (the default) or `"alphabetical"`. Pass `order="alphabetical"` for a list of names such as people, projects or files, and mark a leading "All" or "None" option `pinned: true` to keep it first; keep `"as-given"` for a designed sequence such as sizes or steps. A menu with more than 8 options gets a filter input automatically; `searchable` forces one on or off. `compareLabels(a, b)` from `@arg/ui` is the same comparison for sorting your own lists.
 
 ```tsx
-import { useState } from "react";
 import { Dropdown } from "@arg/ui";
+import { useState } from "react";
 
 const options = [
   { value: "comfortable", label: "Comfortable" },
@@ -155,8 +155,8 @@ export default function DensityPicker() {
 `ContextMenu` is rendered only while a right-click anchor exists. Pass viewport coordinates in `position`, clear the anchor in `onClose`, and build `items` from `item`, `separator`, `header`, `checkbox`, `submenu`, or `stepper` entries.
 
 ```tsx
-import { useState } from "react";
 import { ContextMenu } from "@arg/ui";
+import { useState } from "react";
 
 export default function ContextMenuExample() {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -217,8 +217,8 @@ One document may keep up to 16 simultaneous registrations. Prefer one registrati
 In React, use `useAppChrome` from `@arg/ui`:
 
 ```tsx
-import { useMemo, useState } from "react";
 import { useAppChrome, type AppChromeRegistration } from "@arg/ui";
+import { useMemo, useState } from "react";
 
 interface Selection {
   id: string;
